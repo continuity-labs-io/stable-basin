@@ -23,6 +23,9 @@ class BiologicalCartridgeFusion(nn.Module):
             # Modality 1 (Epigenetics) strictly controls latent dimensions 32 to 63
             self.W_gate.weight[half:, 1] = 20.0 
 
+        self.W_gate.weight.requires_grad = False
+        self.W_gate.bias.requires_grad = False
+
     def forward(self, x_raw: torch.Tensor, mask: torch.Tensor):
         latent_x = self.W_cart(x_raw)
         latent_gate = torch.sigmoid(self.W_gate(mask))

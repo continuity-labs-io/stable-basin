@@ -88,37 +88,59 @@ instabilities.)_
 
 ### Running the Demos
 
-The repository contains two main demonstration scripts:
+The repository contains four main demonstration scripts:
 
-#### 1. End-to-End Compiler Demo (`0_concat_demo.py`)
+#### 1. Bio-Blade Engine (`01_bio_blade_engine.py`)
 
-This script demonstrates the full multi-modal pipeline of the MELD system. It
-ingests realistic AO-LLSM optical telemetry, injects synthetic high-frequency
-GEVI bioelectric data, and processes the fused temporal sequence through the
-continuous Mamba model. It outputs three core thermodynamic metrics:
-
-- Koopman-Stability-Metric (KSM) via Dynamic Mode Decomposition
-- Critical Slowing Down (CSD) for structural wobble
-- Morphological Hysteresis (Scar Area) during biological rescue
-
-It also includes a hardware telemetry benchmark comparing VRAM scaling of Mamba
-vs. a legacy Transformer.
+This script demonstrates the Bio-Blade engine, which simulates high-throughput processing of biological data (like electrophysiology). It shows how the system can ingest raw telemetry and score it (e.g., KSM/CSD scores) to detect biological events at high speeds.
 
 ```bash
-python src/demo/0_concat_demo.py
+python src/demo/01_bio_blade_engine.py
 ```
 
-#### 2. Orthogonal Veto Training (`1_hssm_demo.py`)
+#### 2. Indestructible Edge (`02_indestructible_edge.py`)
 
-To train the Fusion Core and generate the inference dashboard:
+This script demonstrates the fault-tolerance and self-healing routing capabilities of the network. It simulates catastrophic hardware failures (e.g., sensor dropouts) and shows how the architecture seamlessly maintains representation and inference despite severe input corruption.
 
 ```bash
-python src/demo/1_hssm_demo.py
+python src/demo/02_indestructible_edge.py
 ```
 
-This will train the model and output a visual dashboard to
-`output/1_hssm_veto_proof.png` demonstrating the network's ability to zero out
-the pump artifact and detect true biological crashes vs. hardware failures.
+#### 3. Multimodal Autopsy (`03_multimodal_autopsy.py`)
+
+This script demonstrates the Layer-wise Relevance Propagation (LRP) causality engine. It traces back from a catastrophic failure event (Structural Collapse) to uncover the latent root cause (an earlier RNA Stress Alarm) across complex, multimodal sequence data.
+
+```bash
+python src/demo/03_multimodal_autopsy.py
+```
+
+#### 4. Masked State Space Model (`04_masked_state_space_model.py`)
+
+This script demonstrates the core Masked State Space Model (SSM) architecture. It shows how the model handles sparse, intermittent multimodal sensor data by dynamically gating the continuous state transitions based on sensor availability masks.
+
+```bash
+python src/demo/04_masked_state_space_model.py
+```
+
+### Running the Experiments
+
+The repository also includes two primary experiments:
+
+#### 1. Train Synthetic Benchmark (`01_train_synthetic_benchmark.py`)
+
+This script trains and evaluates three models (Baseline SSM, Mask-Aware SSM, and a Causal Transformer) on a synthetic Waddington landscape dataset. It establishes the baseline capability of these architectures to learn latent dynamics from gated sensor data.
+
+```bash
+python src/experiments/01_train_synthetic_benchmark.py
+```
+
+#### 2. Length Extrapolation Stress Test (`02_extrapolation_benchmark.py`)
+
+This script tests the out-of-distribution (OOD) generalization of the models trained on the Waddington dataset on vastly longer sequences. It proves the stability of State Space Models (SSMs) outfitted with the Dual-Lock Stasis system against ghost noise integration over sparse inputs.
+
+```bash
+python src/experiments/02_extrapolation_benchmark.py
+```
 
 ### Running the Latency Benchmark
 

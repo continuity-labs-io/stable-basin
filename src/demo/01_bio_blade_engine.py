@@ -34,13 +34,13 @@ def format_bytes(size: int) -> str:
     return f"{size:.2f} PB"
 
 
-def format_bandwidth(bits_per_sec: float) -> str:
-    """Formats bandwidth into human readable Gbps/Mbps."""
-    gbps = bits_per_sec / 1e9
-    if gbps >= 1.0:
-        return f"{gbps:.2f} Gbps"
-    mbps = bits_per_sec / 1e6
-    return f"{mbps:.2f} Mbps"
+def format_iops(iops: float) -> str:
+    """Formats IOPS into a human-readable format."""
+    if iops > 1e6:
+        return f"{iops / 1e6:.2f}M IOPS"
+    elif iops > 1e3:
+        return f"{iops / 1e3:.2f}K IOPS"
+    return f"{iops:.2f} IOPS"
 
 
 def plot_bio_blade_dashboard(raw_telemetry, ksm_scores, csd_scores, event_frame):
@@ -187,8 +187,9 @@ def main():
     avg_latency = sum(latencies) / len(latencies)
 
     payload_bytes = BATCH_SIZE * SEQ_LEN * TARGET_CHANNELS * 4
-    payload_bits = payload_bytes * 8
-    theoretical_bps = payload_bits / avg_latency
+    
+    # Calculate interrupts bypassed (assuming 1 frame = 1 interrupt)
+    iops = (BATCH_SIZE * SEQ_LEN) / avg_latency
 
     print("\n" + "=" * 60)
     print(" BIO-BLADE ENGINE BENCHMARK ")
@@ -199,9 +200,9 @@ def main():
     print(f"Payload Size:    {format_bytes(payload_bytes)}")
     print("-" * 60)
     print(f"Local Edge Inference Latency:   {avg_latency * 1000:.2f} ms")
-    print(f"Cloud Bandwidth Required:       {format_bandwidth(theoretical_bps)}")
+    print(f"Interrupts Bypassed (IOPS):     {format_iops(iops)}")
     print("=" * 60)
-    print("CONCLUSION: Edge-compute prevents AWS ingress throttling.\n")
+    print("CONCLUSION: Edge-compute prevents kernel panic from IOPS exhaustion.\n")
 
     logger.info("[*] Running inference on continuous sequence (Control -> Crash)...")
 
