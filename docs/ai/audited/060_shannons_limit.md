@@ -1,6 +1,6 @@
 # 3. Shannon's Limit (The H-SSM Imperative)
 
-**Status:** Accepted (Pending Implementation)
+**Status:** Completed
 
 ## 1. The Conceptual Shift
 Mamba-2's $\mathcal{O}(1)$ memory is a fixed capacity constraint ($d_{state} = 64$). It cannot compress an infinite 1.38 trillion-frame sequence (800 days at 20kHz) without catastrophic forgetting.
@@ -12,8 +12,8 @@ The architecture must be explicitly defined as a two-tier cascade. Layer 1 (Fast
 We formally elevate `hierarchical_ssm.py` from a "demo" to the Core Temporal Scaffold.
 
 ### Action Items
-- [ ] Update documentation and references to elevate `hierarchical_ssm.py` to the "Core Temporal Scaffold".
-- [ ] Ensure the architecture description accurately reflects the two-tier cascade (Fast-Mamba / Slow-Mamba).
+- [x] Update documentation and references to elevate `hierarchical_ssm.py` to the "Core Temporal Scaffold".
+- [x] Ensure the architecture description accurately reflects the two-tier cascade (Fast-Mamba / Slow-Mamba).
 
 ### Targeted Files
 - `hierarchical_ssm.py`

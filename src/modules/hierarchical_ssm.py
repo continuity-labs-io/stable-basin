@@ -5,7 +5,16 @@ import numpy as np
 
 class HierarchicalSSM(nn.Module):
     """
-    2-Layer Hierarchical Continuous-Time State Space Model (H-SSM).
+    Core Temporal Scaffold: 2-Tier Hierarchical Continuous-Time State Space Model (H-SSM).
+    
+    This architecture explicitly defines a two-tier cascade to overcome Shannon's Limit 
+    and catastrophic forgetting over long sequence lengths:
+    - Layer 1 (Fast-Mamba): Ingests high-frequency (e.g. 20kHz) HD-MEA data and outputs 
+      low-frequency (e.g. 1Hz) Macroscopic Kinetic Tokens.
+    - Layer 2 (Slow-Mamba): Operates entirely on the 1Hz Macroscopic tokens, efficiently 
+      compressing months of continuous recording into a finite state vector without violating 
+      Shannon's limit.
+      
     Demonstrates a standing wave phase transition driven by delayed recurrent feedback.
 
     Scenario A (Low K): The "Driven Mode." The feedback parameter (K) is turned down.
