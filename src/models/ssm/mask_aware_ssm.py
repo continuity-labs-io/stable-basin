@@ -4,7 +4,12 @@ import torch.nn as nn
 
 class MaskAwareSSM(nn.Module):
     """
-    Mask-Aware SSM that natively implements the 'Physics Hack', modulating time based on the latent gate.
+    Observer Model: Mask-Aware SSM that natively implements the 'Physics Hack', 
+    modulating time based on the latent gate.
+    
+    It continuously ingests non-destructive streams (Voltage, Morphology, Fluid Exhaust) 
+    and uses Mask-Aware Subspace Routing to mathematically infer hidden, destructive states 
+    (like RNA and Epigenetics) without lysing the cell.
     """
 
     def __init__(self, d_model: int):
