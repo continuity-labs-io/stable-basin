@@ -4,6 +4,8 @@ from src.models.encoders.fusion import BiologicalCartridgeFusion
 from src.models.ssm.baseline_ssm import BaselineSSM
 from src.models.ssm.mask_aware_ssm import MaskAwareSSM
 from src.models.attention.baseline_transformer import BaselineTransformer
+from src.models.rnn.gru_d import GRUDModel
+from src.models.rnn.ode_rnn import ODERNNModel
 
 from enum import Enum
 
@@ -19,6 +21,10 @@ class SSMType(str, Enum):
     """Causal Transformer baseline."""
     MASK_AWARE = "mask_aware"
     """MASR (Mask-Aware State-Space Representation) model."""
+    GRU_D = "gru_d"
+    """GRU-D model."""
+    ODE_RNN = "ode_rnn"
+    """ODE-RNN model using torchdiffeq."""
 
 class SensorFusionPredictor(nn.Module):
     def __init__(
@@ -39,6 +45,10 @@ class SensorFusionPredictor(nn.Module):
             self.ssm = MaskAwareSSM(d_model)
         elif ssm_type == "transformer":
             self.ssm = BaselineTransformer(d_model)
+        elif ssm_type == "gru_d":
+            self.ssm = GRUDModel(d_model)
+        elif ssm_type == "ode_rnn":
+            self.ssm = ODERNNModel(d_model)
         else:
             raise ValueError(f"Unknown ssm_type: {ssm_type}")
 
@@ -65,6 +75,23 @@ class SensorFusionPredictor(nn.Module):
             latent_x, latent_gate = self.fusion(x_concat, mask)
             h = self.ssm(latent_x)
             
+        elif self.ssm_type in ["gru_d", "ode_rnn"]:
+            # Compute time deltas dynamically based on the mask
+            # For every step where mask == 0, delta_t increments.
+            # Where mask == 1, delta_t resets to 0.
+            B, L, _ = x_raw.shape
+            delta_t = torch.zeros(B, L, 1, device=x_raw.device)
+            current_delta = torch.zeros(B, 1, device=x_raw.device)
+            
+            for t in range(L):
+                m_t = mask[:, t, 1:2]
+                current_delta = current_delta + 1.0
+                delta_t[:, t, :] = current_delta
+                current_delta = torch.where(m_t == 1.0, torch.zeros_like(current_delta), current_delta)
+                
+            latent_x, latent_gate = self.fusion(x_raw, mask)
+            h = self.ssm(latent_x, delta_t)
+
         else:
             latent_x, latent_gate = self.fusion(x_raw, mask)
             if self.ssm_type == "baseline":

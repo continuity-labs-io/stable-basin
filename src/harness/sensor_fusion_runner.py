@@ -40,6 +40,8 @@ def save_benchmark_plot(
         SSMType.MASK_CONCAT.value: "y-",
         SSMType.TRANSFORMER.value: "g:",
         SSMType.MASK_AWARE.value: "b-",
+        SSMType.GRU_D.value: "c-",
+        SSMType.ODE_RNN.value: "m-",
     }
 
     labels = {
@@ -48,6 +50,8 @@ def save_benchmark_plot(
         SSMType.MASK_CONCAT.value: "Mask-Concat SSM",
         SSMType.TRANSFORMER.value: "Causal Transformer",
         SSMType.MASK_AWARE.value: "MASR (Ours)",
+        SSMType.GRU_D.value: "GRU-D",
+        SSMType.ODE_RNN.value: "ODE-RNN",
     }
 
     for name in model_names:

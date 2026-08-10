@@ -18,9 +18,10 @@ class SyntheticWaddingtonDataset(Dataset):
     - mask: A 2-dimensional tensor representing the observability of the two modalities.
     """
 
-    def __init__(self, size=100, seq_len=500):
+    def __init__(self, size: int = 100, seq_len: int = 500, sparsity: float = 0.05):
         self.size = size
         self.seq_len = seq_len
+        self.sparsity = sparsity
         # Ensure consistent biological mapping across datasets
         rng_state = torch.get_rng_state()
         torch.manual_seed(42)
@@ -68,10 +69,8 @@ class SyntheticWaddingtonDataset(Dataset):
 
         # The Mask
         mask_0 = torch.ones(self.seq_len, 1)
-        mask_1 = (torch.rand(self.seq_len, 1) > 0.95).float()
-
-        # Hack to ensure at least some observability at the start
-        mask_1[:10] = (torch.rand(10, 1) > 0.80).float()
+        # sparsity is the fraction of active sensors
+        mask_1 = (torch.rand(self.seq_len, 1) < self.sparsity).float()
 
         # CRITICAL ZERO-PADDING
         modality_1 = modality_1 * mask_1
