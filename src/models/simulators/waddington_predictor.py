@@ -5,6 +5,20 @@ from src.models.ssm.baseline_ssm import BaselineSSM
 from src.models.ssm.mask_aware_ssm import MaskAwareSSM
 from src.models.attention.baseline_transformer import BaselineTransformer
 
+from enum import Enum
+
+class SSMType(str, Enum):
+    """The type of state-space model or baseline to instantiate."""
+    BASELINE = "baseline"
+    """Zero-padded SSM baseline."""
+    FORWARD_FILL = "forward_fill"
+    """Forward-fill (hold-last-value) SSM baseline."""
+    MASK_CONCAT = "mask_concat"
+    """Mask-concatenated SSM baseline."""
+    TRANSFORMER = "transformer"
+    """Causal Transformer baseline."""
+    MASK_AWARE = "mask_aware"
+    """MASR (Mask-Aware State-Space Representation) model."""
 
 class WaddingtonPredictor(nn.Module):
     def __init__(
@@ -12,9 +26,14 @@ class WaddingtonPredictor(nn.Module):
     ):
         super().__init__()
         self.ssm_type = ssm_type
-        self.fusion = BiologicalCartridgeFusion(d_cartridge, n_modalities, d_model)
+        
+        # For mask_concat, we concatenate the 2D mask to the 30D raw data
+        if ssm_type == "mask_concat":
+            self.fusion = BiologicalCartridgeFusion(d_cartridge + n_modalities, n_modalities, d_model)
+        else:
+            self.fusion = BiologicalCartridgeFusion(d_cartridge, n_modalities, d_model)
 
-        if ssm_type == "baseline":
+        if ssm_type in ["baseline", "forward_fill", "mask_concat"]:
             self.ssm = BaselineSSM(d_model)
         elif ssm_type == "mask_aware":
             self.ssm = MaskAwareSSM(d_model)
@@ -26,13 +45,33 @@ class WaddingtonPredictor(nn.Module):
         self.readout = nn.Linear(d_model, 1)
 
     def forward(self, x_raw: torch.Tensor, mask: torch.Tensor):
-        latent_x, latent_gate = self.fusion(x_raw, mask)
-
-        if self.ssm_type == "baseline":
+        if self.ssm_type == "forward_fill":
+            # Apply Forward-Fill (Hold-Last-Value) to the sparse modality (indices 20-29)
+            x_ff = x_raw.clone()
+            batch_size, seq_len, _ = x_raw.shape
+            last_known = torch.zeros_like(x_raw[:, 0, 20:])
+            for t in range(seq_len):
+                m_t = mask[:, t, 1:2]
+                current_x = x_raw[:, t, 20:]
+                last_known = torch.where(m_t == 1.0, current_x, last_known)
+                x_ff[:, t, 20:] = last_known
+            
+            latent_x, latent_gate = self.fusion(x_ff, mask)
             h = self.ssm(latent_x)
-        elif self.ssm_type == "mask_aware":
-            h = self.ssm(latent_x, latent_gate)
-        elif self.ssm_type == "transformer":
+            
+        elif self.ssm_type == "mask_concat":
+            # Concatenate mask directly to the features
+            x_concat = torch.cat([x_raw, mask], dim=-1)
+            latent_x, latent_gate = self.fusion(x_concat, mask)
             h = self.ssm(latent_x)
+            
+        else:
+            latent_x, latent_gate = self.fusion(x_raw, mask)
+            if self.ssm_type == "baseline":
+                h = self.ssm(latent_x)
+            elif self.ssm_type == "mask_aware":
+                h = self.ssm(latent_x, latent_gate)
+            elif self.ssm_type == "transformer":
+                h = self.ssm(latent_x)
 
         return self.readout(h)
