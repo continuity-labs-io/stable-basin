@@ -39,7 +39,7 @@ def setup_diagnostic_logger():
 
 logger = setup_diagnostic_logger()
 
-from src.pipeline.ephys.brw_dataloader import ContinuousHDMEADataset
+from src.data.ephys.hdmea_dataset import HDMEADataset
 from src.models.ssm.spike_forecaster import SpikeForecaster
 from src.models.losses.meld_loss import MeldLoss
 from src.metrics.metrics import ThermodynamicMetrics
@@ -187,12 +187,11 @@ def main():
 
     file_path = "data/ephys/hdmea_neuropulse.brw"
 
-    print("[*] 1. Initializing ContinuousHDMEADataset...")
+    print("[*] 1. Initializing HDMEADataset...")
     try:
-        dataset = ContinuousHDMEADataset(
-            brw_file_path=file_path, sequence_length=SEQ_LEN, target_channels=TARGET_CHANNELS
-        )
-        batch = dataset[0].unsqueeze(0).to(device)
+        dataset = HDMEADataset(data_path=file_path, seq_len=SEQ_LEN)
+        # Slicing the first 1024 channels for the demo
+        batch = dataset[0][:, :TARGET_CHANNELS].unsqueeze(0).to(device)
     except Exception as e:
         print(
             f"[!] Warning: Native BRW dataloader failed ({e}). Falling back to synthetic HD-MEA Tensor."

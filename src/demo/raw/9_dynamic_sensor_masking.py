@@ -31,7 +31,7 @@ try:
 except ImportError:
     Mamba2 = None
 
-from src.pipeline.neocortical_assembloid_dataloader import NeocorticalAssembloidDataset
+from src.data.simulators.neocortical_assembloid_dataloader import NeocorticalAssembloidDataset
 from src.utils.device import get_optimal_device
 
 

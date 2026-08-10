@@ -31,7 +31,7 @@ from src.metrics.metrics import ThermodynamicMetrics
 from src.models.simulators.gevi_injector import GEVIInjector
 from src.models.encoders.spatial_compressor import SpatialCompressor
 from src.models.ssm.state_space_engine import StateSpaceEngine
-from src.pipeline.optical.aollsm_dataloader import AOLLSMDataset
+from src.data.optical.aollsm_dataloader import AOLLSMDataset
 
 warnings.filterwarnings("ignore")
 
