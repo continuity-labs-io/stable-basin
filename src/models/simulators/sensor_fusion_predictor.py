@@ -20,7 +20,7 @@ class SSMType(str, Enum):
     MASK_AWARE = "mask_aware"
     """MASR (Mask-Aware State-Space Representation) model."""
 
-class WaddingtonPredictor(nn.Module):
+class SensorFusionPredictor(nn.Module):
     def __init__(
         self, ssm_type: str, d_cartridge: int = 30, n_modalities: int = 2, d_model: int = 64
     ):
