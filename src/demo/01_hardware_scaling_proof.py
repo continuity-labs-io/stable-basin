@@ -17,7 +17,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from src.data.ephys.maxwell_dataset import MaxWellHDMEADataset
-from src.models.ssm.spike_forecaster import SpikeForecaster
+from src.models.ssm.meld_engine import MeldEngine
 from src.metrics.metrics import ThermodynamicMetrics
 from src.utils.device import get_optimal_device
 
@@ -171,8 +171,8 @@ def main():
 
     batch = val_seq[:, :SEQ_LEN, :].expand(BATCH_SIZE, -1, -1).contiguous()
 
-    logger.info("[*] Initializing SpikeForecaster...")
-    model = SpikeForecaster(input_dim=TARGET_CHANNELS, d_model=256, d_state=64).to(device)
+    logger.info("[*] Initializing MeldEngine...")
+    model = MeldEngine(input_dim=TARGET_CHANNELS, d_model=256, mask_aware=False).to(device)
     model.eval()
 
     logger.info("[*] Running Edge Inference Benchmark...")

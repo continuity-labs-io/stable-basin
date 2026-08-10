@@ -46,8 +46,8 @@ class MambaLRPEpsilon:
         W_in = self.model.input_proj.weight.data
         b_in = self.model.input_proj.bias.data
 
-        W_out = self.model.output_proj.weight.data
-        b_out = self.model.output_proj.bias.data
+        W_out = self.model.forward_head.weight.data
+        b_out = self.model.forward_head.bias.data
 
         # Forward through first projection
         h_in = F.linear(x, W_in, b_in)

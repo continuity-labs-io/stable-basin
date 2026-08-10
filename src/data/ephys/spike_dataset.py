@@ -137,7 +137,7 @@ class SpikeProphecyDataset(IterableDataset):
                     padded_window = window_t
 
                 # Convert to torch tensor (float32 for model consumption)
-                tensor_window = torch.from_numpy(padded_window).float()
+                tensor_window = torch.from_numpy(padded_window.copy()).float()
                 yield tensor_window
 
 

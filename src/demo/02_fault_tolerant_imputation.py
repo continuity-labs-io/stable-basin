@@ -29,49 +29,7 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("IndestructibleEdge")
 
 
-# --- Fallback SSM for Mac/MPS ---
-class DemoSSM(nn.Module):
-    def __init__(self, d_model):
-        super().__init__()
-        self.conv = nn.Conv1d(d_model, d_model, kernel_size=4, padding=3, groups=d_model)
-        self.proj = nn.Linear(d_model, d_model)
-
-    def forward(self, x):
-        x_c = x.transpose(1, 2)
-        x_c = self.conv(x_c)[..., : x.shape[1]]
-        x_c = x_c.transpose(1, 2)
-        return self.proj(F.silu(x_c))
-
-
-# --- Architecture ---
-class DynamicMaskingEngine(nn.Module):
-    def __init__(self, input_dim=114, d_model=256):
-        super().__init__()
-        self.mask_encoder = nn.Sequential(
-            nn.Linear(input_dim * 2, d_model),
-            nn.LayerNorm(d_model),
-            nn.GELU(),
-            nn.Linear(d_model, d_model),
-        )
-
-        if Mamba2 is not None:
-            self.ssm1 = Mamba2(d_model=d_model, d_state=64)
-            self.ssm2 = Mamba2(d_model=d_model, d_state=64)
-        else:
-            self.ssm1 = DemoSSM(d_model)
-            self.ssm2 = DemoSSM(d_model)
-
-        self.predictor = nn.Linear(d_model, input_dim)
-
-    def forward(self, x):
-        mask = torch.isnan(x).float()
-        x_safe = torch.nan_to_num(x, nan=0.0)
-        x_combined = torch.cat([x_safe, mask], dim=-1)
-        h = self.mask_encoder(x_combined)
-        h = self.ssm1(h)
-        h = self.ssm2(h)
-        preds = self.predictor(h)
-        return preds, mask
+from src.models.ssm.meld_engine import MeldEngine
 
 
 # --- Data Generator ---
@@ -186,7 +144,7 @@ def main():
 
     print("\n[*] BOOTING DEMO 2: THE INDESTRUCTIBLE EDGE")
 
-    engine = DynamicMaskingEngine(input_dim=114, d_model=256).to(device)
+    engine = MeldEngine(input_dim=114, d_model=256, mask_aware=True).to(device)
     simulator = WetLabDisasterSimulator(seq_len=200, input_dim=114)
     optimizer = optim.AdamW(engine.parameters(), lr=1e-3)
 
