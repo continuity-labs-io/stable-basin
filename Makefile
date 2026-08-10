@@ -6,7 +6,7 @@ sensor-fusion-synthetic:
 		--epochs 50 \
 		--train-seq-len 500 \
 		--test-seq-len 500 \
-		--models baseline mask_aware transformer gru_d ode_rnn \
+		--models baseline forward_fill mask_concat transformer mask_aware gru_d ode_rnn \
 		--csv-name 02_benchmark.csv \
 		--png-name 02_benchmark_results.png
 
@@ -16,7 +16,7 @@ sensor-fusion-extrapolation:
 		--epochs 40 \
 		--train-seq-len 500 \
 		--test-seq-len 2000 \
-		--models baseline mask_aware transformer gru_d ode_rnn \
+		--models baseline forward_fill mask_concat transformer mask_aware gru_d ode_rnn \
 		--csv-name 03_stress_test.csv \
 		--png-name 03_extrapolation_results.png
 

@@ -10,6 +10,14 @@ from src.data.waddington_dataset import SyntheticWaddingtonDataset
 from src.models.simulators.sensor_fusion_predictor import SensorFusionPredictor, SSMType
 from src.utils.device import get_optimal_device
 from torch.utils.data import DataLoader, Dataset
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 
 class DatasetWrapper(Dataset):
@@ -95,7 +103,7 @@ def save_benchmark_plot(
     os.makedirs("output/data", exist_ok=True)
     out_path = f"output/data/{png_name}"
     plt.savefig(out_path, dpi=300)
-    print(f"Saved plot to {out_path}")
+    logger.info(f"Saved plot to {out_path}")
 
 
 def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, csv_name, png_name):
@@ -116,8 +124,8 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
     loss_history = {name: [] for name in model_names}
 
     # Training Loop
-    print(f"\n--- Starting Task: {task_name} ---")
-    print(f"Training {len(models)} architectures on seq_len={train_seq_len} for {epochs} epochs...")
+    logger.info(f"--- Starting Task: {task_name} ---")
+    logger.info(f"Training {len(models)} architectures on seq_len={train_seq_len} for {epochs} epochs...")
     for epoch in range(1, epochs + 1):
         for m in models.values():
             m.train()
@@ -144,9 +152,9 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
             log_str += f"{name}: {avg_loss:.3f} | "
 
         if epoch % 5 == 0 or epoch == 1:
-            print(log_str)
+            logger.info(log_str)
 
-    print(f"\nRunning Length Extrapolation Stress Test (seq_len={test_seq_len})...")
+    logger.info(f"Running Length Extrapolation Stress Test (seq_len={test_seq_len})...")
     for m in models.values():
         m.eval()
 
@@ -165,10 +173,10 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
             # Calculate MSE
             if test_seq_len > train_seq_len:
                 ood_mse = ((preds_dict[name][train_seq_len:] - test_y_true[train_seq_len:]) ** 2).mean()
-                print(f"OOD-MSE [{name}]: {ood_mse:.4f}")
+                logger.info(f"OOD-MSE [{name}]: {ood_mse:.4f}")
             else:
                 mse = ((preds_dict[name] - test_y_true) ** 2).mean()
-                print(f"MSE [{name}]: {mse:.4f}")
+                logger.info(f"MSE [{name}]: {mse:.4f}")
 
     results = {"True Phase": test_y_true.flatten()}
     for k, v in preds_dict.items():
@@ -177,7 +185,7 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
     df = pd.DataFrame(results)
     csv_out_path = f"output/data/{csv_name}"
     df.to_csv(csv_out_path, index=False)
-    print(f"Saved CSV to {csv_out_path}")
+    logger.info(f"Saved CSV to {csv_out_path}")
 
     save_benchmark_plot(
         model_names, loss_history, preds_dict, test_y_true, train_seq_len, test_seq_len, task_name, png_name

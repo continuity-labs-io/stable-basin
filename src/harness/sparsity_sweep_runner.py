@@ -9,6 +9,14 @@ import matplotlib.pyplot as plt
 from src.data.waddington_dataset import SyntheticWaddingtonDataset
 from src.models.simulators.sensor_fusion_predictor import SensorFusionPredictor
 from src.utils.device import get_optimal_device
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 def run_experiment(device, model_name, sparsity, seed, epochs=10, train_seq_len=500, test_seq_len=2000):
     # Set seed for reproducibility
@@ -65,15 +73,15 @@ def main():
     models = ["baseline", "forward_fill", "mask_concat", "gru_d", "ode_rnn", "mask_aware"]
     results = {m: {s: [] for s in sparsities} for m in models}
     
-    print("\n[*] Commencing 5-Seed Sparsity Sweep (FitzHugh-Nagumo Oscillator)...")
-    print(f"[*] Sweep parameters: {len(sparsities)} sparsities | {len(seeds)} seeds | {len(models)} models = {len(sparsities)*len(seeds)*len(models)} training runs")
+    logger.info("Commencing 5-Seed Sparsity Sweep (FitzHugh-Nagumo Oscillator)...")
+    logger.info(f"Sweep parameters: {len(sparsities)} sparsities | {len(seeds)} seeds | {len(models)} models = {len(sparsities)*len(seeds)*len(models)} training runs")
     
     for sparsity in sparsities:
         for seed in seeds:
             for m in models:
                 mse = run_experiment(device, m, sparsity, seed)
                 results[m][sparsity].append(mse)
-                print(f"Sparsity: {sparsity*100:0.1f}% | Seed: {seed:<4} | Model: {m:<15} | OOD-MSE: {mse:.4f}")
+                logger.info(f"Sparsity: {sparsity*100:0.1f}% | Seed: {seed:<4} | Model: {m:<15} | OOD-MSE: {mse:.4f}")
                 
     # Plotting Statistical Rigor
     plt.style.use('dark_background')
@@ -102,7 +110,7 @@ def main():
     
     os.makedirs("output/data", exist_ok=True)
     plt.savefig("output/data/05_sparsity_sweep.png", dpi=300)
-    print("\n[+] Dashboard saved to output/data/05_sparsity_sweep.png")
+    logger.info("Dashboard saved to output/data/05_sparsity_sweep.png")
 
 if __name__ == "__main__":
     main()
