@@ -185,7 +185,7 @@ def main():
     EVENT_FRAME = int((CRASH_INJECTION_MS / 1000.0) * SAMPLING_RATE_HZ)
     TARGET_CHANNELS = 1024
 
-    file_path = "data/ephys/example.brw"
+    file_path = "data/ephys/hdmea_neuropulse.brw"
 
     print("[*] 1. Initializing ContinuousHDMEADataset...")
     try:

@@ -96,11 +96,11 @@ if __name__ == "__main__":
     default_dir = "data/ephys"
 
     # Path to the dummy example file
-    dummy_file_path = os.path.join(default_dir, "example.brw")
+    dummy_file_path = os.path.join(default_dir, "hdmea_neuropulse.brw")
 
     if not os.path.exists(dummy_file_path):
         logger.warning(f"Warning: Dummy file not found at {dummy_file_path}.")
-        logger.info("Please place a valid 'example.brw' file there to run the test.")
+        logger.info("Please place a valid 'hdmea_neuropulse.brw' file there to run the test.")
 
     try:
         # Instantiate the dataset

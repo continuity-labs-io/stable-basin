@@ -22,6 +22,6 @@
 *   **Origin:** *HD-MEA NEUROPulse*
 *   **Source URLs:** 
     *   Data (Zenodo): [https://zenodo.org/records/13908319](https://zenodo.org/records/13908319)
-*   **Sampling & Format:** 20kHz continuous telemetry stored in raw BrainWave format (`example.brw`).
+*   **Sampling & Format:** 20kHz continuous telemetry stored in raw BrainWave format (`hdmea_neuropulse.brw`).
 *   **Modalities:** High-density spatial grid recorded from 4,096-channel BioCAM/Accura hardware arrays.
 *   **The MVM Proof (Hardware Scale):** The ultimate engineering benchmark. By piping this massive spatial grid into the state-space engine, you generate the visual proof that the architecture maintains a linear, O(1) VRAM footprint without triggering Out-Of-Memory crashes, defeating standard Transformer models side-by-side.

@@ -146,8 +146,8 @@ def main():
     device = get_optimal_device(allow_mps=False, verbose=True)
     logger.info("[*] Initializing Data Ingestion...")
 
-    FILE_CONTROL = "data/ephys/Drug_2953_control.raw.h5"
-    FILE_CRASH = "data/ephys/Drug_2953_50uM.raw.h5"
+    FILE_CONTROL = "data/ephys/pharmacological_shock/Drug_2953_control.raw.h5"
+    FILE_CRASH = "data/ephys/pharmacological_shock/Drug_2953_50uM.raw.h5"
 
     try:
         dataset_control = MaxWellHDMEADataset(

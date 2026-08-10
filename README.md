@@ -71,7 +71,7 @@ University of Pavia and the IRCCS Mondino Foundation. It includes spontaneous
 baseline activity and evoked responses. URL:
 [https://zenodo.org/records/13908319](https://zenodo.org/records/13908319) You
 can place a downloaded `.brw` file into the appropriate directory (e.g.,
-`data/ephys/example.brw`) for the dataloaders to use.
+`data/ephys/hdmea_neuropulse.brw`) for the dataloaders to use.
 
 ### Installation
 
