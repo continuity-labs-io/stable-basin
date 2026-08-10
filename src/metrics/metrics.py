@@ -1,9 +1,64 @@
 import torch
 import torch.nn.functional as F
 import logging
+import numpy as np
 from src.config import settings
 
 logger = logging.getLogger("DiagnosticLogger")
+
+# =================================================================================
+# TODO: Unvalidated idea. Requires extensive testing. 
+# =================================================================================
+def calculate_dynamic_rank(S, n_rows, n_cols):
+    """
+    Autonomously selects the exact SVD rank cutoff for biological tissue.
+    S: 1D numpy array of Singular Values (from Σ) sorted descending.
+    n_rows, n_cols: Dimensions of the latent state sliding window (e.g., 256, 1000)
+    """
+    # --- 1. THE GAVISH-DONOHO CEILING (The Noise Governor) ---
+    # Calculates the mathematically optimal hard threshold for unknown white noise
+    beta = min(n_rows, n_cols) / max(n_rows, n_cols)
+    omega = 0.56 * beta**3 - 0.95 * beta**2 + 1.82 * beta + 1.43
+    gd_threshold = omega * np.median(S)
+    
+    valid_modes = np.where(S > gd_threshold)[0]
+    
+    # THE WADDINGTON CRASH OVERRIDE:
+    # If the biological signal collapses and only pure entropy remains,
+    # gracefully sever the physics engine so the KSM cleanly drops to 0.0.
+    if len(valid_modes) == 0:
+        return 1 
+        
+    r_max = valid_modes[-1] + 1
+    
+    # If the biology is highly compressed natively, accept the GD limit
+    if r_max <= 3:
+        return r_max
+        
+    # --- 2. LOG-SCALED SPECTRAL GAP (The Biological Target) ---
+    # Restrict the search for the biological elbow strictly inside the safe zone
+    S_safe = S[:r_max]
+    
+    # Biological energy follows a 1/f power law (pink noise).
+    # We evaluate in log-space to linearize the decay and find true structural breaks.
+    log_S = np.log(S_safe + 1e-10)
+    
+    # 1st derivative (velocity of energy decay)
+    d1 = np.diff(log_S)
+    
+    # 2nd derivative (acceleration / structural elbow)
+    d2 = np.diff(d1)
+    
+    # If there is a massive structural cliff (e.g., Cardiomyocytes), apply Spectral Gap.
+    # A positive curvature > 1.0 in log-space indicates a severe drop-off into micro-states.
+    if len(d2) > 0 and np.max(d2) > 1.0:
+        # +1 elegantly maps the index back to the 1-indexed rank, keeping the macro-modes intact
+        return int(np.argmax(d2) + 1)
+    
+    # If the manifold is smooth (e.g., Brain Organoid near criticality), 
+    # default to the Gavish-Donoho ceiling to prevent underfitting the neural complexity.
+    return int(r_max)
+# =================================================================================
 
 
 class ThermodynamicMetrics:
@@ -43,7 +98,7 @@ class ThermodynamicMetrics:
         return [csd_scores[0]] * (window_size - 1) + csd_scores
 
     def calculate_ksm(
-        self, z_sequence, window_size=settings.KSM_WINDOW_SIZE, debug_crash_frame=None
+        self, z_sequence, window_size=settings.KSM_WINDOW_SIZE, debug_crash_frame=None, rank_method="default"
     ):
         """
         The code snippet implements Dynamic Mode Decomposition using a truncated Singular Value Decomposition.
@@ -91,8 +146,16 @@ class ThermodynamicMetrics:
                 max_eig = 0.0
             else:
                 try:
-                    # OptDMD is highly robust to sensor noise
-                    dmd = OptDMD(svd_rank=0)
+                    if rank_method == "dynamic":
+                        # Compute SVD to find rank dynamically using Gavish-Donoho + Log-Spectral Gap
+                        U, S, V = np.linalg.svd(Z_np, full_matrices=False)
+                        n_rows, n_cols = Z_np.shape
+                        r = calculate_dynamic_rank(S, n_rows, n_cols)
+                        dmd = OptDMD(svd_rank=r)
+                    else:
+                        # OptDMD default handles svd_rank=0 robustly
+                        dmd = OptDMD(svd_rank=0)
+                    
                     dmd.fit(Z_np)
 
                     eigenvalues = dmd.eigs

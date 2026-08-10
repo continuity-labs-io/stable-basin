@@ -1,7 +1,7 @@
 import torch
 import time
-from src.models.ssm.state_space_engine import StateSpaceEngine
-from src.metrics.metrics import ThermodynamicMetrics
+from src.models.ssm.meld_engine import MeldEngine
+from src.metrics.metrics import ThermodynamicMetrics, calculate_dynamic_rank
 
 import logging
 
@@ -27,7 +27,7 @@ def run_accuracy_benchmark(device):
     z_seq[50:100] = z_seq[50:100] * scalars.unsqueeze(1)
 
     thermo = ThermodynamicMetrics(alpha=500.0)
-    ksm_scores = thermo.calculate_ksm(z_seq, window_size=4)
+    ksm_scores = thermo.calculate_ksm(z_seq, window_size=4, rank_method="dynamic")
 
     # Identify exact frame KSM metric drops below 0.9
     drop_frame = None
@@ -60,7 +60,9 @@ def run_dmd_speed_benchmark(device, warmup=False):
         S = S_cpu.to(device)
         Vh = Vh_cpu.to(device)
 
-        rank = max(1, (S > 1e-5 * S[0]).sum().item())
+        n_rows, n_cols = X_cpu.shape
+        rank = calculate_dynamic_rank(S_cpu.numpy(), n_rows, n_cols)
+        
         U_k = U[:, :rank]
         S_inv_k = torch.diag(1.0 / S[:rank])
         Vh_k = Vh[:rank, :]
@@ -82,7 +84,8 @@ def run_palc_speed_benchmark(model, device, warmup=False):
     total_time = 0.0
 
     def step_fn(z):
-        return model.forward_predictor(model.mamba(z))
+        preds, _ = model(z)
+        return preds
 
     z_t_list = [torch.randn(1, 1, 832, device=device) for _ in range(num_steps)]
 
@@ -109,7 +112,7 @@ def main():
     device = get_optimal_device(verbose=True)
     logger.info(f"Using device: {device}")
 
-    model = StateSpaceEngine(d_model=832).to(device).eval()
+    model = MeldEngine(input_dim=832, d_model=256, mask_aware=False).to(device).eval()
 
     logger.info("Running Accuracy Benchmark (Temporal Lag)...")
     drop_frame = run_accuracy_benchmark(device)
