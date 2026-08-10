@@ -25,3 +25,21 @@
 *   **Sampling & Format:** 20kHz continuous telemetry stored in raw BrainWave format (`hdmea_neuropulse.brw`).
 *   **Modalities:** High-density spatial grid recorded from 4,096-channel BioCAM/Accura hardware arrays.
 *   **The MVM Proof (Hardware Scale):** The ultimate engineering benchmark. By piping this massive spatial grid into the state-space engine, you generate the visual proof that the architecture maintains a linear, O(1) VRAM footprint without triggering Out-Of-Memory crashes, defeating standard Transformer models side-by-side.
+
+## 4. MaxWell HD-MEA (Generic)
+*   **Origin:** MaxWell Biosystems high-density microelectrode arrays.
+*   **Sampling & Format:** Continuous-time voltage arrays stored in HDF5 (`.raw.h5`) format.
+*   **Modalities:** Multi-channel electrophysiological telemetry.
+*   **The MVM Proof (Generalization):** Proves that the neural integration architecture is hardware-agnostic, capable of dynamically scaling to ingest raw multidimensional continuous-time signals natively from MaxWell hardware arrays without manual feature engineering.
+
+## 5. Spike Prophecy (Steinmetz)
+*   **Origin:** *Spike Prophecy* (https://arxiv.org/html/2605.12992) based on the Steinmetz dataset.
+*   **Sampling & Format:** Multi-unit spike arrays, historically binned into discrete time steps (e.g., 50ms) but ingested as continuous streams.
+*   **Modalities:** In-vivo multi-region Neuropixels recordings from behaving mice.
+*   **The MVM Proof (Substrate Independence):** Demonstrates that the state-space engine can decode complex biological behavior from discrete spike trains across completely different brain regions (in vivo) natively, without requiring task-specific architectural changes.
+
+## 6. Continuous UHD-LFP
+*   **Origin:** Simulated macroscopic continuous Local Field Potential (LFP) mapped across a 2D grid.
+*   **Sampling & Format:** Continuous electromagnetic waves generated as spatial tensors.
+*   **Modalities:** Macroscopic brain waves and continuous-time phase transitions.
+*   **The MVM Proof (Ephaptic Lock-in):** As established in TopoEncoder tests, this proves that a "thought" is a measurable thermodynamic phase transition. The continuous LFP data allows the Mamba-2 engine to mathematically track and align the geometry of this continuous wave directly to a semantic concept (using InfoNCE mathematics).

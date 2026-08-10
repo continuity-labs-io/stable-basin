@@ -18,7 +18,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 
-from src.data.ephys.spike_ingestion import SpikeProphecyDataset
+from src.data.ephys.spike_dataset import SpikeProphecyDataset
 from src.models.ssm.spike_forecaster import SpikeForecaster
 from src.models.losses.meld_loss import MeldLoss
 from src.metrics.metrics import ThermodynamicMetrics

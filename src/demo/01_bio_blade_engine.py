@@ -16,7 +16,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from src.data.ephys.maxwell_dataloader import MaxWellHDMEADataset
+from src.data.ephys.maxwell_dataset import MaxWellHDMEADataset
 from src.models.ssm.spike_forecaster import SpikeForecaster
 from src.metrics.metrics import ThermodynamicMetrics
 from src.utils.device import get_optimal_device
