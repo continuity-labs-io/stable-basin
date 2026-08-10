@@ -111,7 +111,7 @@ def plot_bio_blade_dashboard(raw_telemetry, ksm_scores, csd_scores, event_frame)
     ax3.grid(True, alpha=0.2)
 
     plt.tight_layout()
-    output_path = "output/01_bio_blade_engine.png"
+    output_path = "output/01_hardware_scaling_proof.png"
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     plt.savefig(output_path)
     logger.info(f"[*] Dashboard saved to {output_path}")
@@ -120,7 +120,7 @@ def plot_bio_blade_dashboard(raw_telemetry, ksm_scores, csd_scores, event_frame)
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Bio-Blade Engine Master Demo")
+    parser = argparse.ArgumentParser(description="Hardware Scaling Proof Demo")
     parser.add_argument(
         "--mac",
         action="store_true",

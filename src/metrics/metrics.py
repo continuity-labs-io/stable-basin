@@ -294,3 +294,36 @@ class ThermodynamicMetrics:
         # Return the normalized CKA score
         cka = hsic_kl / torch.sqrt(hsic_kk * hsic_ll)
         return cka.item()
+
+    def extract_fedichev_macrostates(self, z_baseline: torch.Tensor, z_perturbed: torch.Tensor, window_size: int = 4) -> dict:
+        """
+        Extracts the three macroscopic variables defining the Fedichev-Gruber minimal model of aging:
+        z0 (fast dynamic stress response), Z (slow cumulative entropic damage), and epsilon_0 (critical recovery rate).
+        """
+        min_steps = min(z_baseline.shape[0], z_perturbed.shape[0])
+        if min_steps < 2:
+            return {"Z_entropic_damage": [], "z0_volatility": [], "epsilon_0_ksm": []}
+
+        path_down = z_baseline[:min_steps, :]
+        path_up = z_perturbed[:min_steps, :]
+
+        # 1. Variable Z (Entropic Damage): Cumulative integral of path divergence
+        # We reuse our existing hysteresis metric to get the instantaneous divergence
+        _, path_divergence_list = self.calculate_hysteresis(z_baseline, z_perturbed)
+        
+        path_divergence = torch.tensor(path_divergence_list, device=z_baseline.device)
+        Z_t = torch.cumulative_trapezoid(path_divergence, dim=0)
+        # torch.cumulative_trapezoid returns length Time-1. Prepend 0.0 to match Time.
+        Z_t = torch.cat([torch.tensor([0.0], device=Z_t.device), Z_t])
+
+        # 2. Variable z0_volatility (Dynamic Response)
+        z0_volatility = self.calculate_csd(path_up, window_size=window_size)
+
+        # 3. Variable epsilon_0 (Criticality)
+        epsilon_0_ksm = self.calculate_ksm(path_up, window_size=window_size)
+
+        return {
+            "Z_entropic_damage": Z_t.tolist(),
+            "z0_volatility": z0_volatility,
+            "epsilon_0_ksm": epsilon_0_ksm
+        }

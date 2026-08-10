@@ -184,6 +184,7 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
 
     df = pd.DataFrame(results)
     csv_out_path = f"output/data/{csv_name}"
+    os.makedirs(os.path.dirname(csv_out_path), exist_ok=True)
     df.to_csv(csv_out_path, index=False)
     logger.info(f"Saved CSV to {csv_out_path}")
 

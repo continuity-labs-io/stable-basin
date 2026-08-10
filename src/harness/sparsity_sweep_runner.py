@@ -1,4 +1,5 @@
 import os
+import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -66,11 +67,21 @@ def run_experiment(device, model_name, sparsity, seed, epochs=10, train_seq_len=
     return total_mse / count
 
 def main():
+    parser = argparse.ArgumentParser(description="Sensor Fusion Sparsity Sweep Runner")
+    parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
+    parser.add_argument("--train-seq-len", type=int, default=500, help="Training sequence length")
+    parser.add_argument("--test-seq-len", type=int, default=2000, help="Testing sequence length")
+    parser.add_argument("--sparsities", type=float, nargs="+", default=[0.1, 0.05, 0.02, 0.01, 0.005, 0.001], help="Sparsity levels to sweep")
+    parser.add_argument("--seeds", type=int, nargs="+", default=[42, 100, 256, 512, 1024], help="Random seeds to evaluate")
+    parser.add_argument("--models", type=str, nargs="+", default=["baseline", "forward_fill", "mask_concat", "gru_d", "ode_rnn", "mask_aware"], help="Models to evaluate")
+    parser.add_argument("--png-name", type=str, default="05_sparsity_sweep.png", help="Filename for the output PNG")
+    args = parser.parse_args()
+
     device = get_optimal_device(verbose=True)
-    sparsities = [0.1, 0.05, 0.02, 0.01, 0.005, 0.001]
-    seeds = [42, 100, 256, 512, 1024]
+    sparsities = args.sparsities
+    seeds = args.seeds
+    models = args.models
     
-    models = ["baseline", "forward_fill", "mask_concat", "gru_d", "ode_rnn", "mask_aware"]
     results = {m: {s: [] for s in sparsities} for m in models}
     
     logger.info("Commencing 5-Seed Sparsity Sweep (FitzHugh-Nagumo Oscillator)...")
@@ -79,7 +90,7 @@ def main():
     for sparsity in sparsities:
         for seed in seeds:
             for m in models:
-                mse = run_experiment(device, m, sparsity, seed)
+                mse = run_experiment(device, m, sparsity, seed, epochs=args.epochs, train_seq_len=args.train_seq_len, test_seq_len=args.test_seq_len)
                 results[m][sparsity].append(mse)
                 logger.info(f"Sparsity: {sparsity*100:0.1f}% | Seed: {seed:<4} | Model: {m:<15} | OOD-MSE: {mse:.4f}")
                 
@@ -109,8 +120,9 @@ def main():
     ax.grid(True, alpha=0.2)
     
     os.makedirs("output/data", exist_ok=True)
-    plt.savefig("output/data/05_sparsity_sweep.png", dpi=300)
-    logger.info("Dashboard saved to output/data/05_sparsity_sweep.png")
+    out_path = f"output/data/{args.png_name}"
+    plt.savefig(out_path, dpi=300)
+    logger.info(f"Dashboard saved to {out_path}")
 
 if __name__ == "__main__":
     main()

@@ -86,7 +86,7 @@ def main():
     engine.train()
     for _i in range(15):
         optimizer.zero_grad()
-        preds = engine(clean_data[:, :-1, :])
+        preds, _ = engine(clean_data[:, :-1, :])
         loss = F.mse_loss(preds, clean_data[:, 1:, :])
         loss.backward()
         optimizer.step()
