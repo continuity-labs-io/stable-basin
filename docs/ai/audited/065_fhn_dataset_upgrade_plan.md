@@ -39,5 +39,5 @@ This guarantees that:
 - We will redefine `self.W_0` (1 -> 20) and `self.W_1` (1 -> 10) to act as the projection matrices.
 - The `__getitem__` function will yield `modality_0 = w @ W_0 + noise` and `modality_1 = (v @ W_1 + noise) * mask_1`.
 
-## User Feedback Required
-Does this FHN biological oscillator setup sound exactly like the kind of continuous integration problem you want to benchmark? If you approve, I will rewrite the dataset class!
+### 2. Testing
+- develop a unit test to ensure basic attributes and prevent regression.

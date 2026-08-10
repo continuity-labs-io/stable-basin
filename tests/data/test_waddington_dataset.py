@@ -28,36 +28,39 @@ def test_waddington_data_shapes_and_masks():
     assert torch.all(mod1_unmasked == 0.0)
 
 
-def test_waddington_shortcut_leakage():
+def test_waddington_dynamics_leakage():
     """
-    Ensure Modality 0 (Continuous) contains ZERO correlation with y_true,
-    preventing shortcut learning.
+    Ensure Modality 0 (Continuous slow variable) provides information about w,
+    but does NOT provide a direct shortcut to v (y_true).
+    Modality 1 (Sparse fast variable) SHOULD correlate strongly with v when unmasked.
     """
-    # Use a longer sequence to get stable correlation statistics
     dataset = SyntheticWaddingtonDataset(size=1, seq_len=2000)
     batch = dataset[0]
 
     x_raw = batch["x_raw"]
     y_true = batch["y_true"]
+    mask = batch["mask"]
 
     mod0 = x_raw[:, :20]
     mod1 = x_raw[:, 20:]
-    mask = batch["mask"]
 
-    # Calculate Pearson correlation between each dimension of Mod0 and y_true
     y_true_np = y_true.squeeze().numpy()
 
+    # Calculate Pearson correlation between each dimension of Mod0 and y_true
     max_mod0_corr = 0.0
     for dim in range(20):
         mod0_dim = mod0[:, dim].numpy()
-        corr = np.abs(np.corrcoef(mod0_dim, y_true_np)[0, 1])
-        if corr > max_mod0_corr:
-            max_mod0_corr = corr
+        # They will be somewhat correlated because w and v are coupled,
+        # but shouldn't be perfectly correlated (no shortcut).
+        if np.std(mod0_dim) > 1e-5 and np.std(y_true_np) > 1e-5:
+            corr = np.abs(np.corrcoef(mod0_dim, y_true_np)[0, 1])
+            if corr > max_mod0_corr:
+                max_mod0_corr = corr
 
-    # Modality 0 should have essentially zero correlation (it's random noise and independent sines)
-    # Give a small buffer for random chance correlation
-    assert max_mod0_corr < 0.15, (
-        f"Data leakage detected! Modality 0 has correlation {max_mod0_corr} with target."
+    # Modality 0 is the slow variable, which lags the fast variable. 
+    # Correlation is usually moderate but never > 0.9.
+    assert max_mod0_corr < 0.90, (
+        f"Data leakage detected! Modality 0 has suspiciously high correlation {max_mod0_corr} with target v."
     )
 
     # Now check Modality 1 (when it is NOT masked out)
@@ -65,16 +68,15 @@ def test_waddington_shortcut_leakage():
     active_y = y_true[mod1_active_idx].squeeze().numpy()
     active_mod1 = mod1[mod1_active_idx]
 
-    # At least one dimension in Modality 1 MUST be highly correlated because it's the causal driver
+    # At least one dimension in Modality 1 MUST be highly correlated because it's the projection of v
     max_mod1_corr = 0.0
     for dim in range(10):
         mod1_dim = active_mod1[:, dim].numpy()
-        # Avoid perfectly flat signals in case of small sample
         if np.std(mod1_dim) > 1e-5 and np.std(active_y) > 1e-5:
             corr = np.abs(np.corrcoef(mod1_dim, active_y)[0, 1])
             if corr > max_mod1_corr:
                 max_mod1_corr = corr
 
     assert max_mod1_corr > 0.5, (
-        f"Causal link missing! Modality 1 has max correlation {max_mod1_corr} with target."
+        f"Causal link missing! Modality 1 has max correlation {max_mod1_corr} with target v."
     )

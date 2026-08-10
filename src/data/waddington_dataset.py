@@ -11,11 +11,10 @@ class SyntheticWaddingtonDataset(Dataset):
     (the Waddington landscape).
 
     Generates synthetic sequences comprising:
-    - y_true: The 1D target tracking discrete phase transitions.
+    - y_true: The 1D target tracking continuous phase transitions (FitzHugh-Nagumo fast variable).
     - x_raw: A 30-dimensional tensor composed of two modalities:
-      - Modality 0 (20D): Continuous background noise (Gaussian + sine waves) with no
-        causal link to the target (prevents shortcut learning).
-      - Modality 1 (10D): Sparse causal driver that tracks y_true but is only ~5% active.
+      - Modality 0 (20D): Continuous projection of the slow recovery variable w.
+      - Modality 1 (10D): Sparse projection of the fast spiking variable v (masked 95% of the time).
     - mask: A 2-dimensional tensor representing the observability of the two modalities.
     """
 
@@ -25,6 +24,7 @@ class SyntheticWaddingtonDataset(Dataset):
         # Ensure consistent biological mapping across datasets
         rng_state = torch.get_rng_state()
         torch.manual_seed(42)
+        self.W_0 = torch.randn(1, 20)
         self.W_1 = torch.randn(1, 10)
         torch.set_rng_state(rng_state)
 
@@ -32,35 +32,46 @@ class SyntheticWaddingtonDataset(Dataset):
         return self.size
 
     def __getitem__(self, idx):
-        # The Target (y_true)
-        y_true = torch.zeros(self.seq_len, 1)
-        # Proportional jumps based on seq_len
-        jump1 = torch.randint(int(self.seq_len * 0.2), int(self.seq_len * 0.4), (1,)).item()
-        jump2 = torch.randint(int(self.seq_len * 0.6), int(self.seq_len * 0.8), (1,)).item()
-        y_true[jump1:jump2] = 1.0
-        y_true[jump2:] = 2.0
-        y_true += torch.randn(self.seq_len, 1) * 0.02
+        # FHN Parameters
+        tau = 10000.0
+        a = 0.7
+        b = 0.8
+        I_ext = 0.5
+        dt = 0.1
+        sub_steps = 200
 
-        # Modality 0 (Continuous Voltage, 20D) -> Pure Background Noise
-        # Generate pure Gaussian noise and random sine waves
-        t = torch.arange(self.seq_len).float().unsqueeze(1).expand(-1, 20)
-        freqs = torch.rand(20) * 0.5 + 0.1
-        phases = torch.rand(20) * 2 * math.pi
-        sine_waves = torch.sin(t * freqs + phases) * 0.2
-        modality_0 = sine_waves + torch.randn(self.seq_len, 20) * 0.05
+        v = torch.zeros(self.seq_len, 1)
+        w = torch.zeros(self.seq_len, 1)
 
-        # Modality 1 (Sparse Epigenetics, 10D) -> The Causal Driver
-        modality_1 = y_true * self.W_1 + torch.randn(self.seq_len, 10) * 0.05
+        # Randomize initial conditions slightly to vary sequences
+        v_curr = torch.randn(1).item() * 0.5
+        w_curr = torch.randn(1).item() * 0.1
+
+        # Euler Integration Loop
+        for i in range(self.seq_len):
+            for _ in range(sub_steps):
+                dv = v_curr - (v_curr**3) / 3.0 - w_curr + I_ext
+                dw = (v_curr + a - b * w_curr) / tau
+                v_curr += dv * dt
+                w_curr += dw * dt
+            v[i, 0] = v_curr
+            w[i, 0] = w_curr
+
+        # Target is the fast variable
+        y_true = v
+
+        # Modality 0 (Continuous slow variable, 20D)
+        modality_0 = w @ self.W_0 + torch.randn(self.seq_len, 20) * 0.05
+
+        # Modality 1 (Sparse fast variable, 10D)
+        modality_1 = v @ self.W_1 + torch.randn(self.seq_len, 10) * 0.05
 
         # The Mask
         mask_0 = torch.ones(self.seq_len, 1)
         mask_1 = (torch.rand(self.seq_len, 1) > 0.95).float()
 
-        # Hack to ensure observability
-        if jump1 + 5 < self.seq_len:
-            mask_1[jump1 + 5] = 1.0
-        if jump2 + 5 < self.seq_len:
-            mask_1[jump2 + 5] = 1.0
+        # Hack to ensure at least some observability at the start
+        mask_1[:10] = (torch.rand(10, 1) > 0.80).float()
 
         # CRITICAL ZERO-PADDING
         modality_1 = modality_1 * mask_1
@@ -71,7 +82,6 @@ class SyntheticWaddingtonDataset(Dataset):
         # Output
         x_raw = torch.cat([modality_0, modality_1], dim=1)
         return {"x_raw": x_raw, "mask": mask, "y_true": y_true}
-
 
 if __name__ == "__main__":
     dataset = SyntheticWaddingtonDataset(size=1)
@@ -84,16 +94,15 @@ if __name__ == "__main__":
     fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 
     axes[0].plot(y_true.numpy(), color="black", linewidth=2)
-    axes[0].set_title("y_true Trajectory")
+    axes[0].set_title("y_true Trajectory (Fast Variable v)")
 
     im1 = axes[1].imshow(x_raw.numpy().T, aspect="auto", cmap="viridis", interpolation="none")
-    axes[1].set_title("x_raw Heatmap")
+    axes[1].set_title("x_raw Heatmap (Top 20=Continuous w, Bottom 10=Sparse v)")
 
     im2 = axes[2].imshow(mask.numpy().T, aspect="auto", cmap="binary", interpolation="none")
     axes[2].set_title("mask Heatmap")
 
     plt.tight_layout()
-    # Updated path to match current structure logic
     os.makedirs("output/data", exist_ok=True)
     plt.savefig("output/data/00_synthetic_data_preview.png")
     print("Saved diagnostic preview to output/data/00_synthetic_data_preview.png")
