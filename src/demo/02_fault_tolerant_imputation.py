@@ -1,5 +1,5 @@
 """
-Demo 02: Indestructible Edge
+Route: The Blind Reach (Hardware Dropout)
 
 This script demonstrates the fault-tolerance and self-healing routing capabilities of the network.
 It simulates catastrophic hardware failures (e.g., sensor dropouts) and shows how the architecture

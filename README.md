@@ -1,5 +1,7 @@
 # Stable Basin
 
+> **Benchmarking continuous-time AI on its ability to maintain biological homeostasis against entropic decay.**
+
 The objective is to maintain the biological latent state inside the youthful homeostatic attractor basin, evaluated by Time-in-Basin (TiB) against entropic decay and simulated hardware failures.
 
 Stable Basin Benchmark is a research repository for benchmarking continuous-time
@@ -8,146 +10,82 @@ focuses on fusing high-frequency electrophysiological data with lower-frequency
 optical imaging, orthogonalizing hardware artifacts, and performing real-time
 biological anomaly detection using self-supervised predictive coding.
 
-## Core Concepts
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-### The "Drowning Signal" Environment
+Traditional AI leaderboards rank models on *Mean Squared Error* or *Next-Token Prediction*. **Stable Basin** ranks models on **Survival**.
 
-The `ToyBiologicalEnvironment` simulates a realistic, complex multiscale
-biological recording:
+Stable Basin is an open-source evaluation suite designed to stress-test infinite-horizon State Space Models (SSMs) and continuous sequence architectures. It measures a model's ability to lock onto and maintain a "youthful" biological attractor basin against entropic decay, systemic shocks, and catastrophic hardware failures.
 
-- **GEVI (Genetically Encoded Voltage Indicator) Data:** Sampled at 20kHz,
-  containing sparse 1ms biological spikes (action potentials).
-- **Optical Data:** Sampled at 100Hz, representing a continuous macro-biological
-  state.
-- **Artifacts:** Both modalities are corrupted by a massive 2Hz sine wave
-  representing a mechanical pump vibration (the "Drowning Signal").
-- **Anomalies:** The environment supports injecting "Corrosion" (hardware
-  failure causing baseline drift) and "Toxic Shock" (biological crashes causing
-  variance explosions).
+## 🎯 The Mission: Defeating Entropy
 
-### State Space Engine (Fusion Core)
+Biological youth isn't about predicting the future; it's about holding the line. A living organism exists in a highly specific, high-energy *Stable Basin* of homeostasis. Mechanical noise, DNA methylation drift, and environmental shocks are constantly trying to knock it out of that basin.
 
-The core architecture (`src/models/state_space_engine.py`) uses a **Mamba SSM**
-to model the continuous kinetic trajectory of the biological state:
+We evaluate continuous-time machine learning architectures (like Mamba-2) on their ability to act as the ultimate biological flight computer: processing multi-modal, high-frequency telemetry (wearables, electrophysiology, epigenetics) to detect critical instability *before* a physiological crash occurs.
 
-1. **Edge Compression:** A 1D Convolution processes the 20kHz GEVI data into a
-   lower-dimensional latent representation.
-2. **Fusion:** The compressed GEVI latents are fused with the 100Hz optical
-   stream.
-3. **Forward Predictive Coding:** The Mamba SSM performs self-supervised forward
-   prediction, outputting a "Surprise" metric (Cosine Distance) between
-   predicted and actual future states.
-4. **Orthogonal Veto:** The network is trained on homeostasis data to
-   mathematically isolate biological spikes and orthogonalize (veto) the massive
-   2Hz pump artifact.
+### Why "Stable Basin"?
+It's an impossible balancing act. The datasets in this repository are designed to be explicitly hostile. Sensors will randomly drop offline, hardware will vibrate, and the tissue will undergo variance explosions. If the AI relies on naive temporal memorization instead of deep spatial covariance, the latent geometry shatters, and the model "falls off the wall."
 
-### Thermodynamic Metrics & Latency Benchmarks
+---
 
-The repository evaluates the thermodynamic stability and phase space geometry of
-the biological manifold (`src/metrics/thermodynamics.py`):
+## 🏆 The Leaderboard Gauntlet (The "Routes")
 
-- **PALC (Pseudo-Arclength Continuation):** Exact Jacobian-based phase space
-  volume tracking.
-- **DMD (Dynamic Mode Decomposition):** A sliding-window approximation of the
-  Koopman operator.
-- **Latency Benchmarks:** `src/metrics/bifurcation_benchmark.py` compares the
-  latency of exact Jacobian computation (~730ms) vs. DMD (~1.3ms), validating
-  DMD as a viable proxy for 100Hz live-streaming applications.
+Stable Basin is divided into four progressively brutal trial routes. Models are ranked by **Time-in-Basin (TiB)**. How many continuous frames can your physics engine hold the grip before the biological latent state slips over the edge?
 
-### Interpretability (SPD)
+### Route 1: The Quake (Hardware Veto)
+Can the model hold the biological signal while ignoring a massive mechanical earthquake?
+*   **The Test:** Multi-modal data corrupted by a massive 2Hz microfluidic pump artifact.
+*   **The Failure State:** Hallucinating a biological crash due to hardware wobble.
 
-The repository includes experimental integration with the Goodfire AI
-**Stochastic Parameter Decomposition (SPD)** library
-(`src/metrics/spd_interpreter.py`). It applies structural interpretability
-techniques specifically to the internal 1D Convolutional components of the Mamba
-architecture to decompose and understand its feature isolation capabilities.
+### Route 2: The Blind Reach (Fault Tolerance)
+Can the model impute missing biology using pure spatial covariance?
+*   **The Test:** Mid-sequence, 15% to 50% of the hardware sensors permanently output `NaN`.
+*   **The Failure State:** Catastrophic network collapse when the primary input dimensions vanish.
 
-## Getting Started
+### Route 3: The Wobble (Critical Slowing Down)
+Can the model detect the phase transition *before* it happens?
+*   **The Test:** Tracking the physical 'wobble' (variance) and sluggishness (lag-1 autocorrelation) of a system approaching a saddle-node bifurcation.
+*   **The Leaderboard Stat:** **Detection Latency.** How many milliseconds in advance does the AI radar trigger the alarm?
 
-### Datasets
+### Route 4: The Scar (Rejuvenation Hysteresis)
+If the system falls out of the basin, can it compute the optimal path back in?
+*   **The Test:** A biological tissue is shocked, then rescued with an intervention.
+*   **The Leaderboard Stat:** **Hysteresis Area.** The most efficient model leaves the smallest topological "scar" between the aging trajectory and the rejuvenation trajectory.
 
-**HD-MEA NEUROPulse Dataset** For raw 3Brain `.brw` data files (BrainWave
-format) recorded from 4,096-channel HD-MEAs, you can use the HD-MEA NEUROPulse
-Dataset on Zenodo. This repository was published by researchers from the
-University of Pavia and the IRCCS Mondino Foundation. It includes spontaneous
-baseline activity and evoked responses. URL:
-[https://zenodo.org/records/13908319](https://zenodo.org/records/13908319) You
-can place a downloaded `.brw` file into the appropriate directory (e.g.,
-`data/ephys/hdmea_neuropulse.brw`) for the dataloaders to use.
+---
 
-### Installation
+## ⚙️ The Reference Architecture: `MeldEngine`
 
-Ensure you have PyTorch and the required dependencies installed. You should
-install the project in editable mode from the repository root:
+To provide a baseline for the benchmark, this repository includes the **MeldEngine**, a continuous-time state-space reference architecture powered by **Mamba-2**. 
 
+Unlike standard Transformers that suffer from $\mathcal{O}(N^2)$ context limits and rely on discrete tokens, the `MeldEngine` utilizes Mask-Aware Subspace Routing to dynamically modulate the flow of time and maintain an $\mathcal{O}(1)$ VRAM footprint on edge hardware.
+
+### Quickstart: Running the Routes
+
+Run the interactive Human Rejuvenation Simulator to see the closed-loop flight controller in action:
 ```bash
-pip install -e .
+python src/demo/10_human_rejuvenation_sim.py
 ```
 
-_(Note: Mamba SSM has known precision issues on Apple Silicon (MPS). The demo
-scripts automatically default to CPU for the Mamba training loop to prevent NaN
-instabilities.)_
-
-### Running the Demos
-
-The repository contains four main demonstration scripts:
-
-#### 1. Bio-Blade Engine (`01_bio_blade_engine.py`)
-
-This script demonstrates the Bio-Blade engine, which simulates high-throughput processing of biological data (like electrophysiology). It shows how the system can ingest raw telemetry and score it (e.g., KSM/CSD scores) to detect biological events at high speeds.
+Run the Fault-Tolerant Imputation trial (Route 2: The Blind Reach):
 
 ```bash
-python src/demo/01_bio_blade_engine.py
+python src/demo/02_fault_tolerant_imputation.py
 ```
 
-#### 2. Indestructible Edge (`02_indestructible_edge.py`)
+🧬 Thermodynamic Metrics
 
-This script demonstrates the fault-tolerance and self-healing routing capabilities of the network. It simulates catastrophic hardware failures (e.g., sensor dropouts) and shows how the architecture seamlessly maintains representation and inference despite severe input corruption.
+The core of the Stable Basin is our deterministic physics evaluation suite (src/metrics/), which extracts true macroscopic variables from the model's latent embedding space:Koopman Stability Metric (KSM): Dynamic Mode Decomposition (DMD) to calculate the stable eigenvalue bounds of the biological attractor.Critical Slowing Down (CSD): Variance and AR1 tracking to detect phase transitions before they occur.Fedichev Macrostates: Tracking the continuous accumulation of configurational entropy ($Z$) over millions of frames.MambaLRP-Epsilon: Mathematically exact Layer-wise Relevance Propagation designed explicitly for continuous-time SSMs to trace crashes back to their root biological circuit.
 
-```bash
-python src/demo/02_indestructible_edge.py
+📄 Citation
+
+If you use Stable Basin to benchmark your infinite-horizon sequence models or biological anomaly detection, please cite:
+
 ```
-
-#### 3. Multimodal Autopsy (`03_multimodal_autopsy.py`)
-
-This script demonstrates the Layer-wise Relevance Propagation (LRP) causality engine. It traces back from a catastrophic failure event (Structural Collapse) to uncover the latent root cause (an earlier RNA Stress Alarm) across complex, multimodal sequence data.
-
-```bash
-python src/demo/03_multimodal_autopsy.py
-```
-
-#### 4. Masked State Space Model (`04_masked_state_space_model.py`)
-
-This script demonstrates the core Masked State Space Model (SSM) architecture. It shows how the model handles sparse, intermittent multimodal sensor data by dynamically gating the continuous state transitions based on sensor availability masks.
-
-```bash
-python src/demo/04_masked_state_space_model.py
-```
-
-### Running the Experiments
-
-The repository also includes two primary experiments:
-
-#### 1. Train Synthetic Benchmark (`01_train_synthetic_benchmark.py`)
-
-This script trains and evaluates three models (Baseline SSM, Mask-Aware SSM, and a Causal Transformer) on a synthetic Waddington landscape dataset. It establishes the baseline capability of these architectures to learn latent dynamics from gated sensor data.
-
-```bash
-python src/experiments/01_train_synthetic_benchmark.py
-```
-
-#### 2. Length Extrapolation Stress Test (`02_extrapolation_benchmark.py`)
-
-This script tests the out-of-distribution (OOD) generalization of the models trained on the Waddington dataset on vastly longer sequences. It proves the stability of State Space Models (SSMs) outfitted with the Dual-Lock Stasis system against ghost noise integration over sparse inputs.
-
-```bash
-python src/experiments/02_extrapolation_benchmark.py
-```
-
-### Running the Latency Benchmark
-
-To compare the execution speed of exact Jacobian metrics vs. DMD approximations:
-
-```bash
-python src/metrics/bifurcation_benchmark.py
+@misc{stable_basin_2026,
+  title={Stable Basin: Benchmarking Infinite-Horizon Sequence Models on Thermodynamic Resilience and Rejuvenation Hysteresis},
+  author={Continuity Labs},
+  year={2026},
+  publisher={GitHub},
+  howpublished={\url{[https://github.com/continuity-labs-io/stable-basin](https://github.com/continuity-labs-io/stable-basin)}}
+}
 ```

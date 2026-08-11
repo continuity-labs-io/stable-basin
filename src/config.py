@@ -1,5 +1,5 @@
 """
-MELD Architecture Global Configuration
+Stable Basin Global Configuration (MeldEngine Default)
 """
 
 import os

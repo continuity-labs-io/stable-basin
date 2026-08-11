@@ -1,5 +1,5 @@
 """
-Project CHRONOS: Mid-Term Exam (Target Alpha)
+STABLE BASIN: Route 3: The Wobble (Critical Slowing Down) (Target Alpha)
 Validating the Continuous State-Space Engine on Longitudinal 50ms Ephys Tensors.
 
 This script demonstrates:
@@ -139,7 +139,7 @@ def main():
     device = get_optimal_device(verbose=True, allow_mps=False)
 
     print("\n" + "=" * 80)
-    print(" PROJECT CHRONOS: MID-TERM EXAM (Target Alpha)")
+    print(" STABLE BASIN: ROUTE 3: THE WOBBLE (CRITICAL SLOWING DOWN) (Target Alpha)")
     print(" Executing Continuous Ephys Latent Thermodynamics ")
     print("=" * 80)
 
@@ -278,7 +278,7 @@ def main():
             time_axis, csd_scores, ksm_scores, lle_scores, event_frame=EVENT_FRAME
         )
         print(
-            "\n[+] MID-TERM EXAM PASSED: Substrate Independence Validated on True Electrophysiology."
+            "\n[+] ROUTE 3: THE WOBBLE (CRITICAL SLOWING DOWN) PASSED: Substrate Independence Validated on True Electrophysiology."
         )
 
     except StopIteration:

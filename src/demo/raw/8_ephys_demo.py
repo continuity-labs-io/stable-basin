@@ -1,5 +1,5 @@
 """
-Project CHRONOS: Master Ephys Execution Dashboard (8_ephys_demo.py)
+STABLE BASIN: Master Ephys Execution Dashboard (8_ephys_demo.py)
 Validating continuous-time Mamba-2 engine on raw 1,024-channel HD-MEA data.
 """
 
@@ -170,7 +170,7 @@ def main():
     device = get_optimal_device(allow_mps=False, verbose=True)
 
     print("\n" + "=" * 80)
-    print(" PROJECT CHRONOS: MASTER EPHYS DASHBOARD (8_ephys_demo)")
+    print(" STABLE BASIN: MASTER EPHYS DASHBOARD (8_ephys_demo)")
     print("=" * 80)
 
     # =========================================================================

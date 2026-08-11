@@ -1,5 +1,5 @@
 """
-Demo 04: Masked State Space Model
+Route: The Void (Gradient Stasis)
 
 This script demonstrates the core Masked State Space Model (SSM) architecture.
 It shows how the model handles sparse, intermittent multimodal sensor data by dynamically

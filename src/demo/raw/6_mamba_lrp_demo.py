@@ -1,5 +1,5 @@
 """
-Project CHRONOS: Interpretability Demo (MambaLRP-Lite)
+STABLE BASIN: Interpretability Demo (MambaLRP-Lite)
 First-Order Taylor Decomposition for Continuous State-Space Models.
 
 This demo proves to stakeholders that the AI is not a black box.
@@ -88,7 +88,7 @@ def main():
     device = get_optimal_device(verbose=True, allow_mps=False)
 
     print("\n" + "=" * 80)
-    print(" PROJECT CHRONOS: INTERPRETABILITY DEMO")
+    print(" STABLE BASIN: INTERPRETABILITY DEMO")
     print(" MambaLRPEpsilon (Exact Relevance Conservation)")
     print("=" * 80)
 
@@ -124,7 +124,7 @@ def main():
 if __name__ == "__main__":
     """Next Step:
 
-    Project CHRONOS: Interpretability Directive (Mamba-LRP)
+    STABLE BASIN: Interpretability Directive (Mamba-LRP)
     Objective: 
     We need to replace our MambaLRP_FirstOrder 
     (Gradient-x-Input approximation) with a mathematically exact 

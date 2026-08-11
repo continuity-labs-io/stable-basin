@@ -15,7 +15,7 @@ class TelemetryExhaust:
             mode: "connect" to connect to a live TCP viewer, "save" to save to a local file.
             save_path: The file path to save the recording if mode is "save".
         """
-        rr.init("chronos_flight_recorder", spawn=False)
+        rr.init("stable_basin_telemetry", spawn=False)
         
         if mode == "connect":
             rr.connect()

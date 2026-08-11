@@ -1,5 +1,5 @@
 """
-MELD End-to-End Compiler Demo
+Stable Basin End-to-End Compiler Demo
 
 This script demonstrates the full multi-modal pipeline of the MELD system.
 It ingests AO-LLSM optical telemetry, injects synthetic high-frequency GEVI

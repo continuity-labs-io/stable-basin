@@ -1,5 +1,5 @@
 """
-MELD Topo Encoder Benchmarking Demo
+Stable Basin Topo Encoder Benchmarking Demo
 
 This script simulates the decoding pipeline that maps the continuous
 electromagnetic traveling wave (LFP) into visual stimulus embeddings.

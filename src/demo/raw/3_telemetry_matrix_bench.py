@@ -28,7 +28,7 @@ def format_iops(iops):
 
 def run_benchmark(batch_size=32, time_steps=100, num_batches=10):
     print("\n" + "=" * 80)
-    print(" MELD TELEMETRY MATRIX BENCHMARK ")
+    print(" STABLE BASIN HARDWARE GAUNTLET ")
     print("=" * 80)
 
     device = get_optimal_device(verbose=True)
