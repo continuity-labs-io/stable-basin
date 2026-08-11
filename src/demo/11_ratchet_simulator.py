@@ -2,6 +2,7 @@ import time
 import math
 import sys
 import os
+import plotext as plt
 
 # ANSI Color Codes
 class Colors:
@@ -23,88 +24,165 @@ def print_slow(text, delay=0.03):
         time.sleep(delay)
     print()
 
-def get_patient_journal(ksm):
-    if ksm > 0.85:
-        return Colors.GREEN + "Patient Journal: 'I feel incredible! The recovery was a breeze. I'm going to live forever.'" + Colors.ENDC
-    elif ksm > 0.70:
-        return Colors.CYAN + "Patient Journal: 'Still seeing great results, but my joints ached for a few weeks this time.'" + Colors.ENDC
-    elif ksm > 0.50:
-        return Colors.YELLOW + "Patient Journal: 'The slog is real. It took months to get out of bed. Is it still working?'" + Colors.ENDC
-    elif ksm > 0.30:
-        return Colors.RED + "Patient Journal: 'I'm trapped. The therapy nearly killed me. I look in the mirror and nothing changed.'" + Colors.ENDC
+def get_patient_journal(bio_age):
+    if bio_age > 70:
+        return Colors.RED + "Patient Journal: 'The procedure nearly killed me. I was bedridden for months. I feel so frail.'" + Colors.ENDC
+    elif bio_age > 50:
+        return Colors.YELLOW + "Patient Journal: 'It was a slog, but I'm recovering faster than before. I can feel my joints loosening.'" + Colors.ENDC
+    elif bio_age > 35:
+        return Colors.CYAN + "Patient Journal: 'I bounced back in just a few weeks! I'm running again. This is incredible.'" + Colors.ENDC
     else:
-        return Colors.RED + Colors.BOLD + "Patient Journal: '... [Patient unresponsive due to extreme biological shock]'" + Colors.ENDC
+        return Colors.GREEN + "Patient Journal: 'I feel invincible! The recovery was barely a weekend. I am getting my life back!'" + Colors.ENDC
 
-def get_color_for_ksm(ksm):
-    if ksm > 0.8:
-        return Colors.GREEN
-    elif ksm > 0.5:
+def get_color_for_age(bio_age):
+    if bio_age > 70:
+        return Colors.RED
+    elif bio_age > 50:
         return Colors.YELLOW
-    return Colors.RED
+    elif bio_age > 35:
+        return Colors.CYAN
+    return Colors.GREEN
 
-def run_simulation():
-    # Make output dir in case we write files later
+def run_interactive_simulation():
     os.makedirs("output/demo", exist_ok=True)
     
-    print(Colors.HEADER + Colors.BOLD + "="*60)
-    print("      THE RATCHET SIMULATOR: BIOLOGICAL PLATEAU DEMO")
-    print("="*60 + Colors.ENDC)
-    print("Simulating 20 consecutive years of Level 3 Rejuvenation Therapy...")
-    print("Patient Starting Age: 50 | Base KSM (Stability): 0.95\n")
-    time.sleep(1)
-
-    # Initial State
-    bio_age = 50.0
-    ksm = 0.95
-    
-    # Simulation Parameters
-    max_rejuvenation_power = 5.0  # Max years knocked off when KSM is 1.0
-    ksm_degradation_per_shock = 0.035  # The irreversible thermodynamic damage per therapy
-    
-    for year in range(1, 21):
-        # 1. Natural aging (time passes before therapy)
-        bio_age += 1.0
+    while True:
+        print(Colors.HEADER + Colors.BOLD + "="*60)
+        print("      THE RATCHET SIMULATOR: BENJAMIN BUTTON DEMO")
+        print("="*60 + Colors.ENDC)
         
-        # 2. The Therapy Application
-        # How much age do we knock off? It's gated by the intrinsic plasticity (KSM)
-        age_reduction = max_rejuvenation_power * (ksm ** 1.5)
-        bio_age -= age_reduction
-        
-        # 3. The Consequences (Thermodynamic Noise degrades the system)
-        ksm = max(0.01, ksm - ksm_degradation_per_shock)
-        
-        # 4. Recovery Time (Explodes exponentially as KSM drops)
-        # At KSM=0.95, recovery is ~11 days. At KSM=0.2, recovery is ~250 days.
-        recovery_days = int(10.0 / (ksm ** 2))
-        if recovery_days > 365:
-            recovery_days = 365
+        # 1. Intake Prompt
+        try:
+            start_age = float(input(Colors.BOLD + "Enter the patient's starting age: " + Colors.ENDC))
+        except ValueError:
+            print(Colors.RED + "Invalid input. Exiting." + Colors.ENDC)
+            return
             
-        # UI Output
-        color = get_color_for_ksm(ksm)
-        journal = get_patient_journal(ksm)
-        
-        # Format the numbers nicely
-        age_str = f"{bio_age:.1f}"
-        ksm_str = f"{ksm:.2f}"
-        reduction_str = f"{-age_reduction:.1f} yrs"
-        
-        print_slow(f"{Colors.BOLD}Year {year:02d}{Colors.ENDC} | Therapy Administered")
-        print(f"  └─ KSM (Stability): {color}{ksm_str}{Colors.ENDC}")
-        print(f"  └─ Age Reduction:   {color}{reduction_str}{Colors.ENDC}")
-        print(f"  └─ Recovery Time:   {color}{recovery_days} days{Colors.ENDC}")
-        print(f"  └─ Biological Age:  {Colors.BOLD}{age_str}{Colors.ENDC}")
-        print(f"  └─ {journal}\n")
-        
-        # Dramatic pause
-        time.sleep(0.4)
+        print()
+        time.sleep(0.5)
 
-    print(Colors.HEADER + Colors.BOLD + "="*60)
-    print("                     SIMULATION COMPLETE")
-    print("="*60 + Colors.ENDC)
-    print_slow("CONCLUSION: The 'Ratchet Effect' demonstrates that without addressing", delay=0.02)
-    print_slow("the underlying loss of Koopman Stability Margin (KSM), repeated", delay=0.02)
-    print_slow("rejuvenation therapies experience diminishing returns, eventually", delay=0.02)
-    print_slow("resulting in an inescapable asymptotic biological plateau.", delay=0.02)
+        # 2. Cryopreservation Threshold
+        if start_age >= 90:
+            print(Colors.RED + Colors.BOLD + "WARNING: EXTREME FRAILTY INDEX DETECTED." + Colors.ENDC)
+            print_slow("Patient's biological structures cannot survive the physical shock of Level 3 Rejuvenation.")
+            print_slow("Recommendation: Immediate Cryopreservation until Level 4 (in-situ cellular reprogramming) is available.")
+            print(Colors.BOLD + "Simulation Aborted." + Colors.ENDC)
+        else:
+            print_slow("Patient viable. Initiating Level 3 Rejuvenation Therapy protocol...")
+            print_slow("Goal: Reach a Biological Age of 20.\n")
+            
+            chrono_age = start_age
+            bio_age = start_age
+            
+            cycle = 1
+            years_between_treatments = 2.0
+            total_recovery_days = 0
+            
+            history_years = [0.0]
+            history_bio = [bio_age]
+            history_chrono = [chrono_age]
+            current_year = 0.0
+            
+            while bio_age > 20:
+                print(Colors.HEADER + f"\n--- Clinic Visit #{cycle} ---" + Colors.ENDC)
+                
+                # ASCII Plot
+                plt.clear_figure()
+                plt.plot(history_years, history_chrono, label="Chrono Age", color="blue", marker="dot")
+                plt.plot(history_years, history_bio, label="Bio Age", color="green", marker="dot")
+                plt.title(f"Age Trajectory (Year {current_year})")
+                plt.xlabel("Years Since Start")
+                plt.ylabel("Age")
+                plt.plot_size(60, 15)
+                plt.show()
+                print()
+                
+                print(f"Current Chronological Age: {Colors.BOLD}{chrono_age:.1f}{Colors.ENDC}")
+                print(f"Current Biological Age:    {get_color_for_age(bio_age)}{bio_age:.1f}{Colors.ENDC}\n")
+                
+                # Interactive prompt
+                print(Colors.BOLD + "Select Treatment Plan:" + Colors.ENDC)
+                print("  [1] Conservative (Low Impact, Fast Recovery)")
+                print("  [2] Recommended  (Standard Impact, Normal Recovery)")
+                print("  [3] Aggressive   (High Impact, Brutal Recovery)")
+                print("  [0] Refuse Treatment")
+                
+                choice = input(Colors.BOLD + "Enter choice [0-3]: " + Colors.ENDC).strip()
+                
+                if choice == '0':
+                    print("Patient refused treatment. They will continue to age naturally.")
+                    break
+                elif choice == '1':
+                    therapy_power = 2.0
+                    recovery_mult = 0.5
+                elif choice == '3':
+                    therapy_power = 12.0
+                    recovery_mult = 2.5
+                else:
+                    # Default to recommended for '2' or any invalid input
+                    therapy_power = 6.0
+                    recovery_mult = 1.0
+                    
+                print("\nAdministering therapy...")
+                time.sleep(0.5)
+                
+                # The Math: Recovery time is an exponential curve based on biological age
+                base_recovery = 2.0 * math.exp(0.06 * bio_age)
+                recovery_days = int(base_recovery * recovery_mult)
+                
+                if recovery_days > 365:
+                    print(Colors.RED + Colors.BOLD + "\nTHERAPY REJECTED" + Colors.ENDC)
+                    print_slow(f"Projected recovery time is {recovery_days} days.")
+                    print_slow("Clinic policy prohibits treatments requiring >1 year of continuous bed rest.")
+                    print_slow("The patient cannot tolerate the procedure and will age naturally.")
+                    break
+                    
+                total_recovery_days += recovery_days
+                
+                # Therapy succeeds
+                bio_age -= therapy_power
+                if bio_age < 20:
+                    bio_age = 20.0
+                    
+                color = get_color_for_age(bio_age)
+                journal = get_patient_journal(bio_age)
+                
+                print_slow(f"  └─ Recovery Time:  {color}{recovery_days} days bedridden{Colors.ENDC}", delay=0.01)
+                print_slow(f"  └─ Post-op BioAge: {color}{bio_age:.1f} years{Colors.ENDC}", delay=0.01)
+                print_slow(f"  └─ {journal}\n", delay=0.01)
+                
+                if bio_age <= 20:
+                    print(Colors.GREEN + Colors.BOLD + "="*60)
+                    print("                     VICTORY ACHIEVED")
+                    print("="*60 + Colors.ENDC)
+                    print_slow("The patient has successfully achieved a biological age of 20.")
+                    print_slow(f"Final Chronological Age: {chrono_age:.1f} years old.")
+                    print_slow(f"Total Time Bedridden: {total_recovery_days} days ({total_recovery_days/365.25:.1f} years)")
+                    print_slow("They have achieved functional immortality. Welcome to the future.")
+                    break
+                    
+                print(Colors.CYAN + f"Doctor's orders: 'Come back in {int(years_between_treatments)} years for your next round.'" + Colors.ENDC)
+                print("Time passes...\n")
+                time.sleep(1)
+                
+                # Time Skip
+                chrono_age += years_between_treatments
+                bio_age += years_between_treatments
+                current_year += years_between_treatments
+                history_years.append(current_year)
+                history_chrono.append(chrono_age)
+                history_bio.append(bio_age)
+                cycle += 1
+                
+        print("\n" + "="*60)
+        play_again = input(Colors.BOLD + "Would you like to simulate another patient? [Y/n]: " + Colors.ENDC).strip().lower()
+        if play_again == 'n':
+            print("Exiting simulator. Have a long and healthy life!")
+            break
+        print("\n\n")
 
 if __name__ == "__main__":
-    run_simulation()
+    try:
+        run_interactive_simulation()
+    except KeyboardInterrupt:
+        print("\nSimulation aborted.")
