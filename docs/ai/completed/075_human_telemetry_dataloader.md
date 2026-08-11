@@ -6,7 +6,7 @@ Please create a new file: `src/pipeline/sim2real/human_telemetry_dataloader.py`
 
 **Requirements:**
 1. **Class Name:** `HumanTelemetryLoader` (following the pattern of `OmegaBioelectricLoader`).
-2. **Inputs:** Mock the ingestion of continuous, multi-scale human wearable data simulating a 50-year-old human. 
+2. **Inputs:** Mock the ingestion of continuous, multi-scale human wearable data simulating a middle-aged human. 
     *   **Continuous HRV:** 250Hz sampling (RR intervals / ECG proxy).
     *   **Actigraphy (Movement):** 50Hz sampling (accelerometer data).
     *   **Core Temperature:** 1Hz sampling.

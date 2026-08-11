@@ -118,7 +118,7 @@ def main():
             perfusion = 40.0 + np.random.randn() * 2.0
             exhaust.log_infrastructure(vram_mb=vram, perfusion_rate=perfusion)
             
-    logger.info(f"[+] Demo 05 Complete. You can now open {rrd_path} in the Rerun viewer.")
+    logger.info(f"[+] Demo 05 Complete. You can now open {rrd_path} in the Rerun viewer by running: rerun {rrd_path}")
 
 if __name__ == "__main__":
     main()

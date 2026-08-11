@@ -295,7 +295,25 @@ class ThermodynamicMetrics:
         cka = hsic_kl / torch.sqrt(hsic_kk * hsic_ll)
         return cka.item()
 
-    def extract_fedichev_macrostates(self, z_baseline: torch.Tensor, z_perturbed: torch.Tensor, window_size: int = 4) -> dict:
+    def calculate_epigenetic_dispersion(self, cpg_tensor):
+        """
+        Calculates the thermodynamic configurational entropy (Z) of the epigenetic landscape.
+        cpg_tensor shape: [Time, Cells, CpGs]
+        Returns: list of scalars (length Time) representing Z.
+        """
+        if cpg_tensor is None or cpg_tensor.dim() != 3:
+            return []
+            
+        # Statistical dispersion (Variance) across the cell ensemble
+        # Higher variance = cells have lost structural integrity and are drifting
+        cell_variance = torch.var(cpg_tensor, dim=1) # Shape: [Time, CpGs]
+        
+        # Mean variance across all tracked CpG sites
+        total_entropy_z = torch.mean(cell_variance, dim=1) # Shape: [Time]
+        
+        return total_entropy_z.tolist()
+
+    def extract_fedichev_macrostates(self, z_baseline: torch.Tensor, z_perturbed: torch.Tensor, window_size: int = 4, cpg_tensor: torch.Tensor = None) -> dict:
         """
         Extracts the three macroscopic variables defining the Fedichev-Gruber minimal model of aging:
         z0 (fast dynamic stress response), Z (slow cumulative entropic damage), and epsilon_0 (critical recovery rate).
@@ -322,8 +340,14 @@ class ThermodynamicMetrics:
         # 3. Variable epsilon_0 (Criticality)
         epsilon_0_ksm = self.calculate_ksm(path_up, window_size=window_size)
 
+        # 4. Epigenetic Entropy (Z directly from Methylation, if provided)
+        Z_epigenetic_entropy = []
+        if cpg_tensor is not None:
+            Z_epigenetic_entropy = self.calculate_epigenetic_dispersion(cpg_tensor)
+
         return {
             "Z_entropic_damage": Z_t.tolist(),
             "z0_volatility": z0_volatility,
-            "epsilon_0_ksm": epsilon_0_ksm
+            "epsilon_0_ksm": epsilon_0_ksm,
+            "Z_epigenetic_entropy": Z_epigenetic_entropy
         }
