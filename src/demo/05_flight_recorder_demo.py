@@ -31,9 +31,9 @@ def main():
     # 2. Initialize the metrics extractor and telemetry bridge
     metrics_engine = ThermodynamicMetrics()
     
-    output_dir = "output"
+    output_dir = "output/demo"
     os.makedirs(output_dir, exist_ok=True)
-    rrd_path = os.path.join(output_dir, "flight_recorder.rrd")
+    rrd_path = os.path.join(output_dir, "05_flight_recorder.rrd")
     
     exhaust = TelemetryExhaust(mode="save", save_path=rrd_path)
     logger.info(f"[*] Telemetry stream initialized. Saving to: {rrd_path}")

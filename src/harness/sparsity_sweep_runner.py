@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 from src.data.waddington_dataset import SyntheticWaddingtonDataset
@@ -75,6 +76,7 @@ def main():
     parser.add_argument("--seeds", type=int, nargs="+", default=[42, 100, 256, 512, 1024], help="Random seeds to evaluate")
     parser.add_argument("--models", type=str, nargs="+", default=["baseline", "forward_fill", "mask_concat", "gru_d", "ode_rnn", "mask_aware"], help="Models to evaluate")
     parser.add_argument("--png-name", type=str, default="05_sparsity_sweep.png", help="Filename for the output PNG")
+    parser.add_argument("--csv-name", type=str, default="05_sparsity_sweep.csv", help="Filename for the output CSV")
     args = parser.parse_args()
 
     device = get_optimal_device(verbose=True)
@@ -119,10 +121,21 @@ def main():
     ax.legend()
     ax.grid(True, alpha=0.2)
     
-    os.makedirs("output/data", exist_ok=True)
-    out_path = f"output/data/{args.png_name}"
+    os.makedirs("output/harness", exist_ok=True)
+    out_path = f"output/harness/{args.png_name}"
     plt.savefig(out_path, dpi=300)
     logger.info(f"Dashboard saved to {out_path}")
+    
+    # Save CSV
+    csv_data = {"Sparsity": sparsities}
+    for m in models:
+        csv_data[f"{m}_mean"] = [np.mean(results[m][s]) for s in sparsities]
+        csv_data[f"{m}_std"] = [np.std(results[m][s]) for s in sparsities]
+        
+    df = pd.DataFrame(csv_data)
+    csv_out_path = f"output/harness/{args.csv_name}"
+    df.to_csv(csv_out_path, index=False)
+    logger.info(f"Saved CSV to {csv_out_path}")
 
 if __name__ == "__main__":
     main()

@@ -172,7 +172,7 @@ def main():
 
         preds, _ = engine(corrupt_test)
 
-        output_dir = "output"
+        output_dir = "output/demo"
     os.makedirs(output_dir, exist_ok=True)
 
     plot_indestructible_dashboard(corrupt_test[0], clean_test[0], preds[0], 100, output_dir)

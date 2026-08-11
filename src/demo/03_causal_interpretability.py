@@ -128,7 +128,7 @@ def main():
     print(json.dumps(autopsy_report, indent=2))
     print("=" * 50 + "\n")
 
-    output_dir = "output"
+    output_dir = "output/demo"
     os.makedirs(output_dir, exist_ok=True)
 
     raw_numpy = test_seq[0].detach().cpu().numpy()

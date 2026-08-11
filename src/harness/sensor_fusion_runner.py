@@ -100,8 +100,8 @@ def save_benchmark_plot(
     ax2.legend(loc="upper left")
 
     plt.tight_layout()
-    os.makedirs("output/data", exist_ok=True)
-    out_path = f"output/data/{png_name}"
+    os.makedirs("output/harness", exist_ok=True)
+    out_path = f"output/harness/{png_name}"
     plt.savefig(out_path, dpi=300)
     logger.info(f"Saved plot to {out_path}")
 
@@ -183,7 +183,7 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
         results[k] = v.flatten()
 
     df = pd.DataFrame(results)
-    csv_out_path = f"output/data/{csv_name}"
+    csv_out_path = f"output/harness/{csv_name}"
     os.makedirs(os.path.dirname(csv_out_path), exist_ok=True)
     df.to_csv(csv_out_path, index=False)
     logger.info(f"Saved CSV to {csv_out_path}")

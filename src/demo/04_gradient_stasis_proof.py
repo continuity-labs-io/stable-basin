@@ -84,17 +84,27 @@ if __name__ == "__main__":
     loss = h_t.sum()
     loss.backward()
 
-    print("--- ARCHITECTURE DIAGNOSTICS ---")
-    print("A_bar (State Transition Matrix):")
-    print(A_bar.detach().numpy())
-    print("-> Notice Channel 3 is EXACTLY 1.0 (Identity Matrix). Time is completely frozen.\n")
+    summary = f"""--- ARCHITECTURE DIAGNOSTICS ---
+A_bar (State Transition Matrix):
+{A_bar.detach().numpy()}
+-> Notice Channel 3 is EXACTLY 1.0 (Identity Matrix). Time is completely frozen.
 
-    print("B_bar (Input Matrix):")
-    print(B_bar.detach().numpy())
-    print("-> Notice Channel 3 is virtually 0.0. New noise is successfully blocked.\n")
+B_bar (Input Matrix):
+{B_bar.detach().numpy()}
+-> Notice Channel 3 is virtually 0.0. New noise is successfully blocked.
 
-    print("--- THE GRADIENT SUPERHIGHWAY ---")
-    print("Gradients flowing back to h_prev:")
-    print(h_prev.grad.numpy())
-    print("-> Notice the gradient for the frozen channel is EXACTLY 1.0.")
-    print("-> The error signal survives the temporal void flawlessly across millions of steps.")
+--- THE GRADIENT SUPERHIGHWAY ---
+Gradients flowing back to h_prev:
+{h_prev.grad.numpy()}
+-> Notice the gradient for the frozen channel is EXACTLY 1.0.
+-> The error signal survives the temporal void flawlessly across millions of steps.
+"""
+    print(summary)
+    
+    import os
+    output_dir = "output/demo"
+    os.makedirs(output_dir, exist_ok=True)
+    out_file = os.path.join(output_dir, "04_gradient_stasis_summary.txt")
+    with open(out_file, "w") as f:
+        f.write(summary)
+    print(f"[*] Summary saved to {out_file}")
