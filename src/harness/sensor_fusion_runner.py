@@ -106,7 +106,7 @@ def save_benchmark_plot(
     logger.info(f"Saved plot to {out_path}")
 
 
-def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, csv_name, png_name):
+def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, csv_name, png_name, use_wandb=False):
     device = get_optimal_device(verbose=True)
 
     # Data Preparation
@@ -132,6 +132,16 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
         timing_log.flush()
 
     # Training Loop
+    if use_wandb:
+        import wandb
+        wandb.init(project="stable-basin", config={
+            "task_name": task_name,
+            "epochs": epochs,
+            "train_seq_len": train_seq_len,
+            "test_seq_len": test_seq_len,
+            "models": model_names
+        })
+
     log_t(f"--- Starting Task: {task_name} ---")
     log_t(f"Training {len(models)} architectures on seq_len={train_seq_len} for {epochs} epochs...")
     total_start = time.time()
@@ -156,7 +166,10 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
                 loss.backward()
                 optimizers[name].step()
                 running_losses[name] += loss.item()
-                log_t(f"      Model {name} batch {b_idx} took {time.time() - model_start:.3f}s")
+                model_time = time.time() - model_start
+                log_t(f"      Model {name} batch {b_idx} took {model_time:.3f}s")
+                if use_wandb:
+                    wandb.log({"epoch": epoch, "batch": b_idx, f"{name}/loss": loss.item(), f"{name}/time_per_batch": model_time})
             
             log_t(f"    Batch {b_idx} took {time.time() - batch_start:.3f}s")
 
@@ -191,9 +204,13 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
             if test_seq_len > train_seq_len:
                 ood_mse = ((preds_dict[name][train_seq_len:] - test_y_true[train_seq_len:]) ** 2).mean()
                 logger.info(f"OOD-MSE [{name}]: {ood_mse:.4f}")
+                if use_wandb:
+                    wandb.log({f"{name}/ood_mse": ood_mse})
             else:
                 mse = ((preds_dict[name] - test_y_true) ** 2).mean()
                 logger.info(f"MSE [{name}]: {mse:.4f}")
+                if use_wandb:
+                    wandb.log({f"{name}/mse": mse})
 
     results = {"True Phase": test_y_true.flatten()}
     for k, v in preds_dict.items():
@@ -208,6 +225,9 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
     save_benchmark_plot(
         model_names, loss_history, preds_dict, test_y_true, train_seq_len, test_seq_len, task_name, png_name
     )
+    if use_wandb:
+        wandb.log({"dashboard": wandb.Image(f"output/harness/{png_name}")})
+        wandb.finish()
 
 
 def main():
@@ -219,6 +239,7 @@ def main():
     parser.add_argument("--models", type=str, nargs="+", default=[m.value for m in SSMType], help="List of models to benchmark")
     parser.add_argument("--csv-name", type=str, required=True, help="Filename for the output CSV")
     parser.add_argument("--png-name", type=str, required=True, help="Filename for the output PNG")
+    parser.add_argument("--wandb", action="store_true", help="Enable WandB tracking")
     
     args = parser.parse_args()
     
@@ -229,7 +250,8 @@ def main():
         test_seq_len=args.test_seq_len,
         model_names=args.models,
         csv_name=args.csv_name,
-        png_name=args.png_name
+        png_name=args.png_name,
+        use_wandb=args.wandb
     )
 
 if __name__ == "__main__":

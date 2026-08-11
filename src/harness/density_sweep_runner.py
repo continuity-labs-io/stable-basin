@@ -97,6 +97,7 @@ def main():
     parser.add_argument("--models", type=str, nargs="+", default=["baseline", "forward_fill", "mask_concat", "gru_d", "ode_rnn", "mask_aware"], help="Models to evaluate")
     parser.add_argument("--png-name", type=str, default="05_density_sweep.png", help="Filename for the output PNG")
     parser.add_argument("--csv-name", type=str, default="05_density_sweep.csv", help="Filename for the output CSV")
+    parser.add_argument("--wandb", action="store_true", help="Enable WandB tracking")
     args = parser.parse_args()
 
     device = get_optimal_device(verbose=True)
@@ -112,12 +113,18 @@ def main():
     logger.info("Commencing 5-Seed Density Sweep (FitzHugh-Nagumo Oscillator)...")
     logger.info(f"Sweep parameters: {len(densities)} densities | {len(seeds)} seeds | {len(models)} models = {len(densities)*len(seeds)*len(models)} training runs")
     
+    if args.wandb:
+        import wandb
+        wandb.init(project="stable-basin", config=args)
+
     for density in densities:
         for seed in seeds:
             for m in models:
                 mse = run_experiment(device, m, density, seed, epochs=args.epochs, train_seq_len=args.train_seq_len, test_seq_len=args.test_seq_len, timing_log=timing_log)
                 results[m][density].append(mse)
                 logger.info(f"Density: {density*100:0.1f}% | Seed: {seed:<4} | Model: {m:<15} | OOD-MSE: {mse:.4f}")
+                if args.wandb:
+                    wandb.log({"density": density, "seed": seed, f"{m}/ood_mse": mse})
                 
     # Plotting Statistical Rigor
     plt.style.use('dark_background')
@@ -159,6 +166,10 @@ def main():
     csv_out_path = f"output/harness/{args.csv_name}"
     df.to_csv(csv_out_path, index=False)
     logger.info(f"Saved CSV to {csv_out_path}")
+    
+    if args.wandb:
+        wandb.log({"dashboard": wandb.Image(out_path)})
+        wandb.finish()
 
 if __name__ == "__main__":
     main()

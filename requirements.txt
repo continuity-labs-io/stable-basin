@@ -27,3 +27,4 @@ torchdiffeq
 h5py
 spikeinterface
 rerun-sdk
+wandb

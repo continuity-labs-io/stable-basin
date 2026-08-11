@@ -1,0 +1,16 @@
+program: src.harness.density_sweep_runner
+command:
+  - ${env}
+  - python
+  - -m
+  - ${program}
+  - ${args}
+  - --wandb
+method: grid
+parameters:
+  models:
+    values: ["baseline", "gru_d", "ode_rnn", "mask_aware"]
+  seeds:
+    values: [42, 100, 256, 512]
+  densities:
+    values: [0.1, 0.05, 0.01, 0.001]
