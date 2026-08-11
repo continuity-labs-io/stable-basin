@@ -4,6 +4,7 @@ import pytest
 from src.pipeline.sim2real.sigma_phase_structure_dataloader import SigmaPhaseLoader
 
 
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_sigma_dataloader_output_format():
     loader = SigmaPhaseLoader(target_components=5)
     times, raw_feats = loader.fetch_and_segment()
