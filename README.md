@@ -76,6 +76,12 @@ python src/demo/02_fault_tolerant_imputation.py
 
 The core of the Stable Basin is our deterministic physics evaluation suite (src/metrics/), which extracts true macroscopic variables from the model's latent embedding space:Koopman Stability Metric (KSM): Dynamic Mode Decomposition (DMD) to calculate the stable eigenvalue bounds of the biological attractor.Critical Slowing Down (CSD): Variance and AR1 tracking to detect phase transitions before they occur.Fedichev Macrostates: Tracking the continuous accumulation of configurational entropy ($Z$) over millions of frames.MambaLRP-Epsilon: Mathematically exact Layer-wise Relevance Propagation designed explicitly for continuous-time SSMs to trace crashes back to their root biological circuit.
 
+## 🔍 Open Research Problems
+
+The core math of Stable Basin is written, but we are looking for engineers to take ownership of specific infrastructure nodes (e.g. CUDA/Triton Mamba-LRP kernels, Sim2Real dataloaders, Gymnasium environments). 
+
+If you want to solve aging and build out these missing nodes, please check out the [Open Problems Board](OPEN_PROBLEMS.md) in the repository. Pick a constraint, and open a PR!
+
 📄 Citation
 
 If you use Stable Basin to benchmark your infinite-horizon sequence models or biological anomaly detection, please cite:

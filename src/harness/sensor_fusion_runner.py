@@ -123,38 +123,53 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
 
     loss_history = {name: [] for name in model_names}
 
+    import time
+    os.makedirs("output/harness", exist_ok=True)
+    timing_log = open("output/harness/sensor_fusion_timing.log", "a")
+    def log_t(msg):
+        logger.info(msg)
+        timing_log.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {msg}\n")
+        timing_log.flush()
+
     # Training Loop
-    logger.info(f"--- Starting Task: {task_name} ---")
-    logger.info(f"Training {len(models)} architectures on seq_len={train_seq_len} for {epochs} epochs...")
+    log_t(f"--- Starting Task: {task_name} ---")
+    log_t(f"Training {len(models)} architectures on seq_len={train_seq_len} for {epochs} epochs...")
+    total_start = time.time()
     for epoch in range(1, epochs + 1):
+        epoch_start = time.time()
         for m in models.values():
             m.train()
 
         running_losses = {name: 0.0 for name in model_names}
 
-        for batch in dataloader:
+        for b_idx, batch in enumerate(dataloader):
+            batch_start = time.time()
             x_raw = batch["x_raw"].to(device)
             mask = batch["mask"].to(device)
             y_true = batch["y_true"].to(device)
 
             for name, model in models.items():
+                model_start = time.time()
                 optimizers[name].zero_grad()
                 preds = model(x_raw, mask)
                 loss = criterion(preds, y_true)
                 loss.backward()
                 optimizers[name].step()
                 running_losses[name] += loss.item()
+                log_t(f"      Model {name} batch {b_idx} took {time.time() - model_start:.3f}s")
+            
+            log_t(f"    Batch {b_idx} took {time.time() - batch_start:.3f}s")
 
-        log_str = f"Epoch {epoch:02d}/{epochs} | "
+        log_str = f"Epoch {epoch:02d}/{epochs} took {time.time() - epoch_start:.2f}s | "
         for name in model_names:
             avg_loss = running_losses[name] / len(dataloader)
             loss_history[name].append(avg_loss)
             log_str += f"{name}: {avg_loss:.3f} | "
 
-        if epoch % 5 == 0 or epoch == 1:
-            logger.info(log_str)
+        log_t(log_str)
 
-    logger.info(f"Running Length Extrapolation Stress Test (seq_len={test_seq_len})...")
+    log_t(f"Total training time: {time.time() - total_start:.2f}s")
+    log_t(f"Running Length Extrapolation Stress Test (seq_len={test_seq_len})...")
     for m in models.values():
         m.eval()
 
@@ -168,7 +183,9 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
     preds_dict = {}
     with torch.no_grad():
         for name, model in models.items():
+            eval_start = time.time()
             preds_dict[name] = model(test_x_raw, test_mask)[0].cpu().numpy()
+            log_t(f"    Eval {name} took {time.time() - eval_start:.3f}s")
 
             # Calculate MSE
             if test_seq_len > train_seq_len:

@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torchdiffeq import odeint
+from torchdiffeq import odeint_adjoint as odeint
 
 class ODEFunc(nn.Module):
     def __init__(self, d_model: int):

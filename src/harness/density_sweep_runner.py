@@ -20,7 +20,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def run_experiment(device, model_name, density, seed, epochs=10, train_seq_len=500, test_seq_len=2000):
+import time
+
+def run_experiment(device, model_name, density, seed, epochs=10, train_seq_len=500, test_seq_len=2000, timing_log=None):
+    def log_t(msg):
+        if timing_log:
+            timing_log.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {msg}\n")
+            timing_log.flush()
     # Set seed for reproducibility
     torch.manual_seed(seed)
     np.random.seed(seed)
@@ -38,8 +44,11 @@ def run_experiment(device, model_name, density, seed, epochs=10, train_seq_len=5
     
     # Train loop
     model.train()
+    total_start = time.time()
     for epoch in range(epochs):
-        for batch in train_loader:
+        epoch_start = time.time()
+        for b_idx, batch in enumerate(train_loader):
+            batch_start = time.time()
             x_raw = batch["x_raw"].to(device)
             mask = batch["mask"].to(device)
             y_true = batch["y_true"].to(device)
@@ -49,13 +58,20 @@ def run_experiment(device, model_name, density, seed, epochs=10, train_seq_len=5
             loss = criterion(preds, y_true)
             loss.backward()
             optimizer.step()
+            batch_time = time.time() - batch_start
+            log_t(f"Model {model_name} Epoch {epoch} Batch {b_idx} took {batch_time:.3f}s")
+            
+        epoch_time = time.time() - epoch_start
+        log_t(f"Model {model_name} Epoch {epoch} took {epoch_time:.2f}s")
             
     # Eval loop (Out-of-Distribution / Extrapolation)
     model.eval()
     total_mse = 0.0
     count = 0
+    eval_start = time.time()
     with torch.no_grad():
-        for batch in test_loader:
+        for b_idx, batch in enumerate(test_loader):
+            batch_start = time.time()
             x_raw = batch["x_raw"].to(device)
             mask = batch["mask"].to(device)
             y_true = batch["y_true"].to(device)
@@ -64,7 +80,11 @@ def run_experiment(device, model_name, density, seed, epochs=10, train_seq_len=5
             mse = criterion(preds, y_true).item()
             total_mse += mse * x_raw.size(0)
             count += x_raw.size(0)
+            log_t(f"Model {model_name} Eval Batch {b_idx} took {time.time() - batch_start:.3f}s")
             
+    eval_time = time.time() - eval_start
+    log_t(f"Model {model_name} Total Eval took {eval_time:.2f}s")
+    log_t(f"Model {model_name} Total Experiment took {time.time() - total_start:.2f}s")
     return total_mse / count
 
 def main():
@@ -86,13 +106,16 @@ def main():
     
     results = {m: {s: [] for s in densities} for m in models}
     
+    os.makedirs("output/harness", exist_ok=True)
+    timing_log = open("output/harness/density_sweep_timing.log", "a")
+    
     logger.info("Commencing 5-Seed Density Sweep (FitzHugh-Nagumo Oscillator)...")
     logger.info(f"Sweep parameters: {len(densities)} densities | {len(seeds)} seeds | {len(models)} models = {len(densities)*len(seeds)*len(models)} training runs")
     
     for density in densities:
         for seed in seeds:
             for m in models:
-                mse = run_experiment(device, m, density, seed, epochs=args.epochs, train_seq_len=args.train_seq_len, test_seq_len=args.test_seq_len)
+                mse = run_experiment(device, m, density, seed, epochs=args.epochs, train_seq_len=args.train_seq_len, test_seq_len=args.test_seq_len, timing_log=timing_log)
                 results[m][density].append(mse)
                 logger.info(f"Density: {density*100:0.1f}% | Seed: {seed:<4} | Model: {m:<15} | OOD-MSE: {mse:.4f}")
                 
