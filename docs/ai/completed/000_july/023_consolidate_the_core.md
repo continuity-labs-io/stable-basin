@@ -1,5 +1,5 @@
 Let's knock out Suggestion 1: Consolidate the Core. We are injecting the
-hardware-agnostic routing logic into MeldBenchmark so it scales flawlessly on
+hardware-agnostic routing logic into Stable Basin Benchmark so it scales flawlessly on
 Apple Silicon or Edge GPUs, and we are centralizing the scattered physics
 constants.
 

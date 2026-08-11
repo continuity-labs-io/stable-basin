@@ -1,4 +1,4 @@
-Create a new file named `brw_dataloader.py` for the MeldBenchmark repository.
+Create a new file named `brw_dataloader.py` for the Stable Basin Benchmark repository.
 
 I need a PyTorch `Dataset` and `DataLoader` pipeline designed to ingest
 continuous high-density electrophysiology data from raw 3Brain `.brw` files. The

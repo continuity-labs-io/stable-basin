@@ -1,4 +1,4 @@
-name: meld
+name: sb
 channels:
   - conda-forge
 dependencies:

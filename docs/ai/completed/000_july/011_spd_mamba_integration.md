@@ -16,7 +16,7 @@ Decomposition (SPD) on the custom `StateSpaceEngine` trained inside
 
 ### Mamba End-to-End Core
 
-#### [MODIFY] [1_hssm_demo.py](file:///Users/ry/gh/MeldBenchmark/src/demo/1_hssm_demo.py)
+#### [MODIFY] 1_hssm_demo.py
 
 Export the trained `StateSpaceEngine` (Fusion Core) weights.
 
@@ -30,7 +30,7 @@ Export the trained `StateSpaceEngine` (Fusion Core) weights.
 
 ### Configuration
 
-#### [MODIFY] [spd_mamba_config.yaml](file:///Users/ry/gh/MeldBenchmark/configs/spd_mamba_config.yaml)
+#### [MODIFY] spd_mamba_config.yaml
 
 Update the SPD config to target our local Mamba architecture rather than the
 Hugging Face pre-trained model.
@@ -46,7 +46,7 @@ Hugging Face pre-trained model.
 
 ### Interpretability Pipeline
 
-#### [MODIFY] [spd_interpreter.py](file:///Users/ry/gh/MeldBenchmark/src/metrics/spd_interpreter.py)
+#### [MODIFY] spd_interpreter.py
 
 Implement the Goodfire patch to support 1D Convolutions.
 

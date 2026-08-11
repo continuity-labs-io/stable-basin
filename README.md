@@ -1,6 +1,8 @@
-# MeldBenchmark
+# Stable Basin
 
-MeldBenchmark is a research repository for benchmarking continuous-time
+The objective is to maintain the biological latent state inside the youthful homeostatic attractor basin, evaluated by Time-in-Basin (TiB) against entropic decay and simulated hardware failures.
+
+Stable Basin Benchmark is a research repository for benchmarking continuous-time
 multiscale biological datasets using State Space Models (SSMs). The project
 focuses on fusing high-frequency electrophysiological data with lower-frequency
 optical imaging, orthogonalizing hardware artifacts, and performing real-time

@@ -1,7 +1,7 @@
 [project]
-name = "meld-benchmark"
+name = "stable-basin"
 version = "0.1.0"
-description = "MELD benchmark"
+description = "Stable Basin"
 
 [tool.ruff]
 line-length = 100

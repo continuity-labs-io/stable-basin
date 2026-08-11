@@ -1,6 +1,6 @@
 {
     "output": {
-        "filePath": "cache/meld-benchmark-repomix.xml"
+        "filePath": "cache/stable-basin-repomix.xml"
     },
     "include": [
         "src/**/*.py"

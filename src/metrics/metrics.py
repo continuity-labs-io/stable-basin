@@ -164,21 +164,22 @@ class ThermodynamicMetrics:
                         eigenvalues = dmd.eigs
                         max_eig = float(np.max(np.abs(eigenvalues)))
 
-                    if debug_crash_frame is not None:
-                        # Log the sliding window right before the crash and right after
-                        if t == debug_crash_frame - 1:
-                            logger.debug(
-                                f"PyDMD Audit [BEFORE crash, t={t}]: eigs={eigenvalues}, max_eig={max_eig}"
-                            )
-                        elif t == debug_crash_frame + 1:
-                            logger.debug(
-                                f"PyDMD Audit [AFTER crash, t={t}]: eigs={eigenvalues}, max_eig={max_eig}"
-                            )
+                        if debug_crash_frame is not None:
+                            # Log the sliding window right before the crash and right after
+                            if t == debug_crash_frame - 1:
+                                logger.debug(
+                                    f"PyDMD Audit [BEFORE crash, t={t}]: eigs={eigenvalues}, max_eig={max_eig}"
+                                )
+                            elif t == debug_crash_frame + 1:
+                                logger.debug(
+                                    f"PyDMD Audit [AFTER crash, t={t}]: eigs={eigenvalues}, max_eig={max_eig}"
+                                )
 
-                except Exception as e:
-                    logger.error(f"PyDMD Failed at frame {t}: {e}")
-                    # Force drop in thermodynamic stability on mathematical failure
-                    max_eig = 0.0
+                    except Exception as e:
+                        logger.error(f"PyDMD Failed at frame {t}: {e}")
+                        # Force drop in thermodynamic stability on mathematical failure
+                        max_eig = 0.0
+
 
             if max_eig == 0.0:
                 ksm = 0.0

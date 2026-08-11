@@ -1,4 +1,4 @@
-# MeldBenchmark Issues & Technical Debt
+# Stable Basin Benchmark Issues & Technical Debt
 
 This document tracks known issues, technical debt, and open TODOs within the
 codebase.

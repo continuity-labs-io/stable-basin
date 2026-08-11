@@ -1,7 +1,7 @@
 # Logging Standards
 
 This document establishes the rule for how we handle output and logging in the
-MeldBenchmark codebase.
+Stable Basin Benchmark codebase.
 
 ## The Rule: No `print()` Statements in Production Code
 
