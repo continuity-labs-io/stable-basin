@@ -72,7 +72,24 @@ Run the Fault-Tolerant Imputation trial (Route 2: The Blind Reach):
 python src/demo/02_fault_tolerant_imputation.py
 ```
 
-🧬 Thermodynamic Metrics
+### Weights & Biases (WandB) Distributed Training
+
+To scale the training and evaluation across a GPU cluster, use the provided WandB sweep orchestration:
+
+1. Authenticate with your API key:
+   ```bash
+   wandb login
+   ```
+2. Initialize the cloud orchestrator using the provided grid search matrix:
+   ```bash
+   wandb sweep sweep.yaml
+   ```
+3. Launch agents across your GPUs to chew through the work in parallel!
+   ```bash
+   wandb agent <SWEEP_ID>
+   ```
+
+## 🧬 Thermodynamic Metrics
 
 The core of the Stable Basin is our deterministic physics evaluation suite (src/metrics/), which extracts true macroscopic variables from the model's latent embedding space:Koopman Stability Metric (KSM): Dynamic Mode Decomposition (DMD) to calculate the stable eigenvalue bounds of the biological attractor.Critical Slowing Down (CSD): Variance and AR1 tracking to detect phase transitions before they occur.Fedichev Macrostates: Tracking the continuous accumulation of configurational entropy ($Z$) over millions of frames.MambaLRP-Epsilon: Mathematically exact Layer-wise Relevance Propagation designed explicitly for continuous-time SSMs to trace crashes back to their root biological circuit.
 
