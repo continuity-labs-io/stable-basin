@@ -20,8 +20,8 @@ def test_waddington_data_shapes_and_masks():
     assert torch.all(mask[:, 0] == 1.0)
 
     # Modality 1 (last 10 dims) mask should be sparse (~5%)
-    sparsity = mask[:, 1].mean().item()
-    assert 0.01 < sparsity < 0.15  # generous bounds for random generation
+    density = mask[:, 1].mean().item()
+    assert 0.01 < density < 0.15  # generous bounds for random generation
 
     # Check zero padding on modality 1 when mask is 0
     mod1_unmasked = x_raw[:, 20:][mask[:, 1] == 0]

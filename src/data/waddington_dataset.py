@@ -20,7 +20,7 @@ class SyntheticWaddingtonDataset(Dataset):
     Parameters:
     - size (int): The total number of unique sequences generated per epoch.
     - seq_len (int): The total time steps (length) of each sequence generated. 
-    - sparsity (float): The probability (0.0 to 1.0) that a Modality 1 sensor is active at any given step.
+    - density (float): The probability (0.0 to 1.0) that a Modality 1 sensor is active at any given step.
     
     Mathematics (FitzHugh-Nagumo Model):
     The data is generated dynamically on-the-fly using the FitzHugh-Nagumo oscillator equations.
@@ -36,12 +36,12 @@ class SyntheticWaddingtonDataset(Dataset):
     - tau (10000.0): The time-scale separation parameter making 'w' much slower than 'v'.
     """
 
-    def __init__(self, size: int = 100, seq_len: int = 500, sparsity: float = 0.05,
+    def __init__(self, size: int = 100, seq_len: int = 500, density: float = 0.05,
                  dim_slow: int = 20, dim_fast: int = 10, noise_std: float = 0.05,
                  tau: float = 10000.0, a: float = 0.7, b: float = 0.8, I_ext: float = 0.5):
         self.size = size
         self.seq_len = seq_len
-        self.sparsity = sparsity
+        self.density = density
         self.dim_slow = dim_slow
         self.dim_fast = dim_fast
         self.noise_std = noise_std
@@ -103,8 +103,8 @@ class SyntheticWaddingtonDataset(Dataset):
 
         # The Mask
         mask_0 = torch.ones(self.seq_len, 1)
-        # sparsity is the fraction of active sensors
-        mask_1 = (torch.rand(self.seq_len, 1) < self.sparsity).float()
+        # density is the fraction of active sensors
+        mask_1 = (torch.rand(self.seq_len, 1) < self.density).float()
 
         # CRITICAL ZERO-PADDING
         modality_1 = modality_1 * mask_1

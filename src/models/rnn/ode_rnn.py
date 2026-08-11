@@ -22,6 +22,11 @@ class ODERNNModel(nn.Module):
     def __init__(self, d_model: int):
         super().__init__()
         self.d_model = d_model
+        
+        # ODE Solver Configuration
+        self.ode_solver = 'rk4'
+        self.ode_step_size = 0.1
+        
         self.ode_func = ODEFunc(d_model)
         self.gru_cell = nn.GRUCell(d_model, d_model)
         
@@ -41,8 +46,15 @@ class ODERNNModel(nn.Module):
             # Integrate hidden state from t-1 to t (interval of 1)
             t_span = torch.tensor([0.0, 1.0], device=x.device)
             
-            # odeint returns shape (2, B, d_model), take the final state at index 1
-            h = odeint(self.ode_func, h, t_span, method='euler')[1]
+            # odeint returns shape (2, B, d_model)
+            h_trajectory = odeint(
+                self.ode_func, 
+                h, 
+                t_span, 
+                method=self.ode_solver, 
+                options={'step_size': self.ode_step_size}
+            )
+            h = h_trajectory[1]
             
             # Apply GRU update with the current observation
             h = self.gru_cell(x[:, t, :], h)
