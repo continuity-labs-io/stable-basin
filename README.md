@@ -82,7 +82,7 @@ To scale the training and evaluation across a GPU cluster, use the provided Wand
    ```
 2. Initialize the cloud orchestrator using the provided grid search matrix:
    ```bash
-   wandb sweep sweep.yaml
+   wandb sweep src/harness/density_sweep.yaml
    ```
 3. Launch agents across your GPUs to chew through the work in parallel!
    ```bash
