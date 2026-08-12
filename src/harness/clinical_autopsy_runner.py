@@ -75,6 +75,10 @@ class NpEncoder(json.JSONEncoder):
 
 
 def evaluate_model(trial_config):
+    import logging
+    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger(__name__).setLevel(logging.INFO)
+    
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -87,7 +91,7 @@ def evaluate_model(trial_config):
         project="stable-basin",
         name=f"autopsy_{model_type}",
         config={"model_type": model_type, **config},
-        reinit=True
+        reinit="finish_previous"
     )
     
     logger.info(f"--- Running Autopsy for Model: {model_type} ---")
@@ -107,6 +111,7 @@ def evaluate_model(trial_config):
         dataset = PharmacologicalShockDataset(condition=condition, seq_len=seq_len)
         telemetry = dataset[0].unsqueeze(0).to(device)  # shape: [1, seq_len, 1024]
         mask = torch.ones_like(telemetry)
+        logger.info(f"Successfully loaded Pharmacological Shock Data! Telemetry shape: {telemetry.shape}")
     except FileNotFoundError:
         logger.warning("Dataset file not found. Generating dummy telemetry for testing.")
         t = torch.linspace(0, 10 * np.pi, seq_len, device=device).unsqueeze(1)
@@ -269,6 +274,7 @@ def evaluate_model(trial_config):
         "baseline_ksm_variance": base_ksm_variance
     })
     
+    logger.info(f"SUCCESS: {model_type} evaluation complete! Crash frame detected at: {crash_frame}")
     wandb.finish()
 
 

@@ -1,6 +1,13 @@
-torch
-matplotlib
+torch>=2.1.0
 numpy
+pandas
+matplotlib
+scipy
+h5py
 pyyaml
 ray[tune]
 wandb
+pydmd
+timm
+scikit-learn
+torchdiffeq

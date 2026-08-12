@@ -16,8 +16,13 @@ class PharmacologicalShockDataset(Dataset):
     dropped spikes, this dataset proves the architecture can detect the exact millisecond the pharmacological 
     agent collapses the network's Kinetic Stability Metric (KSM) from 1.0 down to 0.0.
     """
-    def __init__(self, condition: str = "control", base_path: str = "data/ephys/pharmacological_shock", seq_len: int = 1024):
-        self.data_path = os.path.join(base_path, f"Drug_2953_{condition}.raw.h5")
+    def __init__(self, condition: str = "control", base_path: str = None, seq_len: int = 1024):
+        if base_path is None:
+            # Resolve relative to this file's location to always find the repo root
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            base_path = os.path.join(current_dir, "..", "..", "..", "data", "ephys", "pharmacological_shock")
+            
+        self.data_path = os.path.abspath(os.path.join(base_path, f"Drug_2953_{condition}.raw.h5"))
         if not os.path.exists(self.data_path):
             raise FileNotFoundError(f"Could not find dataset for condition '{condition}' at {self.data_path}")
             

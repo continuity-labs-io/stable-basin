@@ -59,35 +59,18 @@ To provide a baseline for the benchmark, this repository includes the **MaskAwar
 
 Unlike standard Transformers that suffer from $\mathcal{O}(N^2)$ context limits and rely on discrete tokens, the `MaskAwareMamba` utilizes Mask-Aware Subspace Routing to dynamically modulate the flow of time and maintain an $\mathcal{O}(1)$ VRAM footprint on edge hardware.
 
-### Quickstart: Running the Routes
+### Quickstart: Push-Button Cloud Execution
 
-Run the interactive Human Rejuvenation Simulator to see the closed-loop flight controller in action:
-```bash
-python src/demo/10_human_rejuvenation_sim.py
-```
+Stable Basin uses declarative YAML configurations for distributed parallel execution.
 
-Run the Fault-Tolerant Imputation trial (Route 2: The Blind Reach):
+**1. Run the CI/CD Smoke Test**
+Ensure your hardware and registry are perfectly configured:
+`make preflight`
 
-```bash
-python src/demo/02_fault_tolerant_imputation.py
-```
-
-### Weights & Biases (WandB) Distributed Training
-
-To scale the training and evaluation across a GPU cluster, use the provided WandB sweep orchestration:
-
-1. Authenticate with your API key:
-   ```bash
-   wandb login
-   ```
-2. Initialize the cloud orchestrator using the provided grid search matrix:
-   ```bash
-   wandb sweep src/harness/density_sweep.yaml
-   ```
-3. Launch agents across your GPUs to chew through the work in parallel!
-   ```bash
-   wandb agent <SWEEP_ID>
-   ```
+**2. Execute the Clinical Autopsy Pipeline**
+This command spins up parallel workers to evaluate the architectures simultaneously against the pharmacological crash dataset:
+`make clinical-autopsy`
+*All inference latencies, KSM traces, and MambaLRP Causal Autopsy JSONs will automatically sync to your W&B cloud dashboard.*
 
 ## 🧬 Thermodynamic Metrics
 

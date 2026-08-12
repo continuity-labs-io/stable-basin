@@ -41,3 +41,14 @@ EPOCHS ?= 15
 
 clinical-autopsy:
 	python -m src.harness.clinical_autopsy_runner --config configs/clinical_autopsy.yaml
+
+.PHONY: preflight docker-build
+
+preflight:
+	@echo "Running Preflight Smoke Tests..."
+	python -m src.harness.smoke_test
+	@echo "Smoke tests passed! The registry is stable."
+
+docker-build:
+	@echo "Building Stable Basin Docker Image..."
+	docker build -t stable-basin:latest .
