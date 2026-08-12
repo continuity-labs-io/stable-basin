@@ -14,7 +14,7 @@ import logging
 
 from src.models.ssm.mask_aware_mamba import MaskAwareMamba
 from src.metrics.metrics import ThermodynamicMetrics
-from src.metrics.telemetry_logger import TelemetryLogger
+from src.system.telemetry_logger import TelemetryLogger
 from src.utils.device import get_optimal_device
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")

@@ -26,7 +26,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from src.metrics.hardware_monitor import HardwareMonitor
+from src.system.hardware_monitor import HardwareMonitor
 from src.metrics.metrics import ThermodynamicMetrics
 from src.data.sim2real.gevi_injector import GEVIInjector
 from src.models.encoders.spatial_compressor import SpatialCompressor

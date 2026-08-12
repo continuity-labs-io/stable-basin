@@ -44,7 +44,7 @@ from src.models.ssm.spike_forecaster import SpikeForecaster
 from src.models.losses.meld_loss import MeldLoss
 from src.metrics.metrics import ThermodynamicMetrics
 from src.metrics.mamba_lrp import MambaLRPEpsilon
-from src.metrics.hardware_monitor import HardwareMonitor
+from src.system.hardware_monitor import HardwareMonitor
 from src.utils.device import get_optimal_device
 
 
