@@ -3,14 +3,22 @@ import torch.nn as nn
 
 
 class BaselineTransformer(nn.Module):
-    def __init__(self, d_model: int = 64, nhead: int = 4, num_layers: int = 2, max_len: int = 10000):
+    def __init__(
+        self,
+        d_model: int = 64,
+        nhead: int = 4,
+        num_layers: int = 2,
+        max_len: int = 10000,
+        pos_embedding_scale: float = 0.02,
+        ff_expansion_factor: int = 4,
+    ):
         super().__init__()
         self.d_model = d_model
         # Learnable positional encoding
-        self.pos_embedding = nn.Parameter(torch.randn(1, max_len, d_model) * 0.02)
+        self.pos_embedding = nn.Parameter(torch.randn(1, max_len, d_model) * pos_embedding_scale)
 
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=d_model, nhead=nhead, batch_first=True, dim_feedforward=d_model * 4
+            d_model=d_model, nhead=nhead, batch_first=True, dim_feedforward=d_model * ff_expansion_factor
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 

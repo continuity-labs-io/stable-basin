@@ -9,7 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from src.data.waddington_dataset import SyntheticWaddingtonDataset
-from src.models.simulators.sensor_fusion_predictor import SensorFusionPredictor
+from src.harness.sensor_fusion_predictor import SensorFusionPredictor
 from src.utils.device import get_optimal_device
 import logging
 

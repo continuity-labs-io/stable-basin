@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from src.data.waddington_dataset import SyntheticWaddingtonDataset
-from src.models.simulators.sensor_fusion_predictor import SensorFusionPredictor, SSMType
+from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
 from src.utils.device import get_optimal_device
 from torch.utils.data import DataLoader, Dataset
 import logging

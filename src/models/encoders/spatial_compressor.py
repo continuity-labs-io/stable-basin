@@ -64,16 +64,3 @@ class SpatialCompressor(nn.Module):
         out = features.view(B, T, -1)
 
         return out
-
-
-if __name__ == "__main__":
-    # Quick test of the architecture matching the requirements
-    logger.info("Testing SpatialCompressor architecture...")
-    model = SpatialCompressor()
-    # Dummy input mirroring our dataloader format: [Batch, Time, Channels, Depth, Height, Width]
-    x = torch.randn(2, 5, 2, 128, 128, 128)
-    logger.info(f"Input shape: {x.shape}")
-
-    out = model(x)
-    logger.info(f"Output shape: {out.shape}")
-    logger.info("Test passed! Output matches [Batch, Time, 768]")

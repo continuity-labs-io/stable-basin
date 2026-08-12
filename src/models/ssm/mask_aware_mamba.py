@@ -50,7 +50,8 @@ class MaskAwareMamba(nn.Module):
 
     def forward(self, x, mask=None, return_hidden=False):
         if self.mask_aware:
-            mask = torch.isnan(x).float()
+            if mask is None:
+                mask = torch.isnan(x).float()
             x_safe = torch.nan_to_num(x, nan=0.0)
             x_in = torch.cat([x_safe, mask], dim=-1)
             h = self.input_proj(x_in)
