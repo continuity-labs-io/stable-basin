@@ -7,7 +7,7 @@ import time
 
 from src.pipeline.sim2real.human_telemetry_dataloader import HumanTelemetryLoader
 from src.pipeline.sim2real.epigenetic_entropy_dataloader import EpigeneticEntropyLoader
-from src.models.ssm.meld_engine import MeldEngine
+from src.models.ssm.mask_aware_mamba import MaskAwareMamba
 from src.metrics.metrics import ThermodynamicMetrics
 from src.core.rejuvenation_controller import RejuvenationFlightController
 
@@ -25,7 +25,7 @@ def main():
     
     # 1. Initialize Components
     logger.info("[1/4] Booting Biological Flight Computer...")
-    engine = MeldEngine(input_dim=6, d_model=32, mask_aware=True).to(device)
+    engine = MaskAwareMamba(input_dim=6, d_model=32, mask_aware=True).to(device)
     metrics = ThermodynamicMetrics()
     controller = RejuvenationFlightController(engine, metrics, hysteresis_frames=3)
     

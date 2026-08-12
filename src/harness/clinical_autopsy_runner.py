@@ -14,7 +14,7 @@ from src.models.attention.baseline_transformer import BaselineTransformer
 from src.metrics.autopsy_engine import ThermodynamicAutopsyEngine
 from src.models.ssm.baseline_ssm import BaselineSSM
 from src.models.ssm.mask_aware_ssm import MaskAwareSSM
-from src.models.ssm.meld_engine import MeldEngine
+from src.models.ssm.mask_aware_mamba import MaskAwareMamba
 from src.metrics.metrics import ThermodynamicMetrics
 from src.metrics.mamba_lrp import MambaLRPEpsilon
 from src.utils.device import get_optimal_device
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class ModelAdapter(nn.Module):
     """
     Adapter to give BaselineSSM, BaselineTransformer, and MaskAwareSSM
-    the same interface as MeldEngine (input projection, forward forecasting head, etc).
+    the same interface as MaskAwareMamba (input projection, forward forecasting head, etc).
     """
     def __init__(self, core_model, input_dim=1024, d_model=256, is_mask_aware=False):
         super().__init__()
@@ -102,7 +102,7 @@ def main():
     d_model = 256
     
     if args.model_type == "meld":
-        model = MeldEngine(input_dim=input_dim, d_model=d_model, mask_aware=False).to(device)
+        model = MaskAwareMamba(input_dim=input_dim, d_model=d_model, mask_aware=False).to(device)
     elif args.model_type == "baseline":
         core = BaselineSSM(d_model=d_model)
         model = ModelAdapter(core, input_dim=input_dim, d_model=d_model).to(device)

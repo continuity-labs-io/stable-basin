@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("IndestructibleEdge")
 
 
-from src.models.ssm.meld_engine import MeldEngine
+from src.models.ssm.mask_aware_mamba import MaskAwareMamba
 
 
 # --- Data Generator ---
@@ -144,7 +144,7 @@ def main():
 
     print("\n[*] BOOTING DEMO 2: THE INDESTRUCTIBLE EDGE")
 
-    engine = MeldEngine(input_dim=114, d_model=256, mask_aware=True).to(device)
+    engine = MaskAwareMamba(input_dim=114, d_model=256, mask_aware=True).to(device)
     simulator = WetLabDisasterSimulator(seq_len=200, input_dim=114)
     optimizer = optim.AdamW(engine.parameters(), lr=1e-3)
 

@@ -1,7 +1,7 @@
 """
 Demo 05: Flight Recorder
 
-This script simulates a real-time, asynchronous telemetry stream of the MeldEngine's
+This script simulates a real-time, asynchronous telemetry stream of the MaskAwareMamba's
 internal physics state using the TelemetryExhaust bridge to the Rerun viewer.
 It streams Fedichev Macrostates and the phase space geometry without blocking inference.
 """
@@ -12,7 +12,7 @@ import torch
 import numpy as np
 import logging
 
-from src.models.ssm.meld_engine import MeldEngine
+from src.models.ssm.mask_aware_mamba import MaskAwareMamba
 from src.metrics.metrics import ThermodynamicMetrics
 from src.metrics.telemetry_exhaust import TelemetryExhaust
 from src.utils.device import get_optimal_device
@@ -25,7 +25,7 @@ def main():
     logger.info("\n[*] BOOTING DEMO 05: THE FLIGHT RECORDER")
     
     # 1. Initialize our engine
-    engine = MeldEngine(input_dim=114, d_model=256, mask_aware=False).to(device)
+    engine = MaskAwareMamba(input_dim=114, d_model=256, mask_aware=False).to(device)
     engine.eval()
     
     # 2. Initialize the metrics extractor and telemetry bridge
@@ -61,7 +61,7 @@ def main():
         # 1. Forward Pass (Inference)
         with torch.no_grad():
             # In a real streaming app, we'd process windowed chunks. Here we simulate it.
-            # MeldEngine expects [Batch, Seq, Features]
+            # MaskAwareMamba expects [Batch, Seq, Features]
             batch_base = baseline_data[:t].unsqueeze(0)
             batch_pert = perturbed_data[:t].unsqueeze(0)
             

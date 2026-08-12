@@ -1,6 +1,6 @@
 import torch
 import time
-from src.models.ssm.meld_engine import MeldEngine
+from src.models.ssm.mask_aware_mamba import MaskAwareMamba
 from src.metrics.metrics import ThermodynamicMetrics, calculate_dynamic_rank
 
 import logging
@@ -112,7 +112,7 @@ def main():
     device = get_optimal_device(verbose=True)
     logger.info(f"Using device: {device}")
 
-    model = MeldEngine(input_dim=832, d_model=256, mask_aware=False).to(device).eval()
+    model = MaskAwareMamba(input_dim=832, d_model=256, mask_aware=False).to(device).eval()
 
     logger.info("Running Accuracy Benchmark (Temporal Lag)...")
     drop_frame = run_accuracy_benchmark(device)

@@ -1,7 +1,7 @@
 import torch
 import pytest
 from src.metrics.mamba_lrp import MambaLRPEpsilon
-from src.models.ssm.meld_engine import MeldEngine
+from src.models.ssm.mask_aware_mamba import MaskAwareMamba
 from src.utils.device import get_optimal_device
 
 
@@ -14,7 +14,7 @@ def test_relevance_conservation_axiom():
     device = get_optimal_device(allow_mps=False)  # CPU for deterministic math
 
     # Initialize a small test model
-    model = MeldEngine(input_dim=16, d_model=32, mask_aware=False).to(device)
+    model = MaskAwareMamba(input_dim=16, d_model=32, mask_aware=False).to(device)
     lrp = MambaLRPEpsilon(model, epsilon=1e-7)
 
     # Generate random biological tensor [Batch, Time, Channels]

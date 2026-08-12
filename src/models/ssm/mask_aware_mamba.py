@@ -6,36 +6,46 @@ import torch.nn.functional as F
 try:
     from mamba_ssm import Mamba2
 except ImportError:
-    logging.warning("mamba_ssm is not installed. MeldEngine will fall back to an Identity backbone.")
+    logging.warning("mamba_ssm is not installed. MaskAwareMamba will fall back to an Identity backbone.")
     Mamba2 = None
 
-class MeldEngine(nn.Module):
+class MaskAwareMamba(nn.Module):
     """
-    Unified Continuous-Time State Space Engine for multimodal telemetry.
-    Handles standard forecasting, reverse time reconstruction, and mask-aware routing.
+    Mask-Aware Mamba-2 Engine for multimodal telemetry.
+    
+    Comparable to `MaskAwareSSM`, but uses a highly optimized Mamba-2 backbone 
+    instead of a baseline ZOH continuous-time formulation. 
+    
+    Note on Heads: This module is specifically designed for Thermodynamic/Custom 
+    loss functions, which is why it utilizes a dual-head architecture:
+    - forward_head: standard causal forecasting (predicts t+1)
+    - reverse_head: auto-encoding/reconstruction (reconstructs t)
     """
     def __init__(self, input_dim: int, d_model: int = 256, d_state: int = 64, mask_aware: bool = False):
         super().__init__()
         self.mask_aware = mask_aware
         
-        # If mask_aware is True, we double the input dim to concatenate the sensor failure mask
-        in_features = input_dim * 2 if mask_aware else input_dim
+        if mask_aware:
+            # double the input dim for concatenated sensor failure mask
+            in_features = input_dim * 2
+            self.input_proj = nn.Sequential(
+                nn.Linear(in_features, d_model),
+                nn.LayerNorm(d_model),
+                nn.GELU(),
+                nn.Linear(d_model, d_model),
+            )
+        else:
+            in_features = input_dim
+            self.input_proj = nn.Linear(input_dim, d_model)
 
-        self.input_proj = nn.Sequential(
-            nn.Linear(in_features, d_model),
-            nn.LayerNorm(d_model),
-            nn.GELU(),
-            nn.Linear(d_model, d_model),
-        ) if mask_aware else nn.Linear(input_dim, d_model)
-
-        # Core SSM Backbone
         if Mamba2 is not None:
             self.mamba = Mamba2(d_model=d_model, d_state=d_state)
         else:
             self.mamba = nn.Identity()
 
-        # Forward head (predicts t+1) and Reverse head (reconstructs t for Thermodynamic loss)
+        # Standard causal forecasting head (predicts x_{t+1})
         self.forward_head = nn.Linear(d_model, input_dim)
+        # Reverse head for thermodynamic loss (reconstructs x_t)
         self.reverse_head = nn.Linear(d_model, input_dim)
 
     def forward(self, x, mask=None, return_hidden=False):
@@ -49,6 +59,7 @@ class MeldEngine(nn.Module):
 
         hidden_states = self.mamba(h)
 
+        # positive values in prediction
         pred_t_plus_1 = F.softplus(self.forward_head(hidden_states))
         reconstructed_t = F.softplus(self.reverse_head(hidden_states))
 

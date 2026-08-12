@@ -30,7 +30,7 @@ class AttributionEngine:
         x_req = x.clone().detach().requires_grad_(True)
         out = model(x_req)
         
-        # Handle models that return tuples (like MeldEngine returning pred_t_plus_1, reconstructed_t, etc)
+        # Handle models that return tuples (like MaskAwareMamba returning pred_t_plus_1, reconstructed_t, etc)
         predicted_state = out[0] if isinstance(out, tuple) else out
         
         target_state_sum = predicted_state[:, target_time_step, :].sum()

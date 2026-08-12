@@ -18,7 +18,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import logging
 
-from src.models.ssm.meld_engine import MeldEngine
+from src.models.ssm.mask_aware_mamba import MaskAwareMamba
 from src.metrics.mamba_lrp import MambaLRPEpsilon
 from src.metrics.autopsy_engine import ThermodynamicAutopsyEngine
 from src.utils.device import get_optimal_device
@@ -77,7 +77,7 @@ def main():
     device = torch.device("cpu")
 
     print("\n[*] BOOTING DEMO 3: THE MULTIMODAL AUTOPSY")
-    engine = MeldEngine(input_dim=114, d_model=256, mask_aware=False).to(device)
+    engine = MaskAwareMamba(input_dim=114, d_model=256, mask_aware=False).to(device)
 
     logger.info("[*] Generating baseline biology and running burn-in...")
     clean_data = (torch.randn(1, 200, 114).abs() * 0.5).to(device)
