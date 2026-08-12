@@ -1,6 +1,11 @@
+We are upgrading to `OrthogonalModalityEncoder` with Proportional Orthogonal Routing. Please make the following updates:
+
+**1. Update `src/models/encoders/orthonogonal_modality_encoder.py`**
+Replace the existing fusion class with this implementation that safely handles edge cases in proportional routing:
+
+```python
 import torch
 import torch.nn as nn
-
 
 class OrthogonalModalityEncoder(nn.Module):
     """
@@ -60,3 +65,39 @@ class OrthogonalModalityEncoder(nn.Module):
         latent_x = self.W_cart(x_raw)
         latent_gate = torch.sigmoid(self.W_gate(mask))
         return latent_x, latent_gate
+```
+
+2. Update src/models/simulators/sensor_fusion_predictor.py
+Update the SensorFusionPredictor initialization to correctly instantiate the new encoder. Change the __init__ signature to accept modality_dims: list[int] = None.
+
+```
+from src.models.encoders.fusion import OrthogonalModalityEncoder
+
+    def __init__(self, ssm_type: str, modality_dims: list[int] = None, d_model: int = 64):
+        super().__init__()
+        self.ssm_type = ssm_type
+        
+        # Default to the Waddington dataset dimensions if not provided
+        if modality_dims is None:
+            modality_dims = [20, 10]
+            
+        d_sensor_total = sum(modality_dims)
+        num_modalities = len(modality_dims)
+
+        if ssm_type == "mask_concat":
+            # The input dimension is inflated by the mask size
+            self.fusion = OrthogonalModalityEncoder(
+                d_in=d_sensor_total + num_modalities, 
+                modality_dims=modality_dims, 
+                d_model=d_model
+            )
+        else:
+            self.fusion = OrthogonalModalityEncoder(
+                d_in=d_sensor_total, 
+                modality_dims=modality_dims, 
+                d_model=d_model
+            )
+```
+
+3. write unit test verifying the edge case modality_dims=[1000, 2] with d_model=64 properly allocates exactly 63 channels to Modality 0, and 1 channel to Modality 1 without throwing any errors.
+

@@ -31,7 +31,7 @@ class SSMType(str, Enum):
 
 class SensorFusionPredictor(nn.Module):
     def __init__(
-        self, ssm_type: str, total_raw_sensor_input_dim: int = 30, num_modalities: int = 2, d_model: int = 64
+        self, ssm_type: str, modality_dims: list[int] = None, d_model: int = 64
     ):
         """
         Initializes the SensorFusionPredictor.
@@ -39,20 +39,33 @@ class SensorFusionPredictor(nn.Module):
         Args:
             ssm_type (str): The type of State-Space Model or baseline to instantiate 
                 (e.g., 'mask_aware', 'mask_aware_mamba', 'transformer', 'baseline').
-            total_raw_sensor_input_dim (int): The total dimension of the raw sensor input 
-                across all modalities (e.g., 30 for a 20-dim dense + 10-dim sparse split).
-            num_modalities (int): The total number of distinct modalities present in the raw input. 
-                This defines the size of the presence mask.
+            modality_dims (list[int]): A list of dimensions for each modality.
+                Defaults to [20, 10] (20-dim dense, 10-dim sparse) if not provided.
             d_model (int): The hidden dimension (latent space) for the state space model.
         """
         super().__init__()
         self.ssm_type = ssm_type
 
+        # Default to the Waddington dataset dimensions if not provided
+        if modality_dims is None:
+            modality_dims = [20, 10]
+            
+        d_sensor_total = sum(modality_dims)
+        num_modalities = len(modality_dims)
+
         if ssm_type == "mask_concat":
-            # concatenate the 'num_modalities' mask to the 'total_raw_sensor_input_dim' raw data
-            self.fusion = OrthogonalModalityEncoder(total_raw_sensor_input_dim + num_modalities, num_modalities, d_model)
+            # The input dimension is inflated by the mask size
+            self.fusion = OrthogonalModalityEncoder(
+                d_in=d_sensor_total + num_modalities, 
+                modality_dims=modality_dims, 
+                d_model=d_model
+            )
         else:
-            self.fusion = OrthogonalModalityEncoder(total_raw_sensor_input_dim, num_modalities, d_model)
+            self.fusion = OrthogonalModalityEncoder(
+                d_in=d_sensor_total, 
+                modality_dims=modality_dims, 
+                d_model=d_model
+            )
 
         if ssm_type in ["baseline", "forward_fill", "mask_concat"]:
             self.ssm = BaselineSSM(d_model)
