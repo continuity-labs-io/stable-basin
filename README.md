@@ -1,4 +1,4 @@
-# Stable Basin
+# Stable Basin 🥣
 
 > **Benchmarking continuous-time AI on its ability to maintain biological homeostasis against entropic decay.**
 
@@ -53,11 +53,11 @@ If the system falls out of the basin, can it compute the optimal path back in?
 
 ---
 
-## ⚙️ The Reference Architecture: `MeldEngine`
+## ⚙️ The Reference Architecture: `MaskAwareMamba`
 
-To provide a baseline for the benchmark, this repository includes the **MeldEngine**, a continuous-time state-space reference architecture powered by **Mamba-2**. 
+To provide a baseline for the benchmark, this repository includes the **MaskAwareMamba**, a continuous-time state-space reference architecture powered by **Mamba-2**. 
 
-Unlike standard Transformers that suffer from $\mathcal{O}(N^2)$ context limits and rely on discrete tokens, the `MeldEngine` utilizes Mask-Aware Subspace Routing to dynamically modulate the flow of time and maintain an $\mathcal{O}(1)$ VRAM footprint on edge hardware.
+Unlike standard Transformers that suffer from $\mathcal{O}(N^2)$ context limits and rely on discrete tokens, the `MaskAwareMamba` utilizes Mask-Aware Subspace Routing to dynamically modulate the flow of time and maintain an $\mathcal{O}(1)$ VRAM footprint on edge hardware.
 
 ### Quickstart: Running the Routes
 
@@ -91,7 +91,15 @@ To scale the training and evaluation across a GPU cluster, use the provided Wand
 
 ## 🧬 Thermodynamic Metrics
 
-The core of the Stable Basin is our deterministic physics evaluation suite (src/metrics/), which extracts true macroscopic variables from the model's latent embedding space:Koopman Stability Metric (KSM): Dynamic Mode Decomposition (DMD) to calculate the stable eigenvalue bounds of the biological attractor.Critical Slowing Down (CSD): Variance and AR1 tracking to detect phase transitions before they occur.Fedichev Macrostates: Tracking the continuous accumulation of configurational entropy ($Z$) over millions of frames.MambaLRP-Epsilon: Mathematically exact Layer-wise Relevance Propagation designed explicitly for continuous-time SSMs to trace crashes back to their root biological circuit.
+The core of the Stable Basin is our deterministic physics evaluation suite (src/metrics/), which extracts true macroscopic variables from the model's latent embedding space:
+
+- **Koopman Stability Metric (KSM)**: Dynamic Mode Decomposition (DMD) to calculate the stable eigenvalue bounds of the biological attractor.
+
+- **Critical Slowing Down (CSD)**: Variance and AR1 tracking to detect phase transitions before they occur.
+
+- **Fedichev Macrostates**: Tracking the continuous accumulation of configurational entropy ($Z$) over millions of frames.
+
+- **MambaLRP-Epsilon**: Mathematically exact Layer-wise Relevance Propagation designed explicitly for continuous-time SSMs to trace crashes back to their root biological circuit.
 
 ## 🔍 Open Research Problems
 

@@ -55,7 +55,8 @@ class StableBasinTrainer:
         
         if use_wandb:
             import wandb
-            wandb.log({"train_loss": avg_loss, "epoch": epoch, "epoch_time": epoch_time})
+            if wandb.run is not None:
+                wandb.log({"train_loss": avg_loss, "epoch": epoch, "epoch_time": epoch_time})
             
         return avg_loss
 

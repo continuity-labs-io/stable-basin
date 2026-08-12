@@ -7,7 +7,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-import matplotlib.pyplot as plt
+
+
+import ray
+from ray import tune, train
+import wandb
 
 from src.data.ephys.pharma_shock_dataset import PharmacologicalShockDataset
 from src.models.attention.baseline_transformer import BaselineTransformer
@@ -48,7 +52,6 @@ class ModelAdapter(nn.Module):
             hidden_states = self.core(h)
         pred_t_plus_1 = F.softplus(self.forward_head(hidden_states))
         
-        # We don't strictly need reconstructed_t for residual MSE, but we match signature
         reconstructed_t = pred_t_plus_1 
         
         if return_hidden:
@@ -70,8 +73,22 @@ class NpEncoder(json.JSONEncoder):
             return obj.tolist()
         return super(NpEncoder, self).default(obj)
 
-def run_autopsy_for_model(model_type, config, telemetry, mask, device):
-    from src.harness.trainer import StableBasinTrainer
+
+def evaluate_model(trial_config):
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    
+    config = trial_config["base_config"]
+    model_type = trial_config["model_type"]
+    device = get_optimal_device(verbose=False)
+    
+    wandb.init(
+        project="stable-basin",
+        name=f"autopsy_{model_type}",
+        config={"model_type": model_type, **config},
+        reinit=True
+    )
     
     logger.info(f"--- Running Autopsy for Model: {model_type} ---")
     
@@ -83,8 +100,27 @@ def run_autopsy_for_model(model_type, config, telemetry, mask, device):
     ksm_threshold = config["evaluation"]["ksm_threshold"]
     png_prefix = config["evaluation"]["png_prefix"]
     csv_prefix = config["evaluation"]["csv_prefix"]
+    condition = config["data"]["condition"]
     
-    # 1. Initialize Model
+    logger.info(f"Loading PharmacologicalShockDataset (seq_len={seq_len}) on worker")
+    try:
+        dataset = PharmacologicalShockDataset(condition=condition, seq_len=seq_len)
+        telemetry = dataset[0].unsqueeze(0).to(device)  # shape: [1, seq_len, 1024]
+        mask = torch.ones_like(telemetry)
+    except FileNotFoundError:
+        logger.warning("Dataset file not found. Generating dummy telemetry for testing.")
+        t = torch.linspace(0, 10 * np.pi, seq_len, device=device).unsqueeze(1)
+        freqs = torch.linspace(0.5, 3.0, 1024, device=device)
+        healthy = torch.sin(t * freqs) + (torch.randn(seq_len, 1024, device=device) * 0.1)
+        telemetry = healthy.unsqueeze(0)
+        
+        crash_frame_true = seq_len // 2
+        telemetry[:, crash_frame_true:, :] = torch.randn_like(telemetry[:, crash_frame_true:, :]) * 0.5
+        telemetry[:, crash_frame_true-50:crash_frame_true, 120:130] = telemetry[:, crash_frame_true-50:crash_frame_true, 120:130] + 5.0
+        
+        mask = (torch.rand_like(telemetry) > 0.90).float()
+        telemetry = telemetry * mask
+
     logger.info(f"Initializing {model_type} model")
     if model_type == "meld":
         model = MaskAwareMamba(input_dim=input_dim, d_model=d_model, mask_aware=False).to(device)
@@ -100,24 +136,22 @@ def run_autopsy_for_model(model_type, config, telemetry, mask, device):
     else:
         raise ValueError(f"Unknown model_type: {model_type}")
 
-    # Register LRP strategy with the AttributionEngine
     lrp_engine = MambaLRPEpsilon(model)
     from src.metrics.attribution_engine import AttributionEngine
     AttributionEngine.get_instance().set_strategy(lambda m, x, t: lrp_engine.attribute(x, t))
 
-    # 2. Burn-in Training Loop with Residual MSE using StableBasinTrainer
     burn_in_len = min(burn_in_frames, seq_len // 4)
     x_train = telemetry[:, :burn_in_len, :]
     mask_train = mask[:, :burn_in_len, :]
     
     optimizer = torch.optim.AdamW(model.parameters(), lr=config["training"]["lr"])
+    from src.harness.trainer import StableBasinTrainer
     trainer = StableBasinTrainer(model, optimizer, device, loss_type="residual_mse")
     
     logger.info(f"Starting Burn-In Training for {epochs} epochs on first {burn_in_len} frames")
     dataloader = [{"x_raw": x_train, "mask": mask_train}]
-    trainer.fit(dataloader, epochs)
+    trainer.fit(dataloader, epochs, use_wandb=True)
 
-    # Calculate baseline KSM variance on training segment
     model.eval()
     with torch.no_grad():
         _, base_hidden = model(x_train, mask=mask_train)
@@ -125,7 +159,6 @@ def run_autopsy_for_model(model_type, config, telemetry, mask, device):
         base_ksm_variance = torch.var(torch.tensor(base_ksm, dtype=torch.float32)).item()
         logger.info(f"Baseline Thermodynamic Stability (KSM Variance): {base_ksm_variance:.6e}")
 
-    # 3. Dynamic Crash Detection
     logger.info("Running dynamic crash detection over full sequence")
     start_time = time.time()
     with torch.no_grad():
@@ -145,11 +178,10 @@ def run_autopsy_for_model(model_type, config, telemetry, mask, device):
 
     if crash_frame == -1:
         logger.warning(f"Crash frame not found! KSM never dropped below {ksm_threshold}.")
-        crash_frame = len(ksm_np) - 1 # Default to end
+        crash_frame = len(ksm_np) - 1 
     else:
         logger.info(f"Detected crash at frame {crash_frame} (KSM dropped below {ksm_threshold})")
 
-    # 4. Causal Autopsy via MambaLRP
     logger.info("Executing Thermodynamic Autopsy Engine")
     feature_names = [f"Ch_{i}" for i in range(input_dim)]
     autopsy = ThermodynamicAutopsyEngine(model, feature_names=feature_names)
@@ -157,10 +189,9 @@ def run_autopsy_for_model(model_type, config, telemetry, mask, device):
     try:
         report = autopsy.generate_autopsy(telemetry, crash_time_step=crash_frame)
     except Exception as e:
-        logger.warning(f"Autopsy generation failed (possibly dummy data issues): {e}")
+        logger.warning(f"Autopsy generation failed: {e}")
         report = {"error": str(e), "crash_frame": crash_frame}
 
-    # 5. Artifacts Saving & Dashboard
     os.makedirs("output/harness", exist_ok=True)
     report_path = f"output/harness/clinical_autopsy_report_{model_type}.json"
     with open(report_path, "w") as f:
@@ -179,19 +210,16 @@ def run_autopsy_for_model(model_type, config, telemetry, mask, device):
 
     fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
     
-    # Pool channels to 128 for plotting
     raw_np = telemetry.squeeze().cpu().numpy() # [seq_len, input_dim]
     pool_factor = max(1, raw_np.shape[1] // 128)
     raw_pooled = raw_np[:, ::pool_factor].T # [128, seq_len]
 
-    # Panel 1: Raw Telemetry Heatmap
     axes[0].imshow(raw_pooled, aspect='auto', cmap='viridis', origin='lower')
     axes[0].axvline(x=crash_frame, color='red', linestyle='--', label='Crash Frame')
     axes[0].set_title(f"{model_type.upper()} - {input_dim}-Ch Telemetry (MaxPool 128)")
     axes[0].set_ylabel("Channels")
     axes[0].legend()
 
-    # Panel 2: KSM Over Time
     axes[1].plot(ksm_np, color='orange')
     axes[1].axhline(y=ksm_threshold, color='red', linestyle=':', label='Threshold')
     axes[1].axvline(x=crash_frame, color='red', linestyle='--')
@@ -200,12 +228,11 @@ def run_autopsy_for_model(model_type, config, telemetry, mask, device):
     axes[1].set_ylim(-0.1, 1.1)
     axes[1].legend()
 
-    # Panel 3: MambaLRP Causal Attribution
     logger.info("Extracting full attribution sequence for Panel 3 plotting...")
     try:
         relevance_tensor = AttributionEngine.get_instance().compute_attribution(model, telemetry, target_time_step=crash_frame)
-        rel_np = relevance_tensor.squeeze().cpu().numpy() # [seq_len, input_dim]
-        rel_pooled = rel_np[:, ::pool_factor].T # [128, seq_len]
+        rel_np = relevance_tensor.squeeze().cpu().numpy() 
+        rel_pooled = rel_np[:, ::pool_factor].T 
         
         axes[2].imshow(rel_pooled, aspect='auto', cmap='magma', origin='lower')
         axes[2].axvline(x=crash_frame, color='white', linestyle='--')
@@ -222,42 +249,56 @@ def run_autopsy_for_model(model_type, config, telemetry, mask, device):
     plt.savefig(png_path, dpi=300)
     logger.info(f"Dashboard saved to {png_path}")
     plt.close(fig)
+    
+    if wandb.run is not None:
+        wandb.log({
+            "inference_latency_ms": latency_ms,
+            "baseline_ksm_variance": base_ksm_variance,
+            "crash_frame": crash_frame,
+            "dashboard": wandb.Image(png_path)
+        })
+
+        artifact = wandb.Artifact(f"autopsy_{model_type}", type="report")
+        artifact.add_file(report_path)
+        artifact.add_file(csv_path)
+        wandb.log_artifact(artifact)
+        
+    tune.report({
+        "latency_ms": latency_ms, 
+        "crash_frame": crash_frame, 
+        "baseline_ksm_variance": base_ksm_variance
+    })
+    
+    wandb.finish()
+
 
 def main():
     import yaml
-    parser = argparse.ArgumentParser(description="Clinical Autopsy Runner")
+    parser = argparse.ArgumentParser(description="Clinical Autopsy Runner (Distributed)")
     parser.add_argument("--config", type=str, required=True, help="Path to YAML config")
     args = parser.parse_args()
 
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
-
-    device = get_optimal_device(verbose=True)
-    
-    seq_len = config["data"]["seq_len"]
-    condition = config["data"]["condition"]
-    
-    logger.info(f"Loading PharmacologicalShockDataset (seq_len={seq_len})")
-    try:
-        dataset = PharmacologicalShockDataset(condition=condition, seq_len=seq_len)
-        telemetry = dataset[0].unsqueeze(0).to(device)  # shape: [1, seq_len, 1024]
-        mask = torch.ones_like(telemetry)
-    except FileNotFoundError:
-        logger.warning("Dataset file not found. Generating dummy telemetry for testing.")
-        t = torch.linspace(0, 10 * np.pi, seq_len, device=device).unsqueeze(1)
-        freqs = torch.linspace(0.5, 3.0, 1024, device=device)
-        healthy = torch.sin(t * freqs) + (torch.randn(seq_len, 1024, device=device) * 0.1)
-        telemetry = healthy.unsqueeze(0)
         
-        crash_frame_true = seq_len // 2
-        telemetry[:, crash_frame_true:, :] = torch.randn_like(telemetry[:, crash_frame_true:, :]) * 0.5
-        telemetry[:, crash_frame_true-50:crash_frame_true, 120:130] = telemetry[:, crash_frame_true-50:crash_frame_true, 120:130] + 5.0
-        
-        mask = (torch.rand_like(telemetry) > 0.90).float()
-        telemetry = telemetry * mask
-
-    for model_type in config["models"]:
-        run_autopsy_for_model(model_type, config, telemetry, mask, device)
+    search_space = {
+        "base_config": config,
+        "model_type": tune.grid_search(config["models"])
+    }
+    
+    ray.init(ignore_reinit_error=True)
+    
+    tuner = tune.Tuner(
+        tune.with_resources(
+            evaluate_model, 
+            resources={"cpu": 1, "gpu": 1 if torch.cuda.is_available() else 0}
+        ),
+        param_space=search_space,
+        run_config=tune.RunConfig(name="clinical_autopsy_sweep")
+    )
+    
+    results = tuner.fit()
+    logger.info("Ray Tune execution complete.")
 
 if __name__ == "__main__":
     main()
