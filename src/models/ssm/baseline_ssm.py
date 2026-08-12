@@ -4,12 +4,23 @@ import torch.nn as nn
 
 class BaselineSSM(nn.Module):
     """
-    Standard continuous-time SSM that ingests data blindly. Acts as a control group.
+    A baseline continuous-time State Space Model (SSM) that processes all
+    timesteps sequentially without any explicit masking mechanism (i.e., it
+    ingests padded or masked states blindly). 
+    
+    It serves as a control group against mask-aware variants. The model uses
+    Zero-Order Hold (ZOH) discretization with an input-dependent time step
+    (`dt`) and input projection (`B`), while the state transition `A` is a
+    learned global parameter restricted to negative values for stability.
     """
 
-    def __init__(self, d_model: int):
+    def __init__(self, d_model: int, A_scale: float = 0.5, A_shift: float = 0.1):
         super().__init__()
-        self.A_log = nn.Parameter(torch.log(torch.rand(d_model) * 0.5 + 0.1))
+        # Initialize A uniformly in [- (A_scale + A_shift), -A_shift] (since A = -exp(A_log)). The
+        # shift bounds A away from 0 to prevent infinite memory, and the
+        # scale ensures memory doesn't decay instantly, providing diverse
+        # timescales.
+        self.A_log = nn.Parameter(torch.log(torch.rand(d_model) * A_scale + A_shift))
         self.B_proj = nn.Linear(d_model, d_model, bias=False)
         self.dt_proj = nn.Linear(d_model, d_model)
 
@@ -26,6 +37,7 @@ class BaselineSSM(nn.Module):
         hidden_states = []
         for t in range(seq_len):
             x_t = latent_x[:, t, :]
+
             dt = torch.nn.functional.softplus(self.dt_proj(x_t))
             B = self.B_proj(x_t)
 

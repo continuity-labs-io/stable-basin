@@ -79,15 +79,11 @@ class ThermodynamicAutopsyEngine:
         """
         # x_sequence: [1, Time, 114]
 
-        # 1. Compute first-order Taylor attribution
-        if hasattr(self.model, "compute_attribution"):
-            attribution_matrix = self.model.compute_attribution(x_sequence, crash_time_step)
-        else:
-            x_req = x_sequence.clone().detach().requires_grad_(True)
-            predicted_state, _ = self.model(x_req)
-            target_state_sum = predicted_state[:, crash_time_step, :].sum()
-            gradients = torch.autograd.grad(target_state_sum, x_req, retain_graph=True)[0]
-            attribution_matrix = x_req.detach() * gradients
+        # 1. Compute attribution using the singleton engine
+        from src.metrics.attribution_engine import AttributionEngine
+        attribution_matrix = AttributionEngine.get_instance().compute_attribution(
+            self.model, x_sequence, crash_time_step
+        )
 
         # attribution_matrix is [1, Time, 114]
         attr_np = attribution_matrix[0].detach().cpu().numpy()  # [Time, 114]

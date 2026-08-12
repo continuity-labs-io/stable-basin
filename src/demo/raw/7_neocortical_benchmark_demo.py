@@ -64,7 +64,8 @@ def main():
     test_seq[:, EVENT_FRAME:, :] *= 0.05
 
     # Extract attribution map
-    attribution_map = engine.compute_attribution(test_seq, target_time_step=EVENT_FRAME)
+    from src.metrics.attribution_engine import AttributionEngine
+    attribution_map = AttributionEngine.get_instance().compute_attribution(engine, test_seq, target_time_step=EVENT_FRAME)
 
     print("[*] Generating Thermodynamic Autopsy Report...")
     autopsy_engine = ThermodynamicAutopsyEngine(engine)

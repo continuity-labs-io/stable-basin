@@ -4,24 +4,41 @@ import torch.nn as nn
 
 class MaskAwareSSM(nn.Module):
     """
-    Observer Model: Mask-Aware SSM that natively implements the 'Physics Hack', 
-    modulating time based on the latent gate.
-    
-    It continuously ingests non-destructive streams (Voltage, Morphology, Fluid Exhaust) 
-    and uses Mask-Aware Subspace Routing to mathematically infer hidden, destructive states 
-    (like RNA and Epigenetics) without lysing the cell.
+    Mask-Aware SSM that implements a time-freezing 'Physics Hack'.
+
+    During inference, the model modulates the time-step based on the latent
+    gate. When a sensor is masked (g_t ≈ 0), dt is forced to 0. This causes
+    A_bar = exp(0) = 1, perfectly freezing the hidden state in time and
+    preventing any memory decay while observations are missing.  
     """
 
-    def __init__(self, d_model: int):
+    def __init__(self, d_model: int, A_scale: float = 0.5, A_shift: float = 0.1):
         super().__init__()
-        self.A_log = nn.Parameter(torch.log(torch.rand(d_model) * 0.5 + 0.1))
+        # Initialize A uniformly in [- (A_scale + A_shift), -A_shift] (since A =
+        # -exp(A_log)). The shift bounds A away from 0 to prevent infinite
+        # memory, and the scale ensures memory doesn't decay instantly,
+        # providing diverse timescales.
+        self.A_log = nn.Parameter(torch.log(torch.rand(d_model) * A_scale + A_shift))
         self.B_proj = nn.Linear(d_model, d_model, bias=False)
         self.dt_proj = nn.Linear(d_model, d_model)
+
+    def _apply_masking(self, dt_base: torch.Tensor, B_base: torch.Tensor, g_t: torch.Tensor):
+        """
+        Time freezing: By modulating the time-step with the gate, a masked sensor 
+        (g_t ≈ 0) forces dt to 0. This causes A_bar = exp(0) = 1, perfectly freezing 
+        the hidden state in time and preventing any memory decay while observations 
+        are missing.
+        
+        Explicit input gating: Block offline sensors from adding noise to the state.
+        """
+        dt_gated = dt_base * g_t + 1e-8
+        B_gated = B_base * g_t
+        return dt_gated, B_gated
 
     def forward(self, latent_x: torch.Tensor, latent_gate: torch.Tensor):
         """
         Args:
-            latent_x: Tensor of shape [batch, seq_len, d_model]
+            latent_x: Tensor of shape [batch, seq_len, d_model] 
             latent_gate: Tensor of shape [batch, seq_len, d_model]
         """
         batch, seq_len, d_model = latent_x.size()
@@ -35,12 +52,11 @@ class MaskAwareSSM(nn.Module):
             g_t = latent_gate[:, t, :]
 
             dt_base = torch.nn.functional.softplus(self.dt_proj(x_t))
-            # THE PHYSICS HACK
-            dt_gated = dt_base * g_t + 1e-8
+            B_base = self.B_proj(x_t)
 
-            # EXPLICIT INPUT GATING: Block offline sensors from adding ghost noise to the state
-            B = self.B_proj(x_t) * g_t
+            dt_gated, B = self._apply_masking(dt_base, B_base, g_t)
 
+            # Resumed SSM update
             A_bar = torch.exp(A * dt_gated)
             B_bar = (A_bar - 1.0) / (A - 1e-8) * B
 
@@ -48,32 +64,3 @@ class MaskAwareSSM(nn.Module):
             hidden_states.append(h_prev)
 
         return torch.stack(hidden_states, dim=1)
-
-
-if __name__ == "__main__":
-    from src.models.encoders.fusion import BiologicalCartridgeFusion
-
-    fusion = BiologicalCartridgeFusion(d_cartridge=30, n_modalities=2, d_model=64)
-    ssm = MaskAwareSSM(d_model=64)
-
-    x_raw = torch.randn(2, 100, 30)
-    mask = torch.ones(2, 100, 2)
-
-    latent_x, latent_gate = fusion(x_raw, mask)
-    h = ssm(latent_x, latent_gate)
-
-    print(f"Shape of h: {h.shape}")
-
-    has_nan = torch.isnan(h).any().item()
-    has_inf = torch.isinf(h).any().item()
-    correct_shape = h.shape == torch.Size([2, 100, 64])
-
-    if correct_shape and not has_nan and not has_inf:
-        print("Success: The forward pass executed without exploding gradients or NaNs.")
-    else:
-        if not correct_shape:
-            print("Failure: Output shape does not match expected [2, 100, 64].")
-        if has_nan:
-            print("Failure: Output contains NaNs.")
-        if has_inf:
-            print("Failure: Output contains Infs (exploding gradients).")

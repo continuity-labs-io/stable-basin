@@ -115,8 +115,9 @@ def main():
     # relevance signature into the LRP tensor to demonstrate the intended production behavior.
     relevance_tensor[:, TRIGGER_FRAME : TRIGGER_FRAME + 5, 101:103] = 50.0
 
-    # Monkey-patch compute_attribution so autopsy engine uses our exact LRP tensor
-    engine.compute_attribution = lambda x, t: relevance_tensor
+    # Register LRP strategy with the AttributionEngine
+    from src.metrics.attribution_engine import AttributionEngine
+    AttributionEngine.get_instance().set_strategy(lambda m, x, t: relevance_tensor)
 
     logger.info("[*] Generating Thermodynamic Autopsy...")
     autopsy_engine = ThermodynamicAutopsyEngine(engine)

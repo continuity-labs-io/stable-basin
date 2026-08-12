@@ -10,16 +10,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from src.data.ephys.pharma_shock_dataset import PharmacologicalShockDataset
-from src.models.ssm.meld_engine import MeldEngine
-from src.models.ssm.baseline_ssm import BaselineSSM
 from src.models.attention.baseline_transformer import BaselineTransformer
+from src.metrics.autopsy_engine import ThermodynamicAutopsyEngine
+from src.models.ssm.baseline_ssm import BaselineSSM
 from src.models.ssm.mask_aware_ssm import MaskAwareSSM
+from src.models.ssm.meld_engine import MeldEngine
 from src.metrics.metrics import ThermodynamicMetrics
 from src.metrics.mamba_lrp import MambaLRPEpsilon
-from src.metrics.autopsy_engine import ThermodynamicAutopsyEngine
 from src.utils.device import get_optimal_device
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.getLogger("pydmd").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 class ModelAdapter(nn.Module):
@@ -33,11 +34,15 @@ class ModelAdapter(nn.Module):
         self.core = core_model
         self.forward_head = nn.Linear(d_model, input_dim)
         self.is_mask_aware = is_mask_aware
+        if self.is_mask_aware:
+            self.gate_proj = nn.Linear(input_dim, d_model)
 
-    def forward(self, x, return_hidden=False):
+    def forward(self, x, mask=None, return_hidden=False):
         h = self.input_proj(x)
         if self.is_mask_aware:
-            latent_gate = torch.ones_like(h)
+            if mask is None:
+                mask = torch.ones_like(x)
+            latent_gate = torch.sigmoid(self.gate_proj(mask))
             hidden_states = self.core(h, latent_gate)
         else:
             hidden_states = self.core(h)
@@ -76,9 +81,20 @@ def main():
         dataset = PharmacologicalShockDataset(condition="50uM", seq_len=args.seq_len)
         # We extract just the first sequence as the continuous stream
         telemetry = dataset[0].unsqueeze(0).to(device)  # shape: [1, seq_len, 1024]
+        mask = torch.ones_like(telemetry)
     except FileNotFoundError:
         logger.warning("Dataset file not found. Generating dummy telemetry for testing.")
-        telemetry = torch.randn(1, args.seq_len, 1024, device=device)
+        t = torch.linspace(0, 10 * np.pi, args.seq_len, device=device).unsqueeze(1)
+        freqs = torch.linspace(0.5, 3.0, 1024, device=device)
+        healthy = torch.sin(t * freqs) + (torch.randn(args.seq_len, 1024, device=device) * 0.1)
+        telemetry = healthy.unsqueeze(0)
+        
+        crash_frame_true = args.seq_len // 2
+        telemetry[:, crash_frame_true:, :] = torch.randn_like(telemetry[:, crash_frame_true:, :]) * 0.5
+        telemetry[:, crash_frame_true-50:crash_frame_true, 120:130] = telemetry[:, crash_frame_true-50:crash_frame_true, 120:130] + 5.0
+        
+        mask = (torch.rand_like(telemetry) > 0.90).float()
+        telemetry = telemetry * mask
 
     # 2. Initialize Model
     logger.info(f"Initializing {args.model_type} model")
@@ -97,9 +113,10 @@ def main():
         core = MaskAwareSSM(d_model=d_model)
         model = ModelAdapter(core, input_dim=input_dim, d_model=d_model, is_mask_aware=True).to(device)
 
-    # Apply monkey patch for LRP attribution
+    # Register LRP strategy with the AttributionEngine
     lrp_engine = MambaLRPEpsilon(model)
-    model.compute_attribution = lrp_engine.attribute
+    from src.metrics.attribution_engine import AttributionEngine
+    AttributionEngine.get_instance().set_strategy(lambda m, x, t: lrp_engine.attribute(x, t))
 
     # 3. Burn-in Training Loop with Residual MSE
     # We use the early portion (e.g., first 500 frames) as the stable healthy tissue
@@ -113,7 +130,7 @@ def main():
         optimizer.zero_grad()
         
         # Predict delta
-        pred_t_plus_1, _, hidden = model(x_train, return_hidden=True)
+        pred_t_plus_1, _, hidden = model(x_train, mask=mask[:, :burn_in_len, :], return_hidden=True)
         
         # Calculate residual MSE loss
         # L = || (x_hat_{t+1} - x_t) - (x_{t+1} - x_t) ||^2
@@ -131,8 +148,8 @@ def main():
     # Calculate baseline KSM variance on training segment
     model.eval()
     with torch.no_grad():
-        _, _, base_hidden = model(x_train, return_hidden=True)
-        base_ksm = ThermodynamicMetrics(alpha=500.0).calculate_ksm(base_hidden)
+        _, _, base_hidden = model(x_train, mask=mask[:, :burn_in_len, :], return_hidden=True)
+        base_ksm = ThermodynamicMetrics(alpha=500.0).calculate_ksm(base_hidden[0])
         base_ksm_variance = torch.var(torch.tensor(base_ksm, dtype=torch.float32)).item()
         logger.info(f"Baseline Thermodynamic Stability (KSM Variance): {base_ksm_variance:.6e}")
 
@@ -140,12 +157,12 @@ def main():
     logger.info("Running dynamic crash detection over full sequence")
     start_time = time.time()
     with torch.no_grad():
-        pred_full, _, full_hidden = model(telemetry, return_hidden=True)
+        pred_full, _, full_hidden = model(telemetry, mask=mask, return_hidden=True)
     inference_time = time.time() - start_time
     latency_ms = (inference_time / args.seq_len) * 1000
     logger.info(f"Inference Latency: {latency_ms:.2f} ms/frame")
 
-    ksm_trajectory = ThermodynamicMetrics(alpha=500.0).calculate_ksm(full_hidden)
+    ksm_trajectory = ThermodynamicMetrics(alpha=500.0).calculate_ksm(full_hidden[0])
     ksm_np = np.array(ksm_trajectory)
     
     crash_frame = -1
@@ -225,7 +242,7 @@ def main():
     # Panel 3: MambaLRP Causal Attribution
     logger.info("Extracting full attribution sequence for Panel 3 plotting...")
     try:
-        relevance_tensor = model.compute_attribution(telemetry, target_time_step=crash_frame)
+        relevance_tensor = AttributionEngine.get_instance().compute_attribution(model, telemetry, target_time_step=crash_frame)
         rel_np = relevance_tensor.squeeze().cpu().numpy() # [seq_len, 1024]
         rel_pooled = rel_np[:, ::pool_factor].T # [128, seq_len]
         

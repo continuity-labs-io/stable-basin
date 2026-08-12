@@ -1,14 +1,17 @@
+import logging
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 try:
     from mamba_ssm import Mamba2
 except ImportError:
+    logging.warning("mamba_ssm is not installed. MeldEngine will fall back to an Identity backbone.")
     Mamba2 = None
 
 class MeldEngine(nn.Module):
     """
-    Unified Continuous-Time State Space Engine for MELD Demos.
+    Unified Continuous-Time State Space Engine for multimodal telemetry.
     Handles standard forecasting, reverse time reconstruction, and mask-aware routing.
     """
     def __init__(self, input_dim: int, d_model: int = 256, d_state: int = 64, mask_aware: bool = False):
@@ -35,7 +38,7 @@ class MeldEngine(nn.Module):
         self.forward_head = nn.Linear(d_model, input_dim)
         self.reverse_head = nn.Linear(d_model, input_dim)
 
-    def forward(self, x, return_hidden=False):
+    def forward(self, x, mask=None, return_hidden=False):
         if self.mask_aware:
             mask = torch.isnan(x).float()
             x_safe = torch.nan_to_num(x, nan=0.0)
@@ -53,16 +56,8 @@ class MeldEngine(nn.Module):
             return pred_t_plus_1, reconstructed_t, hidden_states
         return pred_t_plus_1, reconstructed_t
 
-    def get_hidden_states(self, x):
-        _, _, hidden_states = self.forward(x, return_hidden=True)
+    def get_hidden_states(self, x, mask=None):
+        _, _, hidden_states = self.forward(x, mask=mask, return_hidden=True)
         return hidden_states
 
-    def compute_attribution(self, x, target_time_step):
-        """First-Order Taylor Decomposition for LRP/Interpretability."""
-        x_req = x.clone().detach().requires_grad_(True)
-        pred_t_plus_1, _ = self.forward(x_req)
-        
-        target_state_sum = pred_t_plus_1[:, target_time_step, :].sum()
-        gradients = torch.autograd.grad(target_state_sum, x_req, retain_graph=True)[0]
-        
-        return x_req.detach() * gradients
+

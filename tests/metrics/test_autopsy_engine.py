@@ -11,7 +11,9 @@ def test_autopsy_engine_generation():
     mock_attribution = torch.ones(1, 50, 114)
     # Give high importance to feature 10 to test if it detects it
     mock_attribution[0, :, 10] = 100.0
-    mock_model.compute_attribution.return_value = mock_attribution
+    
+    from src.metrics.attribution_engine import AttributionEngine
+    AttributionEngine.get_instance().set_strategy(lambda m, x, t: mock_attribution)
 
     engine = ThermodynamicAutopsyEngine(mock_model)
     x_sequence = torch.randn(1, 50, 114)
@@ -23,6 +25,9 @@ def test_autopsy_engine_generation():
     assert report["predicted_crash_time"] == "T=45"
     assert "anomaly_ontology" in report
     assert report["anomaly_ontology"]["primary_latent_driver"] == engine.feature_names[10]
+
+    # Cleanup
+    AttributionEngine.get_instance().reset_strategy()
 
     causal_trace = report["anomaly_ontology"]["causal_trace"]
     assert len(causal_trace) == 3  # Top 3 critical steps prior to crash
