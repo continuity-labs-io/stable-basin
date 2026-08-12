@@ -1,4 +1,4 @@
-# Open Problems
+# Open Challenges
 
 *Stable Basin is an open-source biological physics engine. The core math is written, but we are looking for engineers to take ownership of specific infrastructure nodes. If you build it, you will receive lead-contributor status and potential co-authorship on resulting papers.*
 
