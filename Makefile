@@ -32,3 +32,27 @@ sensor-fusion-density-sweep:
 		--png-name 03_sensor_density_sweep.png
 
 sensor-fusion-all: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fusion-density-sweep
+
+.PHONY: clinical-autopsy evaluate-all-models
+
+EPOCHS ?= 15
+
+clinical-autopsy:
+	python -m src.harness.clinical_autopsy_runner \
+		--model-type meld \
+		--epochs $(EPOCHS) \
+		--seq-len 2000 \
+		--ksm-threshold 0.85 \
+		--png-name 06_clinical_autopsy_dashboard_meld.png \
+		--csv-name 06_clinical_autopsy_metrics_meld.csv
+
+evaluate-all-models:
+	for model in meld baseline transformer mask_aware ; do \
+		python -m src.harness.clinical_autopsy_runner \
+			--model-type $$model \
+			--epochs $(EPOCHS) \
+			--seq-len 2000 \
+			--ksm-threshold 0.85 \
+			--png-name 06_clinical_autopsy_dashboard_$$model.png \
+			--csv-name 06_clinical_autopsy_metrics_$$model.csv ; \
+	done

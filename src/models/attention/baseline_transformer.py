@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class BaselineTransformer(nn.Module):
-    def __init__(self, d_model: int = 64, nhead: int = 4, num_layers: int = 2, max_len: int = 2000):
+    def __init__(self, d_model: int = 64, nhead: int = 4, num_layers: int = 2, max_len: int = 10000):
         super().__init__()
         self.d_model = d_model
         # Learnable positional encoding

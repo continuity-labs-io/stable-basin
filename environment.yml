@@ -1,28 +1,8 @@
-name: sb
+name: stable-basin
 channels:
   - conda-forge
 dependencies:
-  - python=3.11
-  - pip
-  - uv
-  - pandas
-  - pyarrow
+  - python>=3.10
   - pytorch
+  - matplotlib
   - numpy
-  - tifffile
-  - google-api-python-client
-  - google-auth-httplib2
-  - google-auth-oauthlib
-  - zarr
-  - fsspec
-  - requests
-  - scikit-learn
-  - pip:
-    - torch
-    - mamba-ssm-macos
-    - timm
-    - causal-conv1d
-    - pydantic-settings
-    - pytest
-    - pyright
-    - rerun-sdk
