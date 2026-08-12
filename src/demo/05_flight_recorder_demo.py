@@ -1,8 +1,8 @@
 """
 Demo 05: Flight Recorder
 
-This script simulates a real-time, asynchronous telemetry stream of the MaskAwareMamba's
-internal physics state using the TelemetryExhaust bridge to the Rerun viewer.
+This script demonstrates how to stream high-dimensional macroscopic data and
+internal physics state using the TelemetryLogger bridge to the Rerun viewer.
 It streams Fedichev Macrostates and the phase space geometry without blocking inference.
 """
 
@@ -14,7 +14,7 @@ import logging
 
 from src.models.ssm.mask_aware_mamba import MaskAwareMamba
 from src.metrics.metrics import ThermodynamicMetrics
-from src.metrics.telemetry_exhaust import TelemetryExhaust
+from src.metrics.telemetry_logger import TelemetryLogger
 from src.utils.device import get_optimal_device
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -35,7 +35,7 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
     rrd_path = os.path.join(output_dir, "05_flight_recorder.rrd")
     
-    exhaust = TelemetryExhaust(mode="save", save_path=rrd_path)
+    exhaust = TelemetryLogger(mode="save", save_path=rrd_path)
     logger.info(f"[*] Telemetry stream initialized. Saving to: {rrd_path}")
     
     # 3. Simulate an incoming biological data stream

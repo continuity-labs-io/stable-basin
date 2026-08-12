@@ -2,7 +2,7 @@ import rerun as rr
 import torch
 import numpy as np
 
-class TelemetryExhaust:
+class TelemetryLogger:
     """
     Asynchronous bridge between the continuous-time physics engine and the Rerun viewer.
     Logs macroscopic variables and high-dimensional phase space without blocking inference.
