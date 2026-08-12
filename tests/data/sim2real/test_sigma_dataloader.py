@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from src.pipeline.sim2real.sigma_phase_structure_dataloader import SigmaPhaseLoader
+from src.data.sim2real.sigma_phase_structure_dataloader import SigmaPhaseLoader
 
 
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
