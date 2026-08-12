@@ -130,7 +130,7 @@ def main():
         optimizer.zero_grad()
         
         # Predict delta
-        pred_t_plus_1, _, hidden = model(x_train, mask=mask[:, :burn_in_len, :], return_hidden=True)
+        pred_t_plus_1, hidden = model(x_train, mask=mask[:, :burn_in_len, :])
         
         # Calculate residual MSE loss
         # L = || (x_hat_{t+1} - x_t) - (x_{t+1} - x_t) ||^2
@@ -148,7 +148,7 @@ def main():
     # Calculate baseline KSM variance on training segment
     model.eval()
     with torch.no_grad():
-        _, _, base_hidden = model(x_train, mask=mask[:, :burn_in_len, :], return_hidden=True)
+        _, base_hidden = model(x_train, mask=mask[:, :burn_in_len, :])
         base_ksm = ThermodynamicMetrics(alpha=500.0).calculate_ksm(base_hidden[0])
         base_ksm_variance = torch.var(torch.tensor(base_ksm, dtype=torch.float32)).item()
         logger.info(f"Baseline Thermodynamic Stability (KSM Variance): {base_ksm_variance:.6e}")
@@ -157,7 +157,7 @@ def main():
     logger.info("Running dynamic crash detection over full sequence")
     start_time = time.time()
     with torch.no_grad():
-        pred_full, _, full_hidden = model(telemetry, mask=mask, return_hidden=True)
+        pred_full, full_hidden = model(telemetry, mask=mask)
     inference_time = time.time() - start_time
     latency_ms = (inference_time / args.seq_len) * 1000
     logger.info(f"Inference Latency: {latency_ms:.2f} ms/frame")

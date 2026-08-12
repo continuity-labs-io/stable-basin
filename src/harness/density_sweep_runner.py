@@ -54,7 +54,7 @@ def run_experiment(device, model_name, density, seed, epochs=10, train_seq_len=5
             y_true = batch["y_true"].to(device)
             
             optimizer.zero_grad()
-            preds = model(x_raw, mask)
+            preds, _ = model(x_raw, mask)
             loss = criterion(preds, y_true)
             loss.backward()
             optimizer.step()
@@ -76,7 +76,7 @@ def run_experiment(device, model_name, density, seed, epochs=10, train_seq_len=5
             mask = batch["mask"].to(device)
             y_true = batch["y_true"].to(device)
             
-            preds = model(x_raw, mask)
+            preds, _ = model(x_raw, mask)
             mse = criterion(preds, y_true).item()
             total_mse += mse * x_raw.size(0)
             count += x_raw.size(0)

@@ -8,6 +8,7 @@ from src.models.attention.baseline_transformer import BaselineTransformer
 from src.models.rnn.gru_d import GRUDModel
 from src.models.rnn.ode_rnn import ODERNNModel
 
+from typing import Optional
 from enum import Enum
 
 class SSMType(str, Enum):
@@ -31,7 +32,7 @@ class SSMType(str, Enum):
 
 class SensorFusionPredictor(nn.Module):
     def __init__(
-        self, ssm_type: str, modality_dims: list[int] = None, d_model: int = 64
+        self, ssm_type: str, modality_dims: list[int] = None, d_model: int = 64, out_dim: int = 1
     ):
         """
         Initializes the SensorFusionPredictor.
@@ -82,9 +83,9 @@ class SensorFusionPredictor(nn.Module):
         else:
             raise ValueError(f"Unknown ssm_type: {ssm_type}")
 
-        self.readout = nn.Linear(d_model, 1)
+        self.readout = nn.Linear(d_model, out_dim)
 
-    def forward(self, x_raw: torch.Tensor, mask: torch.Tensor):
+    def forward(self, x_raw: torch.Tensor, mask: Optional[torch.Tensor] = None):
         if self.ssm_type == "forward_fill":
             # Apply Forward-Fill (Hold-Last-Value) to the sparse modality
             # (indices 20-29)
@@ -134,4 +135,10 @@ class SensorFusionPredictor(nn.Module):
             elif self.ssm_type == "transformer":
                 h = self.ssm(latent_x)
 
-        return self.readout(h)
+        preds = self.readout(h)
+        return preds, h
+
+    def get_hidden_states(self, x, mask=None):
+        """Convenience method for cleanly extracting the thermodynamic manifold."""
+        _, hidden_states = self.forward(x, mask=mask)
+        return hidden_states

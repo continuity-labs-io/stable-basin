@@ -1,3 +1,5 @@
+MODELS ?= baseline forward_fill mask_concat transformer mask_aware mask_aware_mamba gru_d ode_rnn
+
 .PHONY: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fusion-imputation sensor-fusion-all
 
 sensor-fusion-baseline:
@@ -6,7 +8,7 @@ sensor-fusion-baseline:
 		--epochs 50 \
 		--train-seq-len 500 \
 		--test-seq-len 500 \
-		--models baseline forward_fill mask_concat transformer gru_d ode_rnn mask_aware \
+		--models $(MODELS) \
 		--csv-name 01_baseline_interpolation.csv \
 		--png-name 01_baseline_interpolation.png
 
@@ -16,7 +18,7 @@ sensor-fusion-extrapolation:
 		--epochs 40 \
 		--train-seq-len 500 \
 		--test-seq-len 5000 \
-		--models baseline forward_fill mask_concat transformer gru_d ode_rnn mask_aware \
+		--models $(MODELS) \
 		--csv-name 02_extrapolation_test.csv \
 		--png-name 02_extrapolation_test.png
 
@@ -27,13 +29,13 @@ sensor-fusion-density-sweep:
 		--test-seq-len 2000 \
 		--densities 0.1 0.05 0.02 0.01 0.005 0.001 \
 		--seeds 42 100 256 512 1024 \
-		--models baseline forward_fill mask_concat gru_d ode_rnn mask_aware \
+		--models $(MODELS) \
 		--csv-name 03_sensor_density_sweep.csv \
 		--png-name 03_sensor_density_sweep.png
 
 sensor-fusion-all: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fusion-density-sweep
 
-.PHONY: clinical-autopsy evaluate-all-models
+.PHONY: clinical-autopsy clinical-autopsy-all
 
 EPOCHS ?= 15
 
@@ -46,7 +48,7 @@ clinical-autopsy:
 		--png-name 06_clinical_autopsy_dashboard_meld.png \
 		--csv-name 06_clinical_autopsy_metrics_meld.csv
 
-evaluate-all-models:
+clinical-autopsy-all:
 	for model in meld baseline transformer mask_aware ; do \
 		python -m src.harness.clinical_autopsy_runner \
 			--model-type $$model \

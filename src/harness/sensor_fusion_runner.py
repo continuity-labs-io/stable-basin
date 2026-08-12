@@ -161,7 +161,7 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
             for name, model in models.items():
                 model_start = time.time()
                 optimizers[name].zero_grad()
-                preds = model(x_raw, mask)
+                preds, _ = model(x_raw, mask)
                 loss = criterion(preds, y_true)
                 loss.backward()
                 optimizers[name].step()
@@ -197,7 +197,8 @@ def run_benchmark(task_name, epochs, train_seq_len, test_seq_len, model_names, c
     with torch.no_grad():
         for name, model in models.items():
             eval_start = time.time()
-            preds_dict[name] = model(test_x_raw, test_mask)[0].cpu().numpy()
+            preds, _ = model(test_x_raw, test_mask)
+            preds_dict[name] = preds[0].cpu().numpy()
             log_t(f"    Eval {name} took {time.time() - eval_start:.3f}s")
 
             # Calculate MSE

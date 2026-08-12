@@ -3,6 +3,8 @@
         "filePath": "cache/stable-basin-repomix.xml"
     },
     "include": [
-        "src/**/*.py"
+        "src/**/*.py",
+        "Makefile",
+        "*.md"
     ]
 }
