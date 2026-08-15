@@ -59,6 +59,9 @@ To provide a baseline for the benchmark, this repository includes the **MaskAwar
 
 Unlike standard Transformers that suffer from $\mathcal{O}(N^2)$ context limits and rely on discrete tokens, the `MaskAwareMamba` utilizes Mask-Aware Subspace Routing to dynamically modulate the flow of time and maintain an $\mathcal{O}(1)$ VRAM footprint on edge hardware.
 
+> [!NOTE] 
+> **Why no ODE-RNNs?** While continuous-time Ordinary Differential Equation (ODE) RNNs were initially evaluated for this engine, they were excluded from the final benchmark suite. Adaptive ODE solvers (like `dopri5`) exhibit catastrophic computational stiffness when modeling high-frequency biological phase transitions, resulting in inference latencies $>10^4\times$ slower than our Mamba (ZOH discretized) architectures.
+
 ### Quickstart: Push-Button Cloud Execution
 
 Stable Basin uses declarative YAML configurations for distributed parallel execution.

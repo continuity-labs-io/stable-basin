@@ -3,7 +3,7 @@ tasks:
     epochs: 40
     train_seq_len: 500
     test_seq_len: 500
-    models: ["baseline", "forward_fill", "mask_concat", "transformer", "mask_aware", "gru_d", "ode_rnn"]
+    models: ["baseline", "forward_fill", "mask_concat", "transformer", "mask_aware", "gru_d"]
     densities: [0.1]
     seeds: [42]
     csv_name: "01_baseline_interpolation.csv"
@@ -13,7 +13,7 @@ tasks:
     epochs: 40
     train_seq_len: 500
     test_seq_len: 5000
-    models: ["baseline", "forward_fill", "mask_concat", "transformer", "mask_aware", "gru_d", "ode_rnn"]
+    models: ["baseline", "forward_fill", "mask_concat", "transformer", "mask_aware", "gru_d"]
     densities: [0.1]
     seeds: [42]
     csv_name: "02_extrapolation_test.csv"
@@ -23,7 +23,7 @@ tasks:
     epochs: 10
     train_seq_len: 500
     test_seq_len: 2000
-    models: ["baseline", "forward_fill", "mask_concat", "transformer", "mask_aware", "gru_d", "ode_rnn"]
+    models: ["baseline", "forward_fill", "mask_concat", "transformer", "mask_aware", "gru_d"]
     densities: [0.1, 0.05, 0.02, 0.01, 0.005, 0.001]
     seeds: [42, 100, 256, 512, 1024]
     csv_name: "03_sensor_density_sweep.csv"
