@@ -73,7 +73,7 @@ def evaluate_model(trial_config):
     try:
         dataset = PharmacologicalShockDataset(condition=condition, seq_len=seq_len)
         telemetry = dataset[0].unsqueeze(0).to(device)  # shape: [1, seq_len, 1024]
-        mask = torch.ones_like(telemetry)
+        mask = torch.ones(1, seq_len, 1, device=device)
         logger.info(f"Successfully loaded Pharmacological Shock Data! Telemetry shape: {telemetry.shape}")
     except FileNotFoundError:
         logger.warning("Dataset file not found. Generating dummy telemetry for testing.")
@@ -86,7 +86,7 @@ def evaluate_model(trial_config):
         telemetry[:, crash_frame_true:, :] = torch.randn_like(telemetry[:, crash_frame_true:, :]) * 0.5
         telemetry[:, crash_frame_true-50:crash_frame_true, 120:130] = telemetry[:, crash_frame_true-50:crash_frame_true, 120:130] + 5.0
         
-        mask = (torch.rand_like(telemetry) > 0.90).float()
+        mask = (torch.rand(1, seq_len, 1, device=device) > 0.90).float()
         telemetry = telemetry * mask
 
     logger.info(f"Initializing {model_type} model")
@@ -153,8 +153,9 @@ def evaluate_model(trial_config):
         logger.warning(f"Autopsy generation failed: {e}")
         report = {"error": str(e), "crash_frame": crash_frame}
 
-    os.makedirs("output/harness", exist_ok=True)
-    report_path = f"output/harness/clinical_autopsy_report_{model_type}.json"
+    out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../output/harness"))
+    os.makedirs(out_dir, exist_ok=True)
+    report_path = os.path.join(out_dir, f"clinical_autopsy_report_{model_type}.json")
     with open(report_path, "w") as f:
         json.dump(report, f, indent=4, cls=NpEncoder)
     logger.info(f"Saved Autopsy JSON to {report_path}")
@@ -162,7 +163,7 @@ def evaluate_model(trial_config):
     logger.info("Generating 3-panel dashboard")
     
     import csv
-    csv_path = f"output/harness/{csv_prefix}_{model_type}.csv"
+    csv_path = os.path.join(out_dir, f"{csv_prefix}_{model_type}.csv")
     with open(csv_path, mode='w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(["model_type", "baseline_ksm_variance", "crash_frame", "inference_latency_ms_per_frame"])
@@ -206,7 +207,7 @@ def evaluate_model(trial_config):
     axes[2].set_ylabel("Channels")
 
     plt.tight_layout()
-    png_path = f"output/harness/{png_prefix}_{model_type}.png"
+    png_path = os.path.join(out_dir, f"{png_prefix}_{model_type}.png")
     plt.savefig(png_path, dpi=300)
     logger.info(f"Dashboard saved to {png_path}")
     plt.close(fig)

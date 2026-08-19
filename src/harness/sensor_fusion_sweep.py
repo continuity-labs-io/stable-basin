@@ -155,12 +155,12 @@ def save_benchmark_plot(df_results, config, task_name, png_name):
     
     colors = {
         "zero_padded_ssm": "r--", "forward_fill_ssm": "m-.", "mask_concat_ssm": "y-",
-        "causal_transformer": "g:", "masr_ssm": "b-", "gru_d": "c-", "ode_rnn": "m-"
+        "causal_transformer": "g:", "masr_ssm": "b-", "masr_mamba": "c--", "gru_d": "c-", "ode_rnn": "m-"
     }
     labels = {
         "zero_padded_ssm": "Zero-Padded SSM", "forward_fill_ssm": "Forward-Fill SSM",
         "mask_concat_ssm": "Mask-Concat SSM", "causal_transformer": "Causal Transformer",
-        "masr_ssm": "MASR_SSM (Ours)", "gru_d": "GRU-D", "ode_rnn": "ODE-RNN"
+        "masr_ssm": "MASR_SSM (Ours)", "masr_mamba": "MASR_Mamba", "gru_d": "GRU-D", "ode_rnn": "ODE-RNN"
     }
 
     y_true_plotted = False
@@ -208,7 +208,7 @@ def save_density_plot(df_results, config, png_name):
     fig, ax = plt.subplots(figsize=(12, 8))
     
     colors = {"zero_padded_ssm": "red", "forward_fill_ssm": "magenta", "mask_concat_ssm": "yellow", 
-              "gru_d": "cyan", "ode_rnn": "orange", "masr_ssm": "lime"}
+              "gru_d": "cyan", "ode_rnn": "orange", "masr_ssm": "lime", "masr_mamba": "green"}
               
     for m in models:
         m_data = df_results[df_results["config/model_type"] == m]
