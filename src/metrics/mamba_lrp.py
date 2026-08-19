@@ -36,29 +36,32 @@ class MambaLRPEpsilon:
 
         return activations * C
 
-    def attribute(self, x, target_time_step):
+    def attribute(self, x, target_time_step, mask=None):
         """
         Extracts the spatiotemporal relevance tensor [Batch, Time, Channels].
         Operates chunk-wise / sequentially to maintain O(N) memory complexity.
         """
         # --- 1. FORWARD PASS ---
-        # Extract weights from the SpikeForecaster projections
-        W_in = self.model.input_proj.weight.data
-        b_in = self.model.input_proj.bias.data
+        if mask is None:
+            n_modalities = self.model.fusion.W_gate.in_features
+            mask = torch.ones(x.size(0), x.size(1), n_modalities, device=x.device)
 
-        W_out = self.model.forward_head.weight.data
-        b_out = self.model.forward_head.bias.data
+        # Extract weights from the SensorFusionPredictor projections
+        W_in = self.model.fusion.W_proj.weight.data
+        b_in = self.model.fusion.W_proj.bias.data if self.model.fusion.W_proj.bias is not None else None
+
+        W_out = self.model.readout.weight.data
+        b_out = self.model.readout.bias.data if self.model.readout.bias is not None else None
 
         # Forward through first projection
         h_in = F.linear(x, W_in, b_in)
 
         # Forward through Mamba
         # We intercept the hidden states for sequential unrolling
-        hidden_states = self.model.get_hidden_states(x)
+        hidden_states = self.model.get_hidden_states(x, mask=mask)
 
         # Forward through output projection
-        preds_raw = F.linear(hidden_states, W_out, b_out)
-        preds = F.softplus(preds_raw)
+        preds = F.linear(hidden_states, W_out, b_out)
 
         # --- 2. INITIALIZE RELEVANCE ---
         R_out = torch.zeros_like(preds)

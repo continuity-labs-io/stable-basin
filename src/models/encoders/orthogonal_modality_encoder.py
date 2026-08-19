@@ -9,7 +9,7 @@ class OrthogonalModalityEncoder(nn.Module):
     """
     def __init__(self, d_in: int, modality_dims: list[int], d_model: int):
         super().__init__()
-        self.W_cart = nn.Linear(d_in, d_model, bias=False)
+        self.W_proj = nn.Linear(d_in, d_model, bias=False)
         
         n_modalities = len(modality_dims)
         if d_model < n_modalities:
@@ -57,6 +57,6 @@ class OrthogonalModalityEncoder(nn.Module):
         self.W_gate.bias.requires_grad = False
 
     def forward(self, x_raw: torch.Tensor, mask: torch.Tensor):
-        latent_x = self.W_cart(x_raw)
+        latent_x = self.W_proj(x_raw)
         latent_gate = torch.sigmoid(self.W_gate(mask))
         return latent_x, latent_gate

@@ -1,9 +1,9 @@
 experiment_name: "Clinical Autopsy (Pharmacological Shock)"
 models:
-  - "meld"
-  - "baseline"
-  - "transformer"
-  - "mask_aware"
+  - "masr_mamba"
+  - "zero_padded_ssm"
+  - "causal_transformer"
+  - "masr_ssm"
 data:
   condition: "50uM"
   seq_len: 2000

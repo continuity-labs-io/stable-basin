@@ -14,11 +14,8 @@ from ray import tune, train
 import wandb
 
 from src.data.ephys.pharma_shock_dataset import PharmacologicalShockDataset
-from src.models.attention.baseline_transformer import BaselineTransformer
 from src.metrics.autopsy_engine import ThermodynamicAutopsyEngine
-from src.models.ssm.baseline_ssm import BaselineSSM
-from src.models.ssm.mask_aware_ssm import MaskAwareSSM
-from src.models.ssm.mask_aware_mamba import MaskAwareMamba
+from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
 from src.metrics.metrics import ThermodynamicMetrics
 from src.metrics.mamba_lrp import MambaLRPEpsilon
 from src.utils.device import get_optimal_device
@@ -27,40 +24,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logging.getLogger("pydmd").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
-class ModelAdapter(nn.Module):
-    """
-    Adapter to give BaselineSSM, BaselineTransformer, and MaskAwareSSM
-    the same interface as MaskAwareMamba (input projection, forward forecasting head, etc).
-    """
-    def __init__(self, core_model, input_dim=1024, d_model=256, is_mask_aware=False):
-        super().__init__()
-        self.input_proj = nn.Linear(input_dim, d_model)
-        self.core = core_model
-        self.forward_head = nn.Linear(d_model, input_dim)
-        self.is_mask_aware = is_mask_aware
-        if self.is_mask_aware:
-            self.gate_proj = nn.Linear(input_dim, d_model)
-
-    def forward(self, x, mask=None, return_hidden=False):
-        h = self.input_proj(x)
-        if self.is_mask_aware:
-            if mask is None:
-                mask = torch.ones_like(x)
-            latent_gate = torch.sigmoid(self.gate_proj(mask))
-            hidden_states = self.core(h, latent_gate)
-        else:
-            hidden_states = self.core(h)
-        pred_t_plus_1 = F.softplus(self.forward_head(hidden_states))
-        
-        reconstructed_t = pred_t_plus_1 
-        
-        if return_hidden:
-            return pred_t_plus_1, reconstructed_t, hidden_states
-        return pred_t_plus_1, reconstructed_t
-
-    def get_hidden_states(self, x):
-        _, _, hidden_states = self.forward(x, return_hidden=True)
-        return hidden_states
 
 
 class NpEncoder(json.JSONEncoder):
@@ -127,19 +90,12 @@ def evaluate_model(trial_config):
         telemetry = telemetry * mask
 
     logger.info(f"Initializing {model_type} model")
-    if model_type == "meld":
-        model = MaskAwareMamba(input_dim=input_dim, d_model=d_model, mask_aware=False).to(device)
-    elif model_type == "baseline":
-        core = BaselineSSM(d_model=d_model)
-        model = ModelAdapter(core, input_dim=input_dim, d_model=d_model).to(device)
-    elif model_type == "transformer":
-        core = BaselineTransformer(d_model=d_model)
-        model = ModelAdapter(core, input_dim=input_dim, d_model=d_model).to(device)
-    elif model_type == "mask_aware":
-        core = MaskAwareSSM(d_model=d_model)
-        model = ModelAdapter(core, input_dim=input_dim, d_model=d_model, is_mask_aware=True).to(device)
-    else:
-        raise ValueError(f"Unknown model_type: {model_type}")
+    model = SensorFusionPredictor(
+        ssm_type=model_type, 
+        modality_dims=[input_dim], 
+        d_model=d_model, 
+        out_dim=input_dim
+    ).to(device)
 
     lrp_engine = MambaLRPEpsilon(model)
     from src.metrics.attribution_engine import AttributionEngine
@@ -160,7 +116,7 @@ def evaluate_model(trial_config):
     model.eval()
     with torch.no_grad():
         _, base_hidden = model(x_train, mask=mask_train)
-        base_ksm = ThermodynamicMetrics(alpha=500.0).calculate_ksm(base_hidden[0])
+        base_ksm = ThermodynamicMetrics(alpha=500.0, beta=1.0).calculate_ksm(base_hidden[0])
         base_ksm_variance = torch.var(torch.tensor(base_ksm, dtype=torch.float32)).item()
         logger.info(f"Baseline Thermodynamic Stability (KSM Variance): {base_ksm_variance:.6e}")
 

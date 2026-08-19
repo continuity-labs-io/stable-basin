@@ -12,12 +12,12 @@ def run_smoke_test():
 
     # The Frozen Registry
     models_to_test = [
-        SSMType.BASELINE,
-        SSMType.FORWARD_FILL,
-        SSMType.MASK_CONCAT,
-        SSMType.TRANSFORMER,
-        SSMType.MASK_AWARE,
-        SSMType.MASK_AWARE_MAMBA,
+        SSMType.ZERO_PADDED_SSM,
+        SSMType.FORWARD_FILL_SSM,
+        SSMType.MASK_CONCAT_SSM,
+        SSMType.CAUSAL_TRANSFORMER,
+        SSMType.MASR_SSM,
+        SSMType.MASR_MAMBA,
         SSMType.GRU_D,
         SSMType.ODE_RNN
     ]

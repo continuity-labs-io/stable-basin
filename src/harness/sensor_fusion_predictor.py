@@ -13,17 +13,17 @@ from enum import Enum
 
 class SSMType(str, Enum):
     """The type of state-space model or baseline to instantiate."""
-    BASELINE = "baseline"
+    ZERO_PADDED_SSM = "zero_padded_ssm"
     """Zero-padded SSM baseline."""
-    FORWARD_FILL = "forward_fill"
+    FORWARD_FILL_SSM = "forward_fill_ssm"
     """Forward-fill (hold-last-value) SSM baseline."""
-    MASK_CONCAT = "mask_concat"
+    MASK_CONCAT_SSM = "mask_concat_ssm"
     """Mask-concatenated SSM baseline."""
-    TRANSFORMER = "transformer"
+    CAUSAL_TRANSFORMER = "causal_transformer"
     """Causal Transformer baseline."""
-    MASK_AWARE = "mask_aware"
+    MASR_SSM = "masr_ssm"
     """MASR (Mask-Aware State-Space Representation) model."""
-    MASK_AWARE_MAMBA = "mask_aware_mamba"
+    MASR_MAMBA = "masr_mamba"
     """Mask-Aware Mamba-2 model."""
     GRU_D = "gru_d"
     """GRU-D model."""
@@ -54,7 +54,7 @@ class SensorFusionPredictor(nn.Module):
         d_sensor_total = sum(modality_dims)
         num_modalities = len(modality_dims)
 
-        if ssm_type == "mask_concat":
+        if ssm_type == "mask_concat_ssm":
             # The input dimension is inflated by the mask size
             self.fusion = OrthogonalModalityEncoder(
                 d_in=d_sensor_total + num_modalities, 
@@ -68,13 +68,13 @@ class SensorFusionPredictor(nn.Module):
                 d_model=d_model
             )
 
-        if ssm_type in ["baseline", "forward_fill", "mask_concat"]:
+        if ssm_type in ["zero_padded_ssm", "forward_fill_ssm", "mask_concat_ssm"]:
             self.ssm = BaselineSSM(d_model)
-        elif ssm_type == "mask_aware":
+        elif ssm_type == "masr_ssm":
             self.ssm = MaskAwareSSM(d_model)
-        elif ssm_type == "mask_aware_mamba":
+        elif ssm_type == "masr_mamba":
             self.ssm = MaskAwareMamba(input_dim=d_model, d_model=d_model, mask_aware=True)
-        elif ssm_type == "transformer":
+        elif ssm_type == "causal_transformer":
             self.ssm = BaselineTransformer(d_model)
         elif ssm_type == "gru_d":
             self.ssm = GRUDModel(d_model)
@@ -86,7 +86,7 @@ class SensorFusionPredictor(nn.Module):
         self.readout = nn.Linear(d_model, out_dim)
 
     def forward(self, x_raw: torch.Tensor, mask: Optional[torch.Tensor] = None):
-        if self.ssm_type == "forward_fill":
+        if self.ssm_type == "forward_fill_ssm":
             # Apply Forward-Fill (Hold-Last-Value) to the sparse modality
             # (indices 20-29)
             x_ff = x_raw.clone()
@@ -101,7 +101,7 @@ class SensorFusionPredictor(nn.Module):
             latent_x, latent_gate = self.fusion(x_ff, mask)
             h = self.ssm(latent_x)
             
-        elif self.ssm_type == "mask_concat":
+        elif self.ssm_type == "mask_concat_ssm":
             # Concatenate mask directly to the features
             x_concat = torch.cat([x_raw, mask], dim=-1)
             latent_x, latent_gate = self.fusion(x_concat, mask)
@@ -126,13 +126,13 @@ class SensorFusionPredictor(nn.Module):
 
         else:
             latent_x, latent_gate = self.fusion(x_raw, mask)
-            if self.ssm_type == "baseline":
+            if self.ssm_type == "zero_padded_ssm":
                 h = self.ssm(latent_x)
-            elif self.ssm_type == "mask_aware":
+            elif self.ssm_type == "masr_ssm":
                 h = self.ssm(latent_x, latent_gate)
-            elif self.ssm_type == "mask_aware_mamba":
+            elif self.ssm_type == "masr_mamba":
                 h = self.ssm.get_hidden_states(latent_x, mask=latent_gate)
-            elif self.ssm_type == "transformer":
+            elif self.ssm_type == "causal_transformer":
                 h = self.ssm(latent_x)
 
         preds = self.readout(h)

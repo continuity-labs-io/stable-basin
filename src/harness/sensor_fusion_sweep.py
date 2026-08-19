@@ -154,13 +154,13 @@ def save_benchmark_plot(df_results, config, task_name, png_name):
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
     
     colors = {
-        "baseline": "r--", "forward_fill": "m-.", "mask_concat": "y-",
-        "transformer": "g:", "mask_aware": "b-", "gru_d": "c-", "ode_rnn": "m-"
+        "zero_padded_ssm": "r--", "forward_fill_ssm": "m-.", "mask_concat_ssm": "y-",
+        "causal_transformer": "g:", "masr_ssm": "b-", "gru_d": "c-", "ode_rnn": "m-"
     }
     labels = {
-        "baseline": "Zero-Padded SSM", "forward_fill": "Forward-Fill SSM",
-        "mask_concat": "Mask-Concat SSM", "transformer": "Causal Transformer",
-        "mask_aware": "MASR (Ours)", "gru_d": "GRU-D", "ode_rnn": "ODE-RNN"
+        "zero_padded_ssm": "Zero-Padded SSM", "forward_fill_ssm": "Forward-Fill SSM",
+        "mask_concat_ssm": "Mask-Concat SSM", "causal_transformer": "Causal Transformer",
+        "masr_ssm": "MASR_SSM (Ours)", "gru_d": "GRU-D", "ode_rnn": "ODE-RNN"
     }
 
     y_true_plotted = False
@@ -176,8 +176,8 @@ def save_benchmark_plot(df_results, config, task_name, png_name):
             ax2.plot(y_true, "k-", linewidth=4, label="True Phase")
             y_true_plotted = True
             
-        linewidth = 2.5 if name == "mask_aware" else 1.5
-        alpha = 1.0 if name == "mask_aware" else 0.8
+        linewidth = 2.5 if name == "masr_ssm" else 1.5
+        alpha = 1.0 if name == "masr_ssm" else 0.8
         ax2.plot(preds, colors.get(name, "k-"), linewidth=linewidth, alpha=alpha, label=labels.get(name, name))
 
     ax1.set_title(f"MSE Loss Convergence (Training on seq_len={train_seq_len})")
@@ -207,8 +207,8 @@ def save_density_plot(df_results, config, png_name):
     plt.style.use('dark_background')
     fig, ax = plt.subplots(figsize=(12, 8))
     
-    colors = {"baseline": "red", "forward_fill": "magenta", "mask_concat": "yellow", 
-              "gru_d": "cyan", "ode_rnn": "orange", "mask_aware": "lime"}
+    colors = {"zero_padded_ssm": "red", "forward_fill_ssm": "magenta", "mask_concat_ssm": "yellow", 
+              "gru_d": "cyan", "ode_rnn": "orange", "masr_ssm": "lime"}
               
     for m in models:
         m_data = df_results[df_results["config/model_type"] == m]

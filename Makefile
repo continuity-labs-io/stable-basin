@@ -1,4 +1,4 @@
-MODELS ?= baseline forward_fill mask_concat transformer mask_aware mask_aware_mamba gru_d ode_rnn
+MODELS ?= zero_padded_ssm forward_fill_ssm mask_concat_ssm causal_transformer masr_ssm masr_mamba gru_d ode_rnn
 
 .PHONY: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fusion-imputation sensor-fusion-all
 

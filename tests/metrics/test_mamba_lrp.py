@@ -1,7 +1,7 @@
 import torch
 import pytest
 from src.metrics.mamba_lrp import MambaLRPEpsilon
-from src.models.ssm.mask_aware_mamba import MaskAwareMamba
+from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
 from src.utils.device import get_optimal_device
 
 
@@ -14,21 +14,22 @@ def test_relevance_conservation_axiom():
     device = get_optimal_device(allow_mps=False)  # CPU for deterministic math
 
     # Initialize a small test model
-    model = MaskAwareMamba(input_dim=16, d_model=32, mask_aware=False).to(device)
+    model = SensorFusionPredictor(ssm_type=SSMType.MASR_MAMBA, modality_dims=[16], d_model=32, out_dim=16).to(device)
     lrp = MambaLRPEpsilon(model, epsilon=1e-7)
 
     # Generate random biological tensor [Batch, Time, Channels]
     x = torch.rand(1, 20, 16).to(device)
     x = x + 0.1  # Ensure non-zero inputs
+    mask = torch.ones(1, 20, 1).to(device)
 
     target_time_step = 15
 
     # Forward pass to calculate expected total output relevance
-    preds, _ = model(x)
+    preds, _ = model(x, mask)
     expected_relevance = preds[:, target_time_step, :].sum().item()
 
     # Backward pass LRP
-    relevance_tensor = lrp.attribute(x, target_time_step)
+    relevance_tensor = lrp.attribute(x, target_time_step, mask=mask)
     actual_relevance = relevance_tensor.sum().item()
 
     # Calculate the conservation error
