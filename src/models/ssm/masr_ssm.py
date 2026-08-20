@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from .physics import create_a_matrix
+
 
 class MaskAwareSSM(nn.Module):
     """
@@ -12,13 +14,11 @@ class MaskAwareSSM(nn.Module):
     preventing any memory decay while observations are missing.  
     """
 
-    def __init__(self, d_model: int, A_scale: float = 0.5, A_shift: float = 0.1):
+    def __init__(self, d_model: int, A_scale: float = 0.5, A_shift: float = 0.1, a_init_type: str = "random"):
         super().__init__()
-        # Initialize A uniformly in [- (A_scale + A_shift), -A_shift] (since A =
-        # -exp(A_log)). The shift bounds A away from 0 to prevent infinite
-        # memory, and the scale ensures memory doesn't decay instantly,
-        # providing diverse timescales.
-        self.A_log = nn.Parameter(torch.log(torch.rand(d_model) * A_scale + A_shift))
+        
+        # Initialize A using the specified factory
+        self.A_init = create_a_matrix(init_type=a_init_type, shape=(d_model,), a_scale=A_scale, a_shift=A_shift)
         self.B_proj = nn.Linear(d_model, d_model, bias=False)
         self.dt_proj = nn.Linear(d_model, d_model)
 
@@ -44,7 +44,7 @@ class MaskAwareSSM(nn.Module):
         batch, seq_len, d_model = latent_x.size()
         h_prev = torch.zeros(batch, d_model, device=latent_x.device)
 
-        A = -torch.exp(self.A_log)
+        A = self.A_init()
 
         hidden_states = []
         for t in range(seq_len):

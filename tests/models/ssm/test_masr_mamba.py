@@ -64,7 +64,7 @@ def test_masr_mamba_gradients():
     loss.backward()
     
     assert x.grad is not None, "Gradients did not flow back to input x"
-    assert model.A.grad is not None, "Gradients did not flow back to parameter A"
+    assert model.A_init.A_log.grad is not None, "Gradients did not flow back to parameter A"
     assert model.B_proj.weight.grad is not None, "Gradients did not flow back to parameter B_proj"
 
 def test_masr_mamba_device_compatibility():

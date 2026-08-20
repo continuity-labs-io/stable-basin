@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .physics import create_a_matrix
+
 def mamba_masr_reference_scan(x, dt, mask, A, B, C, D):
     """
     Pure PyTorch reference implementation of the Mask-Aware Subspace Routing (MASR) Mamba scan.
@@ -56,13 +58,13 @@ def mamba_masr_reference_scan(x, dt, mask, A, B, C, D):
     return y
 
 class PyTorchMambaMASR(nn.Module):
-    def __init__(self, d_model: int = 16, d_state: int = 4):
+    def __init__(self, d_model, d_state=16, a_init_type: str = "random"):
         super().__init__()
         self.d_model = d_model
         self.d_state = d_state
         
         # Continuous state parameters
-        self.A = nn.Parameter(torch.randn(d_model, d_state) * 0.1)
+        self.A_init = create_a_matrix(init_type=a_init_type, shape=(d_model, d_state), a_scale=0.1, a_shift=0.0)
         self.D = nn.Parameter(torch.ones(d_model))
         
         # Data-dependent parameter projections
@@ -82,7 +84,8 @@ class PyTorchMambaMASR(nn.Module):
         # Softplus ensures Δt is strictly positive
         dt = F.softplus(self.dt_proj(x)) # (batch_size, seq_len, d_model)
         
-        y = mamba_masr_reference_scan(x, dt, mask, self.A, B, C, self.D)
+        A = self.A_init()
+        y = mamba_masr_reference_scan(x, dt, mask, A, B, C, self.D)
         return y
 
 class MaskAwareMamba(nn.Module):
@@ -92,7 +95,7 @@ class MaskAwareMamba(nn.Module):
     Comparable to `MaskAwareSSM`, but uses a PyTorch reference MASR Mamba backbone 
     instead of a baseline ZOH continuous-time formulation. 
     """
-    def __init__(self, input_dim: int, d_model: int = 256, d_state: int = 64, mask_aware: bool = False):
+    def __init__(self, input_dim: int, d_model: int = 256, d_state: int = 64, mask_aware: bool = False, a_init_type: str = "random"):
         super().__init__()
         self.mask_aware = mask_aware
         
@@ -108,8 +111,8 @@ class MaskAwareMamba(nn.Module):
         else:
             in_features = input_dim
             self.input_proj = nn.Linear(input_dim, d_model)
-
-        self.mamba = PyTorchMambaMASR(d_model=d_model, d_state=d_state)
+            
+        self.mamba = PyTorchMambaMASR(d_model=d_model, d_state=d_state, a_init_type=a_init_type)
 
         # Standard causal forecasting head (predicts x_{t+1})
         self.forward_head = nn.Linear(d_model, input_dim)

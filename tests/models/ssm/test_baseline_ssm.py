@@ -31,7 +31,7 @@ def test_baseline_ssm_batch_independence():
 def test_baseline_ssm_initialization_range():
     d_model = 16
     model = BaselineSSM(d_model=d_model)
-    A = -torch.exp(model.A_log).detach()
+    A = model.A_init().detach()
     
     # A should be in [-0.6, -0.1]
     # We allow a tiny bit of float imprecision just in case
@@ -43,7 +43,7 @@ def test_baseline_ssm_stability_bounds():
     model = BaselineSSM(d_model=d_model)
     x = torch.randn(batch, seq_len, d_model)
     
-    A = -torch.exp(model.A_log)
+    A = model.A_init()
     
     # Manually check A_bar computation on all x
     dt = torch.nn.functional.softplus(model.dt_proj(x))
@@ -82,9 +82,9 @@ def test_baseline_ssm_backward_pass():
     
     # Check that gradients are populated
     assert x.grad is not None, "Gradient did not flow back to input x"
-    assert model.A_log.grad is not None, "Gradient did not flow to A_log"
+    assert model.A_init.A_log.grad is not None, "Gradient did not flow to A_log"
     assert model.B_proj.weight.grad is not None, "Gradient did not flow to B_proj"
     assert model.dt_proj.weight.grad is not None, "Gradient did not flow to dt_proj"
     
     # Ensure gradients are not all zeros
-    assert not torch.allclose(model.A_log.grad, torch.zeros_like(model.A_log.grad)), "Gradients for A_log are exactly zero"
+    assert not torch.allclose(model.A_init.A_log.grad, torch.zeros_like(model.A_init.A_log.grad)), "Gradients for A_log are exactly zero"

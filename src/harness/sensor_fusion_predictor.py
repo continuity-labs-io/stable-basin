@@ -32,7 +32,7 @@ class SSMType(str, Enum):
 
 class SensorFusionPredictor(nn.Module):
     def __init__(
-        self, ssm_type: str, modality_dims: list[int] = None, d_model: int = 64, out_dim: int = 1
+        self, ssm_type: str, modality_dims: list[int] = None, d_model: int = 64, out_dim: int = 1, a_init_type: str = "random"
     ):
         """
         Initializes the SensorFusionPredictor.
@@ -69,11 +69,11 @@ class SensorFusionPredictor(nn.Module):
             )
 
         if ssm_type in ["zero_padded_ssm", "forward_fill_ssm", "mask_concat_ssm"]:
-            self.ssm = BaselineSSM(d_model)
+            self.ssm = BaselineSSM(d_model=d_model, a_init_type=a_init_type)
         elif ssm_type == "masr_ssm":
-            self.ssm = MaskAwareSSM(d_model)
+            self.ssm = MaskAwareSSM(d_model=d_model, a_init_type=a_init_type)
         elif ssm_type == "masr_mamba":
-            self.ssm = MaskAwareMamba(input_dim=d_model, d_model=d_model, mask_aware=True)
+            self.ssm = MaskAwareMamba(input_dim=d_model, d_model=d_model, mask_aware=True, a_init_type=a_init_type)
         elif ssm_type == "causal_transformer":
             self.ssm = BaselineTransformer(d_model)
         elif ssm_type == "gru_d":

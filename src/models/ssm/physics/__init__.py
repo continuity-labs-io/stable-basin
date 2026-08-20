@@ -1,3 +1,3 @@
-from .spectrogram_init import BiologicalSpectrogramInit
+from .matrix_a_factory import create_a_matrix, LogSpacedAInit, RandomAInit
 
-__all__ = ["BiologicalSpectrogramInit"]
+__all__ = ["create_a_matrix", "LogSpacedAInit", "RandomAInit"]

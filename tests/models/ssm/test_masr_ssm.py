@@ -61,6 +61,6 @@ def test_mask_aware_ssm_backward_pass():
     # Check that gradients flow to both inputs and all parameters
     assert x.grad is not None
     assert g.grad is not None
-    assert model.A_log.grad is not None
+    assert model.A_init.A_log.grad is not None
     assert model.B_proj.weight.grad is not None
     assert model.dt_proj.weight.grad is not None

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from src.models.ssm.triton_fused_scan import HAS_TRITON, MaskAwareFusedScan
+from .physics import create_a_matrix
 
 def pytorch_fused_scan(
     events: torch.Tensor, 
@@ -66,17 +67,18 @@ def pytorch_fused_scan(
 
 
 class AsyncMaskAwareSSM(nn.Module):
-    def __init__(self, dim: int, d_state: int = 16):
+    def __init__(self, dim: int, d_state: int = 16, a_init_type: str = "random"):
         super().__init__()
         self.dim = dim
         self.d_state = d_state
         
         # SSM Core Parameters (Diagonal Form)
-        self.A_log = nn.Parameter(torch.log(torch.rand(dim, d_state) * 0.5 + 0.1))
+        self.A_init = create_a_matrix(init_type=a_init_type, shape=(dim, d_state))
         self.B_proj = nn.Parameter(torch.randn(dim, d_state) * 0.1)
 
     def forward(self, events: torch.Tensor, event_mask: torch.Tensor):
+        A_log = self.A_init.A_log
         if HAS_TRITON and events.device.type == "cuda":
-            return MaskAwareFusedScan.apply(events, event_mask, self.A_log, self.B_proj)
+            return MaskAwareFusedScan.apply(events, event_mask, A_log, self.B_proj)
         else:
-            return pytorch_fused_scan(events, event_mask, self.A_log, self.B_proj, self.dim, self.d_state)
+            return pytorch_fused_scan(events, event_mask, A_log, self.B_proj, self.dim, self.d_state)
