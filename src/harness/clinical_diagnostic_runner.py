@@ -207,7 +207,9 @@ def evaluate_model(trial_config):
     axes[2].set_ylabel("Channels")
 
     plt.tight_layout()
-    png_path = os.path.join(out_dir, f"{png_prefix}_{model_type}.png")
+    plot_dir = os.path.join(out_dir, "plot")
+    os.makedirs(plot_dir, exist_ok=True)
+    png_path = os.path.join(plot_dir, f"{png_prefix}_{model_type}.png")
     plt.savefig(png_path, dpi=300)
     logger.info(f"Dashboard saved to {png_path}")
     plt.close(fig)
@@ -263,5 +265,39 @@ def main():
     results = tuner.fit()
     logger.info("Ray Tune execution complete.")
 
+    # Aggregate individual outputs into single files
+    out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../output/harness"))
+    import glob
+    import pandas as pd
+
+    # Aggregate JSON reports
+    all_reports = {}
+    json_pattern = os.path.join(out_dir, "clinical_diagnostic_report_*.json")
+    for filepath in glob.glob(json_pattern):
+        if filepath.endswith("clinical_diagnostic_reports.json"):
+            continue
+        basename = os.path.basename(filepath)
+        model_name = basename.replace("clinical_diagnostic_report_", "").replace(".json", "")
+        with open(filepath, "r") as f:
+            all_reports[model_name] = json.load(f)
+        os.remove(filepath)
+        
+    if all_reports:
+        with open(os.path.join(out_dir, "clinical_diagnostic_reports.json"), "w") as f:
+            json.dump(all_reports, f, indent=4, cls=NpEncoder)
+        logger.info("Aggregated individual JSON reports into clinical_diagnostic_reports.json")
+
+    # Aggregate CSV metrics
+    csv_prefix = config["evaluation"]["csv_prefix"]
+    csv_pattern = os.path.join(out_dir, f"{csv_prefix}_*.csv")
+    csv_files = [f for f in glob.glob(csv_pattern) if not f.endswith(f"{csv_prefix}.csv")]
+    if csv_files:
+        df_list = [pd.read_csv(f) for f in csv_files]
+        if df_list:
+            combined_df = pd.concat(df_list, ignore_index=True)
+            combined_df.to_csv(os.path.join(out_dir, f"{csv_prefix}.csv"), index=False)
+            for f in csv_files:
+                os.remove(f)
+            logger.info(f"Aggregated individual CSV metrics into {csv_prefix}.csv")
 if __name__ == "__main__":
     main()

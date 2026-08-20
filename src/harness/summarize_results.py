@@ -7,29 +7,30 @@ out_path = "output/harness/summary_output.txt"
 
 with open(out_path, "w") as out:
     out.write("=== CLINICAL DIAGNOSTIC REPORTS (JSON) ===\n")
-    for model in ["zero_padded_ssm", "causal_transformer", "masr_ssm", "masr_mamba"]:
-        json_path = f"output/harness/clinical_diagnostic_report_{model}.json"
-        if os.path.exists(json_path):
-            with open(json_path) as f:
-                data = json.load(f)
-                out.write(f"Model: {model}\n")
-                out.write(f"  Status: {data.get('status')}\n")
-                out.write(f"  Predicted Crash Time: {data.get('predicted_crash_time')}\n")
-                out.write(f"  Confidence Score: {data.get('confidence_score')}\n")
-                ontology = data.get('anomaly_ontology', {})
-                out.write(f"  Primary Latent Driver: {ontology.get('primary_latent_driver')}\n")
-                trace = ontology.get('causal_trace', [])
-                if len(trace) > 0:
-                    out.write(f"  Top Flagged Input: {trace[0].get('flagged_input')} at {trace[0].get('time_step')}\n")
-                out.write("\n")
+    json_path = "output/harness/clinical_diagnostic_reports.json"
+    if os.path.exists(json_path):
+        with open(json_path) as f:
+            all_data = json.load(f)
+            for model in ["zero_padded_ssm", "causal_transformer", "masr_ssm", "masr_mamba"]:
+                if model in all_data:
+                    data = all_data[model]
+                    out.write(f"Model: {model}\n")
+                    out.write(f"  Status: {data.get('status')}\n")
+                    out.write(f"  Predicted Crash Time: {data.get('predicted_crash_time')}\n")
+                    out.write(f"  Confidence Score: {data.get('confidence_score')}\n")
+                    ontology = data.get('anomaly_ontology', {})
+                    out.write(f"  Primary Latent Driver: {ontology.get('primary_latent_driver')}\n")
+                    trace = ontology.get('causal_trace', [])
+                    if len(trace) > 0:
+                        out.write(f"  Top Flagged Input: {trace[0].get('flagged_input')} at {trace[0].get('time_step')}\n")
+                    out.write("\n")
 
     out.write("=== CLINICAL DIAGNOSTIC METRICS (CSV) ===\n")
-    metrics_df = pd.DataFrame()
-    for file in glob.glob("output/harness/clinical_diagnostic_metrics_*.csv"):
-        df = pd.read_csv(file)
-        metrics_df = pd.concat([metrics_df, df])
-    if not metrics_df.empty:
-        out.write(metrics_df.to_string(index=False) + "\n")
+    csv_path = "output/harness/clinical_diagnostic_metrics.csv"
+    if os.path.exists(csv_path):
+        metrics_df = pd.read_csv(csv_path)
+        if not metrics_df.empty:
+            out.write(metrics_df.to_string(index=False) + "\n")
     out.write("\n")
 
     out.write("=== 01 BASELINE INTERPOLATION ===\n")

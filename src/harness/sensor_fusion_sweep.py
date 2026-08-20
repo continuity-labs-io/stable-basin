@@ -193,8 +193,8 @@ def save_benchmark_plot(df_results, config, task_name, png_name):
     ax2.legend(loc="upper left")
 
     plt.tight_layout()
-    os.makedirs("output/harness", exist_ok=True)
-    out_path = f"output/harness/{png_name}"
+    os.makedirs("output/harness/plot", exist_ok=True)
+    out_path = f"output/harness/plot/{png_name}"
     plt.savefig(out_path, dpi=300)
     logger.info(f"Saved plot to {out_path}")
     plt.close(fig)
@@ -232,8 +232,8 @@ def save_density_plot(df_results, config, png_name):
     ax.legend()
     ax.grid(True, alpha=0.2)
     
-    os.makedirs("output/harness", exist_ok=True)
-    out_path = f"output/harness/{png_name}"
+    os.makedirs("output/harness/plot", exist_ok=True)
+    out_path = f"output/harness/plot/{png_name}"
     plt.savefig(out_path, dpi=300)
     logger.info(f"Dashboard saved to {out_path}")
     plt.close(fig)
