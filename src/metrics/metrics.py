@@ -27,7 +27,7 @@ def calculate_dynamic_rank(S, n_rows, n_cols):
     # If the biological signal collapses and only pure entropy remains,
     # gracefully sever the physics engine so the KSM cleanly drops to 0.0.
     if len(valid_modes) == 0:
-        return 1 
+        return 0 
         
     r_max = valid_modes[-1] + 1
     
@@ -154,15 +154,20 @@ class ThermodynamicMetrics:
                             U, S, V = np.linalg.svd(Z_np, full_matrices=False)
                             n_rows, n_cols = Z_np.shape
                             r = calculate_dynamic_rank(S, n_rows, n_cols)
-                            dmd = OptDMD(svd_rank=r)
+                            if r == 0:
+                                max_eig = 0.0
+                                eigenvalues = []
+                            else:
+                                dmd = OptDMD(svd_rank=r)
+                                dmd.fit(Z_np)
+                                eigenvalues = dmd.eigs
+                                max_eig = float(np.max(np.abs(eigenvalues)))
                         else:
                             # OptDMD default handles svd_rank=0 robustly
                             dmd = OptDMD(svd_rank=0)
-                        
-                        dmd.fit(Z_np)
-
-                        eigenvalues = dmd.eigs
-                        max_eig = float(np.max(np.abs(eigenvalues)))
+                            dmd.fit(Z_np)
+                            eigenvalues = dmd.eigs
+                            max_eig = float(np.max(np.abs(eigenvalues)))
 
                         if debug_crash_frame is not None:
                             # Log the sliding window right before the crash and right after
