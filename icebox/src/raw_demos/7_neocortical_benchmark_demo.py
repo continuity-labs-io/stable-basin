@@ -11,7 +11,7 @@ from src.data.sim2real.neocortical_assembloid_dataloader import NeocorticalAssem
 from src.models.ssm.neocortical_engine import NeocorticalEngine
 from src.models.losses.meld_loss import MeldLoss
 from src.utils.device import get_optimal_device
-from src.metrics.autopsy_engine import ThermodynamicAutopsyEngine
+from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
 
 
 def main():
@@ -67,12 +67,12 @@ def main():
     from src.metrics.attribution_engine import AttributionEngine
     attribution_map = AttributionEngine.get_instance().compute_attribution(engine, test_seq, target_time_step=EVENT_FRAME)
 
-    print("[*] Generating Thermodynamic Autopsy Report...")
-    autopsy_engine = ThermodynamicAutopsyEngine(engine)
-    autopsy_report = autopsy_engine.generate_autopsy(test_seq, EVENT_FRAME)
+    print("[*] Generating Thermodynamic Diagnostic Report...")
+    diagnostic_engine = ThermodynamicDiagnosticEngine(engine)
+    diagnostic_report = diagnostic_engine.generate_diagnostic(test_seq, EVENT_FRAME)
     import json
 
-    print(json.dumps(autopsy_report, indent=2))
+    print(json.dumps(diagnostic_report, indent=2))
 
     print("[*] Generating Publication-Ready Dashboard...")
     plt.style.use("dark_background")

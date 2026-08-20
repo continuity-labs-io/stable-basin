@@ -51,8 +51,8 @@ The `HierarchicalSSM` is currently a frozen mathematical toy simulator demonstra
 * **Why it Matters:** This is the deep physics paper. It appeals to theoretical neuroscience, laying the mathematical groundwork for mapping a biological "thought" into a digital latent space.
 
 ### Paper 3: The "Glass Box" Safety Protocol
-**"Thermodynamic Autopsy: Exact Relevance Propagation for Continuous Biological Trajectories"**
+**"Thermodynamic Diagnostic: Exact Relevance Propagation for Continuous Biological Trajectories"**
 * **The Vibe:** AI Safety / Explainable Biology / DARPA-Grade AI.
 * **The Problem:** Even if an AI perfectly predicts a catastrophic biological event (e.g., a Waddington crash), it is useless to clinicians if it acts as a black box.
-* **The Solution:** You bring your `mamba_lrp.py` and `autopsy_engine.py` modules into the spotlight. You introduce MambaLRPEpsilon, proving how to perfectly conserve attribution backward through the continuous $\exp(A \Delta t)$ matrix.
+* **The Solution:** You bring your `mamba_lrp.py` and `diagnostic_engine.py` modules into the spotlight. You introduce MambaLRPEpsilon, proving how to perfectly conserve attribution backward through the continuous $\exp(A \Delta t)$ matrix.
 * **Why it Matters:** Explainability is the ultimate bottleneck for FDA-approved biological foundation models. When the model predicts a crash, this engine traces the exact causal chain back to the root event (e.g., "A TP53 RNA flash at T-30 mins caused the collapse").

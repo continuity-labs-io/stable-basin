@@ -1,10 +1,10 @@
-# 028: Autopsy Engine
+# 028: Diagnostic Engine
 
 ## Objective
 
-Create a new Python module named `src/metrics/autopsy_engine.py` that translates
+Create a new Python module named `src/metrics/diagnostic_engine.py` that translates
 raw continuous neural tracking data and MambaLRP attribution tensors into the
-structured Thermodynamic Autopsy JSON payload.
+structured Thermodynamic Diagnostic JSON payload.
 
 ## Context
 
@@ -13,11 +13,11 @@ vector per time step (100D Sigma morphological shape indices, 12D Psi RNA
 expression anchors, and 2D Omega bioelectric voltage traces). When a Waddington
 crash or critical anomaly is detected via thermodynamic metrics (like KSM), this
 engine executes a backward attribution trace and generates an automated
-diagnostic autopsy report.
+diagnostic diagnostic report.
 
 ## Requirements
 
-1. **Class `ThermodynamicAutopsyEngine`**:
+1. **Class `ThermodynamicDiagnosticEngine`**:
 
    - `__init__(self, model, feature_names=None)`: Stores the trained model and
      an optional list of 114 feature names. If `feature_names` is None,
@@ -28,7 +28,7 @@ diagnostic autopsy report.
      (`Omega_VoltRed`, `Omega_VoltGrn`).
 
 2. **Method
-   `generate_autopsy(self, x_sequence, crash_time_step, confidence_score=0.98)`**:
+   `generate_diagnostic(self, x_sequence, crash_time_step, confidence_score=0.98)`**:
 
    - Accept a batched input tensor `x_sequence` of shape `[1, Time, 114]` and
      the designated `crash_time_step`.
@@ -47,7 +47,7 @@ diagnostic autopsy report.
 
 3. **Output Schema**:
 
-   - Return a standard Python dictionary strictly matching the user's Autopsy
+   - Return a standard Python dictionary strictly matching the user's Diagnostic
      JSON schema:
      ```json
      {
@@ -71,6 +71,6 @@ diagnostic autopsy report.
 4. **Execution Test Block**:
    - Include a `if __name__ == "__main__":` block that initializes a mock
      `SpikeForecaster` or `NeocorticalEngine` (or similar dummy model), passes a
-     dummy 114-D sequence with an injected crash, runs `generate_autopsy()`, and
+     dummy 114-D sequence with an injected crash, runs `generate_diagnostic()`, and
      prints the pretty-printed JSON string to the terminal to verify zero-error
      execution.

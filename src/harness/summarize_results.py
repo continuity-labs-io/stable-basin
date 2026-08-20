@@ -6,9 +6,9 @@ import os
 out_path = "output/harness/summary_output.txt"
 
 with open(out_path, "w") as out:
-    out.write("=== CLINICAL AUTOPSY REPORTS (JSON) ===\n")
+    out.write("=== CLINICAL DIAGNOSTIC REPORTS (JSON) ===\n")
     for model in ["zero_padded_ssm", "causal_transformer", "masr_ssm", "masr_mamba"]:
-        json_path = f"output/harness/clinical_autopsy_report_{model}.json"
+        json_path = f"output/harness/clinical_diagnostic_report_{model}.json"
         if os.path.exists(json_path):
             with open(json_path) as f:
                 data = json.load(f)
@@ -23,9 +23,9 @@ with open(out_path, "w") as out:
                     out.write(f"  Top Flagged Input: {trace[0].get('flagged_input')} at {trace[0].get('time_step')}\n")
                 out.write("\n")
 
-    out.write("=== CLINICAL AUTOPSY METRICS (CSV) ===\n")
+    out.write("=== CLINICAL DIAGNOSTIC METRICS (CSV) ===\n")
     metrics_df = pd.DataFrame()
-    for file in glob.glob("output/harness/clinical_autopsy_metrics_*.csv"):
+    for file in glob.glob("output/harness/clinical_diagnostic_metrics_*.csv"):
         df = pd.read_csv(file)
         metrics_df = pd.concat([metrics_df, df])
     if not metrics_df.empty:

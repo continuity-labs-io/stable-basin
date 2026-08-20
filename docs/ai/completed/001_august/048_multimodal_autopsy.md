@@ -1,5 +1,5 @@
 Context: We are finalizing the "Director's Cut" of the Project MELD repository.
-This task builds "Master Demo 3: The Multimodal Autopsy", representing our core
+This task builds "Master Demo 3: The Multimodal Diagnostic", representing our core
 pharmaceutical and drug-discovery pitch (e.g., for Daphne Koller, Altos Labs,
 BrainStorm Therapeutics). It proves that when our continuous-time state-space
 model detects a thermodynamic crash, we can deploy exact Layer-wise Relevance
@@ -7,9 +7,9 @@ Propagation (LRP-epsilon) to trace the causality backward in time, isolating the
 specific biological mechanism (the drug target) that triggered the failure, and
 outputting an automated, human-readable JSON diagnostic.
 
-Task: Create a new script `src/demo/03_multimodal_autopsy.py` by synthesizing
+Task: Create a new script `src/demo/03_multimodal_diagnostic.py` by synthesizing
 the 114-D simulation logic, the `MambaLRPEpsilon` module, and the
-`ThermodynamicAutopsyEngine`.
+`ThermodynamicDiagnosticEngine`.
 
 Requirements:
 
@@ -21,7 +21,7 @@ Requirements:
      this instead of NeocorticalEngine because MambaLRPEpsilon explicitly
      targets its `output_proj` and `get_hidden_states` attributes_).
    - Import `MambaLRPEpsilon` from `src.metrics.mamba_lrp`.
-   - Import `ThermodynamicAutopsyEngine` from `src.metrics.autopsy_engine`.
+   - Import `ThermodynamicDiagnosticEngine` from `src.metrics.diagnostic_engine`.
    - Import `get_optimal_device` from `src.utils.device`.
    - Setup basic console logging (INFO level).
 
@@ -30,7 +30,7 @@ Requirements:
    - Initialize device using `get_optimal_device(allow_mps=False, verbose=True)`
      (MPS strictly disabled to ensure accurate autograd/LRP backward pass).
    - Print a stark console header:
-     `[*] BOOTING MASTER DEMO 3: THE MULTIMODAL AUTOPSY`.
+     `[*] BOOTING MASTER DEMO 3: THE MULTIMODAL DIAGNOSTIC`.
    - Instantiate the `SpikeForecaster` (input_dim=114, d_model=256, d_state=64).
 
 3. **Burn-in Training (The Baseline):**
@@ -56,7 +56,7 @@ Requirements:
    - _Physics Note:_ We are mathematically staging a scenario where an RNA
      stress alarm fires at T=110, causing a global network collapse at T=140.
 
-5. **MambaLRP & The Autopsy Engine:**
+5. **MambaLRP & The Diagnostic Engine:**
 
    - Put the model in `.eval()`.
    - Instantiate `MambaLRPEpsilon(engine, epsilon=1e-7)`.
@@ -64,19 +64,19 @@ Requirements:
      `relevance_tensor = lrp.attribute(test_seq, target_time_step=EVENT_FRAME)`.
    - _Override Note:_ Explicitly monkey-patch `engine.compute_attribution` to
      use the `MambaLRPEpsilon.attribute` method so the
-     `ThermodynamicAutopsyEngine` calls the mathematically exact LRP instead of
+     `ThermodynamicDiagnosticEngine` calls the mathematically exact LRP instead of
      its naive Input\*Gradient fallback:
      `engine.compute_attribution = lambda x, t: lrp.attribute(x, t)`
-   - Instantiate `ThermodynamicAutopsyEngine(engine)`.
-   - Call `generate_autopsy(test_seq, EVENT_FRAME)`.
-   - Print the resulting `autopsy_report` beautifully formatted as a JSON string
+   - Instantiate `ThermodynamicDiagnosticEngine(engine)`.
+   - Call `generate_diagnostic(test_seq, EVENT_FRAME)`.
+   - Print the resulting `diagnostic_report` beautifully formatted as a JSON string
      to the console. It MUST successfully identify the spike at T=110 on the
      `Psi` genes as the primary causal trace.
 
 6. **The Publication-Ready Dashboard:**
    - Create
-     `plot_autopsy_dashboard(raw_seq, relevance_map, trigger_frame, event_frame)`.
-     Save to `output/03_multimodal_autopsy.png` using the `dark_background`
+     `plot_diagnostic_dashboard(raw_seq, relevance_map, trigger_frame, event_frame)`.
+     Save to `output/03_multimodal_diagnostic.png` using the `dark_background`
      theme.
    - 2-Panel Vertical Layout (figsize=12, 10, sharex=True):
      - **Panel 1 (The Biological Input):** 2D Heatmap of the corrupted
@@ -98,4 +98,4 @@ Constraints:
 - The console output should narrate the story (e.g.,
   `[*] Injecting RNA Stress Alarm at T=110...`,
   `[*] Structural Collapse at T=140...`,
-  `[*] Generating Thermodynamic Autopsy...`).
+  `[*] Generating Thermodynamic Diagnostic...`).

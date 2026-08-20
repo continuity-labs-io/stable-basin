@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ThermodynamicAutopsyEngine:
+class ThermodynamicDiagnosticEngine:
     """
     Engine for generating causal attribution reports ("Autopsies") for sequence models.
     Uses Layer-wise Relevance Propagation (LRP) or Taylor attribution to trace back from
@@ -46,7 +46,7 @@ class ThermodynamicAutopsyEngine:
         names.extend(voltage_tracks)
         return names
 
-    def generate_autopsy(
+    def generate_diagnostic(
         self, x_sequence: torch.Tensor, crash_time_step: int, confidence_score: float = 0.98
     ) -> dict:
         """
@@ -58,7 +58,7 @@ class ThermodynamicAutopsyEngine:
             confidence_score (float): Optional confidence threshold. Default is 0.98.
 
         Returns:
-            dict: A structured autopsy report with the following schema:
+            dict: A structured diagnostic report with the following schema:
                 {
                     "status": str,                       # E.g., "CRITICAL_FAILURE_PREDICTED"
                     "predicted_crash_time": str,         # E.g., "T=140"
@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     # Mock initialization
     model = NeocorticalEngine(input_dim=114, d_model=256, d_state=32)
-    engine = ThermodynamicAutopsyEngine(model)
+    engine = ThermodynamicDiagnosticEngine(model)
 
     # Dummy sequence (Batch=1, Time=50, Features=114)
     x_sequence = torch.randn(1, 50, 114)
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     # Injected crash at T=45
     crash_time_step = 45
 
-    # Generate autopsy report
-    autopsy_report = engine.generate_autopsy(x_sequence, crash_time_step)
+    # Generate diagnostic report
+    diagnostic_report = engine.generate_diagnostic(x_sequence, crash_time_step)
 
-    logger.info(json.dumps(autopsy_report, indent=2))
+    logger.info(json.dumps(diagnostic_report, indent=2))

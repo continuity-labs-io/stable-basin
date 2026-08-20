@@ -80,10 +80,10 @@ class StableBasinTrainer:
         return loss_history
 ```
 
-3. Create the YAML Configuration (configs/clinical_autopsy.yaml)
-Create a configs directory at the root of the project, and add clinical_autopsy.yaml:
+3. Create the YAML Configuration (configs/clinical_diagnostic.yaml)
+Create a configs directory at the root of the project, and add clinical_diagnostic.yaml:
 ```yaml
-experiment_name: "Clinical Autopsy (Pharmacological Shock)"
+experiment_name: "Clinical Diagnostic (Pharmacological Shock)"
 models:
   - "meld"
   - "baseline"
@@ -100,25 +100,25 @@ training:
   burn_in_frames: 500
 evaluation:
   ksm_threshold: 0.85
-  png_prefix: "06_clinical_autopsy_dashboard"
-  csv_prefix: "06_clinical_autopsy_metrics"
+  png_prefix: "06_clinical_diagnostic_dashboard"
+  csv_prefix: "06_clinical_diagnostic_metrics"
 ```
 
-4. Refactor src/harness/clinical_autopsy_runner.py
+4. Refactor src/harness/clinical_diagnostic_runner.py
 Update the script to use the new architecture:
 
 Replace all argparse flags except --config. Load the YAML using import yaml and config = yaml.safe_load(open(args.config)).
 
-After loading the dataset (the telemetry tensor), encapsulate the model instantiation, training, dynamic crash detection, and autopsy generation into a helper function: def run_autopsy_for_model(model_type, config, telemetry, mask, device):.
+After loading the dataset (the telemetry tensor), encapsulate the model instantiation, training, dynamic crash detection, and diagnostic generation into a helper function: def run_diagnostic_for_model(model_type, config, telemetry, mask, device):.
 
 Inside this function, use the new StableBasinTrainer for the burn-in training. To make it compatible without writing a formal PyTorch Dataset, simply pack your training data into a dummy list: dataloader = [{"x_raw": x_train, "mask": mask_train}] and call trainer.fit(dataloader, epochs).
 
-In main(), iterate over config["models"] to run run_autopsy_for_model() sequentially. Suffix the output filenames dynamically using the prefixes from the config (e.g., f"{config['evaluation']['png_prefix']}_{model_type}.png").
+In main(), iterate over config["models"] to run run_diagnostic_for_model() sequentially. Suffix the output filenames dynamically using the prefixes from the config (e.g., f"{config['evaluation']['png_prefix']}_{model_type}.png").
 
 5. Clean Up the Makefile
-Update the clinical-autopsy target in the Makefile to run:
-python -m src.harness.clinical_autopsy_runner --config configs/clinical_autopsy.yaml
-(You can delete the old clinical-autopsy-all target, as the YAML configuration inherently handles iterating over all models now).
+Update the clinical-diagnostic target in the Makefile to run:
+python -m src.harness.clinical_diagnostic_runner --config configs/clinical_diagnostic.yaml
+(You can delete the old clinical-diagnostic-all target, as the YAML configuration inherently handles iterating over all models now).
 
 6. Verification
-Run make clinical-autopsy to ensure the refactored script executes cleanly end-to-end and still produces the expected JSON, CSV, and PNG artifacts for all 4 models.
+Run make clinical-diagnostic to ensure the refactored script executes cleanly end-to-end and still produces the expected JSON, CSV, and PNG artifacts for all 4 models.

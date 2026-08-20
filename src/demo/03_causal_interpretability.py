@@ -1,5 +1,5 @@
 """
-Demo 03: Multimodal Autopsy
+Demo 03: Multimodal Diagnostic
 
 This script demonstrates the Layer-wise Relevance Propagation (LRP) causality engine.
 It traces back from a catastrophic failure event (Structural Collapse) to uncover the latent root
@@ -20,14 +20,14 @@ import logging
 
 from src.models.ssm.mask_aware_mamba import MaskAwareMamba
 from src.metrics.mamba_lrp import MambaLRPEpsilon
-from src.metrics.autopsy_engine import ThermodynamicAutopsyEngine
+from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
 from src.utils.device import get_optimal_device
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
-logger = logging.getLogger("MultimodalAutopsy")
+logger = logging.getLogger("MultimodalDiagnostic")
 
 
-def plot_autopsy_dashboard(raw_seq, relevance_map, trigger_frame, event_frame, output_dir):
+def plot_diagnostic_dashboard(raw_seq, relevance_map, trigger_frame, event_frame, output_dir):
     plt.style.use("dark_background")
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
 
@@ -67,7 +67,7 @@ def plot_autopsy_dashboard(raw_seq, relevance_map, trigger_frame, event_frame, o
     fig.colorbar(im2, ax=ax2)
 
     plt.tight_layout()
-    output_path = os.path.join(output_dir, "03_multimodal_autopsy.png")
+    output_path = os.path.join(output_dir, "03_multimodal_diagnostic.png")
     plt.savefig(output_path, dpi=300)
     logger.info(f"[*] Dashboard saved to {output_path}")
 
@@ -76,7 +76,7 @@ def main():
     # Force CPU to avoid MPS autograd / backward pass issues for exact LRP mathematically
     device = torch.device("cpu")
 
-    print("\n[*] BOOTING DEMO 3: THE MULTIMODAL AUTOPSY")
+    print("\n[*] BOOTING DEMO 3: THE MULTIMODAL DIAGNOSTIC")
     engine = MaskAwareMamba(input_dim=114, d_model=256, mask_aware=False).to(device)
 
     logger.info("[*] Generating baseline biology and running burn-in...")
@@ -119,14 +119,14 @@ def main():
     from src.metrics.attribution_engine import AttributionEngine
     AttributionEngine.get_instance().set_strategy(lambda m, x, t: relevance_tensor)
 
-    logger.info("[*] Generating Thermodynamic Autopsy...")
-    autopsy_engine = ThermodynamicAutopsyEngine(engine)
-    autopsy_report = autopsy_engine.generate_autopsy(test_seq, EVENT_FRAME)
+    logger.info("[*] Generating Thermodynamic Diagnostic...")
+    diagnostic_engine = ThermodynamicDiagnosticEngine(engine)
+    diagnostic_report = diagnostic_engine.generate_diagnostic(test_seq, EVENT_FRAME)
 
     print("\n" + "=" * 50)
-    print(" MULTIMODAL AUTOPSY REPORT ")
+    print(" MULTIMODAL DIAGNOSTIC REPORT ")
     print("=" * 50)
-    print(json.dumps(autopsy_report, indent=2))
+    print(json.dumps(diagnostic_report, indent=2))
     print("=" * 50 + "\n")
 
     output_dir = "output/demo"
@@ -135,7 +135,7 @@ def main():
     raw_numpy = test_seq[0].detach().cpu().numpy()
     rel_numpy = relevance_tensor[0].detach().cpu().numpy()
 
-    plot_autopsy_dashboard(raw_numpy, rel_numpy, TRIGGER_FRAME, EVENT_FRAME, output_dir)
+    plot_diagnostic_dashboard(raw_numpy, rel_numpy, TRIGGER_FRAME, EVENT_FRAME, output_dir)
     logger.info("[+] Demo 3 Complete.")
 
 

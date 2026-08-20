@@ -70,10 +70,10 @@ Stable Basin uses declarative YAML configurations for distributed parallel execu
 Ensure your hardware and registry are perfectly configured:
 `make preflight`
 
-**2. Execute the Clinical Autopsy Pipeline**
+**2. Execute the Clinical Diagnostic Pipeline**
 This command spins up parallel workers to evaluate the architectures simultaneously against the pharmacological crash dataset:
-`make clinical-autopsy`
-*All inference latencies, KSM traces, and MambaLRP Causal Autopsy JSONs will automatically sync to your W&B cloud dashboard.*
+`make clinical-diagnostic`
+*All inference latencies, KSM traces, and MambaLRP Causal Diagnostic JSONs will automatically sync to your W&B cloud dashboard.*
 
 ## 🧬 Thermodynamic Metrics
 

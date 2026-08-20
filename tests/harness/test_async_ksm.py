@@ -58,7 +58,7 @@ def test_async_ksm():
     # Boost signal for the un-trained model so DMD doesn't flatline (temporal_std < 1e-3)
     with torch.no_grad():
         model.B_proj.normal_(mean=1.0, std=0.2)
-        model.A_log.fill_(math.log(0.9))
+        model.A_init.A_log.fill_(math.log(0.9))
         
     with torch.no_grad():
         h_sparse = model(events, event_mask)

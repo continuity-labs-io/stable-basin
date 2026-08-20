@@ -1,4 +1,4 @@
-experiment_name: "Clinical Autopsy (Pharmacological Shock)"
+experiment_name: "Clinical Diagnostic (Pharmacological Shock)"
 models:
   - "masr_mamba"
   - "zero_padded_ssm"
@@ -15,5 +15,5 @@ training:
   burn_in_frames: 500
 evaluation:
   ksm_threshold: 0.85
-  png_prefix: "clinical_autopsy_dashboard"
-  csv_prefix: "clinical_autopsy_metrics"
+  png_prefix: "clinical_diagnostic_dashboard"
+  csv_prefix: "clinical_diagnostic_metrics"

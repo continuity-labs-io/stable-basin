@@ -19,20 +19,20 @@ sensor-fusion-density-sweep:
 
 sensor-fusion-all: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fusion-density-sweep
 
-.PHONY: clinical-autopsy
+.PHONY: clinical-diagnostic
 
 EPOCHS ?= 15
 
-clinical-autopsy:
-	python -m src.harness.clinical_autopsy_runner --config configs/clinical_autopsy.yaml
+clinical-diagnostic:
+	python -m src.harness.clinical_diagnostic_runner --config configs/clinical_diagnostic.yaml
 
 .PHONY: preflight docker-build
 
 preflight:
 	@echo "Running Preflight Smoke Tests..."
-	python -m src.harness.smoke_test
+	pytest tests/harness/test_smoke.py
 	@echo "Smoke tests passed! The registry is stable."
 
-docker-build:
-	@echo "Building Stable Basin Docker Image..."
-	docker build -t stable-basin:latest .
+# docker-build:
+# 	@echo "Building Stable Basin Docker Image..."
+# 	docker build -t stable-basin:latest .

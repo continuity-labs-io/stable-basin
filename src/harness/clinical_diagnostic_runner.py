@@ -14,7 +14,7 @@ from ray import tune, train
 import wandb
 
 from src.data.ephys.pharma_shock_dataset import PharmacologicalShockDataset
-from src.metrics.autopsy_engine import ThermodynamicAutopsyEngine
+from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
 from src.metrics.metrics import ThermodynamicMetrics
 from src.metrics.mamba_lrp import MambaLRPEpsilon
@@ -52,12 +52,12 @@ def evaluate_model(trial_config):
     
     wandb.init(
         project="stable-basin",
-        name=f"autopsy_{model_type}",
+        name=f"diagnostic_{model_type}",
         config={"model_type": model_type, **config},
         reinit="finish_previous"
     )
     
-    logger.info(f"--- Running Autopsy for Model: {model_type} ---")
+    logger.info(f"--- Running Diagnostic for Model: {model_type} ---")
     
     input_dim = config["data"]["input_dim"]
     d_model = config["training"]["d_model"]
@@ -143,22 +143,22 @@ def evaluate_model(trial_config):
     else:
         logger.info(f"Detected crash at frame {crash_frame} (KSM dropped below {ksm_threshold})")
 
-    logger.info("Executing Thermodynamic Autopsy Engine")
+    logger.info("Executing Thermodynamic Diagnostic Engine")
     feature_names = [f"Ch_{i}" for i in range(input_dim)]
-    autopsy = ThermodynamicAutopsyEngine(model, feature_names=feature_names)
+    diagnostic = ThermodynamicDiagnosticEngine(model, feature_names=feature_names)
             
     try:
-        report = autopsy.generate_autopsy(telemetry, crash_time_step=crash_frame)
+        report = diagnostic.generate_diagnostic(telemetry, crash_time_step=crash_frame)
     except Exception as e:
-        logger.warning(f"Autopsy generation failed: {e}")
+        logger.warning(f"Diagnostic generation failed: {e}")
         report = {"error": str(e), "crash_frame": crash_frame}
 
     out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../output/harness"))
     os.makedirs(out_dir, exist_ok=True)
-    report_path = os.path.join(out_dir, f"clinical_autopsy_report_{model_type}.json")
+    report_path = os.path.join(out_dir, f"clinical_diagnostic_report_{model_type}.json")
     with open(report_path, "w") as f:
         json.dump(report, f, indent=4, cls=NpEncoder)
-    logger.info(f"Saved Autopsy JSON to {report_path}")
+    logger.info(f"Saved Diagnostic JSON to {report_path}")
 
     logger.info("Generating 3-panel dashboard")
     
@@ -220,7 +220,7 @@ def evaluate_model(trial_config):
             "dashboard": wandb.Image(png_path)
         })
 
-        artifact = wandb.Artifact(f"autopsy_{model_type}", type="report")
+        artifact = wandb.Artifact(f"diagnostic_{model_type}", type="report")
         artifact.add_file(report_path)
         artifact.add_file(csv_path)
         wandb.log_artifact(artifact)
@@ -237,7 +237,7 @@ def evaluate_model(trial_config):
 
 def main():
     import yaml
-    parser = argparse.ArgumentParser(description="Clinical Autopsy Runner (Distributed)")
+    parser = argparse.ArgumentParser(description="Clinical Diagnostic Runner (Distributed)")
     parser.add_argument("--config", type=str, required=True, help="Path to YAML config")
     args = parser.parse_args()
 
@@ -257,7 +257,7 @@ def main():
             resources={"cpu": 1, "gpu": 1 if torch.cuda.is_available() else 0}
         ),
         param_space=search_space,
-        run_config=tune.RunConfig(name="clinical_autopsy_sweep")
+        run_config=tune.RunConfig(name="clinical_diagnostic_sweep")
     )
     
     results = tuner.fit()

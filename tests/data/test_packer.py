@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from src.data.waddington_dataset import SyntheticWaddingtonDataset
 from src.data.async_event_packer import AsyncEventPackerDataset, ragged_collate_fn
 
-def main():
+def test_packer():
     print("--- Testing AsyncEventPackerDataset ---")
     
     # 1. Create the base dataset
@@ -43,5 +43,3 @@ def main():
     
     print("\nSuccess! The packer successfully strips zero-padding and collates ragged sequences.")
 
-if __name__ == "__main__":
-    main()

@@ -9,7 +9,7 @@ from src.data.waddington_dataset import SyntheticWaddingtonDataset
 from src.data.async_event_packer import AsyncEventPackerDataset, ragged_collate_fn
 from src.models.ssm.dynamic_integrator import DynamicIntegrator
 
-def main():
+def test_integrator():
     print("--- Testing DynamicIntegrator ---")
     
     # 1. Setup Packer Pipeline
@@ -41,5 +41,3 @@ def main():
     else:
         print("Warning: Output shapes do not match expected shapes.")
 
-if __name__ == "__main__":
-    main()

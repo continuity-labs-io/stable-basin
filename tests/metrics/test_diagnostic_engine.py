@@ -1,10 +1,10 @@
 import pytest
 import torch
 from unittest.mock import MagicMock
-from src.metrics.autopsy_engine import ThermodynamicAutopsyEngine
+from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
 
 
-def test_autopsy_engine_generation():
+def test_diagnostic_engine_generation():
     # Mock model that returns a static attribution matrix
     mock_model = MagicMock()
     # The expected shape for attribution matrix is [1, Time, 114]
@@ -15,11 +15,11 @@ def test_autopsy_engine_generation():
     from src.metrics.attribution_engine import AttributionEngine
     AttributionEngine.get_instance().set_strategy(lambda m, x, t: mock_attribution)
 
-    engine = ThermodynamicAutopsyEngine(mock_model)
+    engine = ThermodynamicDiagnosticEngine(mock_model)
     x_sequence = torch.randn(1, 50, 114)
     crash_time_step = 45
 
-    report = engine.generate_autopsy(x_sequence, crash_time_step)
+    report = engine.generate_diagnostic(x_sequence, crash_time_step)
 
     assert report["status"] == "CRITICAL_FAILURE_PREDICTED"
     assert report["predicted_crash_time"] == "T=45"
