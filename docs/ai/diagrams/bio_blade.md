@@ -1,5 +1,5 @@
 ```mermaid
-graph LR
+graph TB
     %% Define Styles
     classDef wetlab fill:#e0f7fa,stroke:#006064,stroke-width:2px,color:#000;
     classDef hardware fill:#eceff1,stroke:#37474f,stroke-width:2px,color:#000;
@@ -23,7 +23,7 @@ graph LR
 
     %% The Bio-Blade Chassis
     subgraph BIO_BLADE ["Continuity Labs 'Bio-Blade' Edge Chassis"]
-        direction LR
+        direction TB
         
         Port1[QSFP Port 1<br/>Ingress]:::hardware --> NIC
         Port2[QSFP Port 2<br/>Egress / Closed-Loop Control]:::hardware -.-> NIC

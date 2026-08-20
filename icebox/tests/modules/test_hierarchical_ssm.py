@@ -1,6 +1,9 @@
 import pytest
 import torch
-from src.modules.hierarchical_ssm import HierarchicalSSM
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src/modules')))
+from hierarchical_ssm import HierarchicalSSM
 
 
 def test_hierarchical_ssm():

@@ -1,6 +1,6 @@
 import torch
 import pytest
-from src.models.ssm.mask_aware_ssm import MaskAwareSSM
+from src.models.ssm.masr_ssm import MaskAwareSSM
 from src.models.ssm.baseline_ssm import BaselineSSM
 
 def test_mask_aware_ssm_shape():
