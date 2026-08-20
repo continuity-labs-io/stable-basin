@@ -45,7 +45,7 @@ def mamba_masr_reference_scan(x, dt, mask, A, B, C, D):
         
         # When mask is 0, dt_masked_t is 0, so Ā = exp(0) = 1 (Identity), and B̄ = 0
         A_bar = torch.exp(dt_masked_t_exp * A) # (batch_size, d_model, d_state)
-        B_bar = (dt_masked_t_exp * B_t.unsqueeze(1)) # (batch_size, d_model, d_state)
+        B_bar = (A_bar - 1.0) / (A - 1e-8) * B_t.unsqueeze(1) # (batch_size, d_model, d_state)
         
         # Update hidden state h_t = Ā * h_{t-1} + B̄ * x_t
         # Perfectly freezing the hidden state (h_t = h_{t-1}) when mask is 0
@@ -130,10 +130,8 @@ class MaskAwareMamba(nn.Module):
             h = self.input_proj(x)
 
         if self.mask_aware and mask is not None:
-            # Create a global mask for the entire layer: 
-            # if any sensor is present, it's not totally missing.
-            global_mask = mask.amax(dim=-1, keepdim=True).expand(-1, -1, self.mamba.d_model)
-            hidden_states = self.mamba(h, global_mask)
+            # Pass the per-channel mask directly!
+            hidden_states = self.mamba(h, mask)
         else:
             hidden_states = self.mamba(h, torch.ones_like(h))
 

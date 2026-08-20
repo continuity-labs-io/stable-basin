@@ -78,7 +78,7 @@ class RandomAInit(nn.Module):
         self.shape = shape
         
         # A_log initialized uniformly
-        self.A_log = nn.Parameter(torch.log(torch.rand(shape) * a_scale + a_shift))
+        self.A_log = nn.Parameter(torch.log(torch.clamp(torch.rand(shape), min=1e-4) * a_scale + a_shift))
 
     def forward(self) -> torch.Tensor:
         return -torch.exp(self.A_log)

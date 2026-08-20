@@ -18,7 +18,9 @@ class BaselineTransformer(nn.Module):
         self.pos_embedding = nn.Parameter(torch.randn(1, max_len, d_model) * pos_embedding_scale)
 
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=d_model, nhead=nhead, batch_first=True, dim_feedforward=d_model * ff_expansion_factor
+            d_model=d_model, nhead=nhead, batch_first=True, 
+            dim_feedforward=d_model * ff_expansion_factor,
+            norm_first=True
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
