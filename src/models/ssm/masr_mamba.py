@@ -72,6 +72,9 @@ class PyTorchMambaMASR(nn.Module):
         self.C_proj = nn.Linear(d_model, d_state)
         self.dt_proj = nn.Linear(d_model, d_model)
         
+        import math
+        self.dt_proj.bias.data.uniform_(math.log(0.001), math.log(0.1))
+        
     def forward(self, x, mask):
         """
         x: (batch_size, seq_len, d_model)
@@ -110,7 +113,11 @@ class MaskAwareMamba(nn.Module):
             )
         else:
             in_features = input_dim
-            self.input_proj = nn.Linear(input_dim, d_model)
+            self.input_proj = nn.Sequential(
+                nn.Linear(input_dim, d_model),
+                nn.LayerNorm(d_model),
+                nn.GELU()
+            )
             
         self.mamba = PyTorchMambaMASR(d_model=d_model, d_state=d_state, a_init_type=a_init_type)
 

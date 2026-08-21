@@ -3,37 +3,6 @@
 This document tracks known issues, technical debt, and open TODOs within the
 codebase.
 
-## Add Neurospike data integration.
-
-FinalSpark Neuroplatform: Standard Intan MEA, Low: 32 to 64 channels per well,
-20 kHz to 30 kHz, Continuous 24/7 streaming for months. Use for Time: Perfect
-for testing Mamba-2's ability to handle infinite sequence lengths and compute
-thermodynamic drift over weeks, but it lacks the spatial density to show off
-Mamba's capacity.
-
-## V2 Architecture: The 129-D Quintet Tensor
-
-We need data engineers to build actual dataloaders for single-cell epigenetic
-clocks (Gamma) and in-line electrochemical sensors (Mu). Mamba-2's
-data-dependent step size ($\Delta t$) will gracefully absorb the massive `NaN`
-gaps of hourly epigenetic reads.
-
-## The ATP Metabolic Checkbook Loss Constraint
-
-We need to update `src/models/meld_loss.py`. The physics constraint is: If the
-model predicts high-frequency action potentials or massive RNA transcription, it
-must mathematically subtract from the global ATP reserve dimension. If the model
-hallucinates a high-energy repair cascade while the ATP checkbook is empty, the
-loss function must geometrically explode.
-
-## Overhaul `src/modules/hierarchical_ssm.py` for Prime Time
-
-The `HierarchicalSSM` is currently a frozen mathematical toy simulator demonstrating standing wave phase transitions. It needs to be upgraded for actual training and multi-sensor fusion:
-
-1.  **Make Parameters Learnable**: Remove `requires_grad=False` from the core matrices (`A1`, `B1`, `A2`, `B2`, `W_td`).
-2.  **Discretize for Parallel Scans**: The current explicit Euler integration (`for t in range(steps):`) is unacceptably slow for GPUs. Implement a discretization step (e.g., Zero-Order Hold or Bilinear Transform) so the continuous ODE can be unrolled via an associative parallel scan (like the Mamba architecture).
-3.  **Implement Multi-Rate Multi-Sensor Polling**: Upgrade the hardcoded single scalar input `u` to accept a multimodal block tensor. Modulate `dt` or assign different blocks of the `A` matrix to different polling rates (e.g., Layer 1 catching 20kHz electrical spikes, Layer 2 catching 1Hz RNA reads) to prove out native multi-frequency sensor fusion.
-
 ## Publications
 
 ### Paper 1: The Core Foundation (Our Current Focus)
@@ -49,6 +18,15 @@ The `HierarchicalSSM` is currently a frozen mathematical toy simulator demonstra
 * **The Problem:** Single-layer recurrent models act as passive filters; they process noise but cannot spontaneously generate higher-order biological structures (like traveling waves or synchronized rhythms).
 * **The Solution:** Your `hierarchical_ssm.py` module. You prove that by coupling a fast/local layer with a delayed, top-down macro layer, you trigger a thermodynamic phase transition into a stable Attractor Limit Cycle.
 * **Why it Matters:** This is the deep physics paper. It appeals to theoretical neuroscience, laying the mathematical groundwork for mapping a biological "thought" into a digital latent space.
+
+## Overhaul `src/modules/hierarchical_ssm.py` for Prime Time
+
+The `HierarchicalSSM` is currently a frozen mathematical toy simulator demonstrating standing wave phase transitions. It needs to be upgraded for actual training and multi-sensor fusion:
+
+1.  **Make Parameters Learnable**: Remove `requires_grad=False` from the core matrices (`A1`, `B1`, `A2`, `B2`, `W_td`).
+2.  **Discretize for Parallel Scans**: The current explicit Euler integration (`for t in range(steps):`) is unacceptably slow for GPUs. Implement a discretization step (e.g., Zero-Order Hold or Bilinear Transform) so the continuous ODE can be unrolled via an associative parallel scan (like the Mamba architecture).
+3.  **Implement Multi-Rate Multi-Sensor Polling**: Upgrade the hardcoded single scalar input `u` to accept a multimodal block tensor. Modulate `dt` or assign different blocks of the `A` matrix to different polling rates (e.g., Layer 1 catching 20kHz electrical spikes, Layer 2 catching 1Hz RNA reads) to prove out native multi-frequency sensor fusion.
+
 
 ### Paper 3: The "Glass Box" Safety Protocol
 **"Thermodynamic Diagnostic: Exact Relevance Propagation for Continuous Biological Trajectories"**
@@ -77,3 +55,27 @@ Several core modules were developed in isolation and currently contain technical
 
 - **Issue**: Now that we have a functional multimodal dataloader (`MultimodalBioDataset`) yielding phase, voltage, and RNA tensors, we need to test the `HierarchicalSSM` on it.
 - **Task**: Connect the `MultimodalBioDataset` outputs to the `HierarchicalSSM`'s input block tensor, effectively implementing the multi-rate multi-sensor polling architecture described above.
+
+
+## Add Neurospike data integration.
+
+FinalSpark Neuroplatform: Standard Intan MEA, Low: 32 to 64 channels per well,
+20 kHz to 30 kHz, Continuous 24/7 streaming for months. Use for Time: Perfect
+for testing Mamba-2's ability to handle infinite sequence lengths and compute
+thermodynamic drift over weeks, but it lacks the spatial density to show off
+Mamba's capacity.
+
+## V2 Architecture: The 129-D Quintet Tensor
+
+We need data engineers to build actual dataloaders for single-cell epigenetic
+clocks (Gamma) and in-line electrochemical sensors (Mu). Mamba-2's
+data-dependent step size ($\Delta t$) will gracefully absorb the massive `NaN`
+gaps of hourly epigenetic reads.
+
+## The ATP Metabolic Checkbook Loss Constraint
+
+We need to update `src/models/meld_loss.py`. The physics constraint is: If the
+model predicts high-frequency action potentials or massive RNA transcription, it
+must mathematically subtract from the global ATP reserve dimension. If the model
+hallucinates a high-energy repair cascade while the ATP checkbook is empty, the
+loss function must geometrically explode.

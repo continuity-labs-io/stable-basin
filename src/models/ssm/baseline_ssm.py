@@ -23,6 +23,9 @@ class BaselineSSM(nn.Module):
         self.A_init = create_a_matrix(init_type=a_init_type, shape=(d_model,), a_scale=A_scale, a_shift=A_shift)
         self.B_proj = nn.Linear(d_model, d_model, bias=False)
         self.dt_proj = nn.Linear(d_model, d_model)
+        
+        import math
+        self.dt_proj.bias.data.uniform_(math.log(0.001), math.log(0.1))
 
     def forward(self, latent_x: torch.Tensor):
         """

@@ -23,6 +23,9 @@ class MaskAwareMambaCell(nn.Module):
         # Maps biological input to the base temporal step size (dt)
         self.dt_proj = nn.Linear(d_model, d_model)
 
+        import math
+        self.dt_proj.bias.data.uniform_(math.log(0.001), math.log(0.1))
+
         # THE FIX: Subspace Router
         # Maps the 5D biological mask to the 256D latent space gating vector
         self.mask_router = nn.Linear(n_modalities, d_model)
