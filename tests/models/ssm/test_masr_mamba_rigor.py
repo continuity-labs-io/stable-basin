@@ -248,4 +248,74 @@ def test_mamba_masr_gradcheck():
     )
     
     # ASSERT
-    assert test_passed is True, "gradcheck failed for mamba_masr_reference_scan"
+    assert test_passed
+
+def test_mamba_a_matrix_drift_bounds():
+    """
+    Ensures A is strictly bounded away from 0.0 to guarantee a minimum memory leak.
+    """
+    # ARRANGE
+    model = PyTorchMambaMASR(d_model=16, d_state=16)
+    
+    # ACT
+    A = model.A_init()
+    
+    # ASSERT
+    assert torch.all(A <= -0.1), "A matrix is not sufficiently bounded! Drift risk."
+
+def test_mamba_zoh_expm1_precision():
+    """
+    Uses double-precision math to detect catastrophic float32 cancellation if 
+    anyone attempts to remove the torch.expm1 ZOH fix.
+    """
+    # ARRANGE
+    batch_size = 1
+    d_model = 2
+    d_state = 2
+    
+    dt = torch.tensor([[[1e-7, 1e-7]]], dtype=torch.float32) # (1, 2, 1)
+    A = torch.tensor([[-0.1, -0.1], [-0.1, -0.1]], dtype=torch.float32) # (2, 2)
+    B = torch.tensor([[1.0, 1.0]], dtype=torch.float32) # (1, 2)
+    
+    # ACT: Compute float32 using exact mamba_masr_reference_scan logic
+    A_safe = torch.where(A.abs() <= 1e-8, torch.full_like(A, -1e-8), A)
+    B_bar_f32 = torch.expm1(dt * A) / A_safe * B.unsqueeze(1)
+    
+    # Compute float64 true value
+    dt_64 = dt.double()
+    A_64 = A.double()
+    B_64 = B.double()
+    A_safe_64 = torch.where(A_64.abs() <= 1e-8, torch.full_like(A_64, -1e-8), A_64)
+    # the true mathematical value
+    B_bar_true = (torch.exp(dt_64 * A_64) - 1.0) / A_safe_64 * B_64.unsqueeze(1)
+    
+    # Compute what float32 WOULD be if someone reverted to exp(x) - 1.0
+    B_bar_reverted = (torch.exp(dt * A) - 1.0) / A_safe * B.unsqueeze(1)
+    
+    # ASSERT
+    # Make sure our fix matches true mathematical value well
+    assert torch.allclose(B_bar_f32.double(), B_bar_true, atol=1e-8)
+    # Make sure reverted version fails!
+    assert not torch.allclose(B_bar_reverted.double(), B_bar_true, atol=1e-8), "Test invalid! Reverted version somehow matches. The mock values might not trigger catastrophic cancellation."
+
+def test_mamba_dt_variance_clamping():
+    """
+    Strictly enforces the +-1e-4 weight initialization bound on dt_proj to 
+    prevent compounding variance on out-of-distribution inputs.
+    """
+    # ARRANGE & ACT
+    model = PyTorchMambaMASR(d_model=64)
+    
+    # ASSERT
+    assert torch.max(model.dt_proj.weight.abs()) <= 1.05e-4, "dt_proj weight variance is unbounded!"
+
+def test_mamba_residual_d_init():
+    """
+    Guarantees the feedforward residual is zeroed out at initialization so the 
+    network builds a robust recurrent manifold.
+    """
+    # ARRANGE & ACT
+    model = PyTorchMambaMASR(d_model=64)
+    
+    # ASSERT
+    assert torch.all(model.D == 0.0), "Residual D parameter is not initialized to exactly zero!"

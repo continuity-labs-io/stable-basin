@@ -56,8 +56,13 @@ def mamba_masr_reference_scan(
         
         # Prevent division by zero during ZOH discretization
         A_safe = torch.where(A.abs() <= 1e-8, torch.full_like(A, -1e-8), A)
+        
         A_bar = torch.exp(dt_masked_t_exp * A) # (batch_size, d_model, d_state)
-        B_bar = (A_bar - 1.0) / A_safe * B_t.unsqueeze(1) # (batch_size, d_model, d_state)
+        
+        # Swapped exp(dt*A)-1.0 to PyTorch's mathematically identical but numerically 
+        # stable torch.expm1(dt*A) to fix catastrophic cancellation in float32 
+        # when dt*A is very small, which was injecting massive noise during ZOH discretization.
+        B_bar = torch.expm1(dt_masked_t_exp * A) / A_safe * B_t.unsqueeze(1) # (batch_size, d_model, d_state)
         
         # Update hidden state h_t = Ā * h_{t-1} + B̄ * x_t
         # Perfectly freezing the hidden state (h_t = h_{t-1}) when mask is 0
@@ -76,14 +81,25 @@ class PyTorchMambaMASR(nn.Module):
         self.d_state = d_state
         
         # Continuous state parameters
-        self.A_init = create_a_matrix(init_type=a_init_type, shape=(d_model, d_state), a_scale=0.1, a_shift=0.0)
-        self.D = nn.Parameter(torch.ones(d_model))
+        # Increased the A initialization bounds (a_scale=0.5, a_shift=0.1) 
+        # to enforce a minimum baseline memory leak, preventing the hidden state 
+        # from acting as a pure integrator that drifts over 5,000 extrapolation steps.
+        self.A_init = create_a_matrix(init_type=a_init_type, shape=(d_model, d_state), a_scale=0.5, a_shift=0.1)
+        
+        # Initialized the residual shortcut D to zeros (instead of ones) 
+        # to force the network to rely on and learn a robust continuous recurrent 
+        # state from epoch 1, rather than relying on the feedforward path.
+        self.D = nn.Parameter(torch.zeros(d_model))
         
         # Data-dependent parameter projections
         self.B_proj = nn.Linear(d_model, d_state)
         self.C_proj = nn.Linear(d_model, d_state)
-        self.dt_proj = nn.Linear(d_model, d_model)
+        self.dt_proj = nn.Linear(d_model, d_model, bias=True)
         
+        # Clamped the initialization of dt_proj.weight to a near-zero uniform 
+        # distribution to prevent the continuous time step from fluctuating wildly 
+        # on out-of-distribution sequences during extrapolation.
+        nn.init.uniform_(self.dt_proj.weight, -1e-4, 1e-4)
         self.dt_proj.bias.data.uniform_(math.log(0.001), math.log(0.1))
         
     def forward(self, x, mask):
