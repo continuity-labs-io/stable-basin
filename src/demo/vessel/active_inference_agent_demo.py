@@ -6,14 +6,10 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.colors import LinearSegmentedColormap
 
-# Add the project root to the path so we can import the model
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
-
 from src.models.vessel.active_inference_agent import ActiveInferenceAgent
 
 def main():
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    print(f"Running Active Inference Agent on device: {device}")
     
     # Initialize the model
     size = 128

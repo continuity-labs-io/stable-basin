@@ -38,3 +38,6 @@ When instructed to debug PyTorch code or investigate NaNs, the agent MUST adopt 
 ### Enforcing Shape Discipline
 
 ALL new PyTorch neural network modules must use `jaxtyping` (e.g., `Float[Tensor, "batch seq d_model"]`) in their method signatures. Additionally, strictly use `einops` for complex reshapes/rearranges instead of native `.view()` or `.reshape()`.
+
+### Proper Package Imports
+Since the workspace is set up as a proper Python package and installed via `pip install -e .`, manually hacking `sys.path` to resolve imports is totally unnecessary and adds technical debt. Do not use `sys.path.insert` or `sys.path.append` for local imports.
