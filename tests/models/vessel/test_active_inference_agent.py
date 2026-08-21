@@ -26,7 +26,7 @@ def test_gradient_operator_invariants():
     # In a linear slope of 1 per pixel, a standard central difference gradient should be constant (approx 1.0 depending on scaling).
     # Since our Sobel kernel is scaled to give true derivatives (sum of absolute values = 1 for the relevant axis), 
     # it should output roughly 1.0 in the bulk of the slope.
-    # At boundary (circular), it wraps from 15 to 0, creating a sharp negative gradient.
+    # At the boundary, replicate padding prevents wrap-around artifacts.
     assert grad_x[0, 0, 8, 8] > 0.5, "Math/Boundary failed: expected positive x-gradient on linear slope"
     assert torch.isclose(grad_y[0, 0, 8, 8], torch.tensor(0.0), atol=1e-5), "Math/Boundary failed: expected zero y-gradient on horizontal slope"
     

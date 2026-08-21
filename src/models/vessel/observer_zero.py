@@ -49,10 +49,10 @@ class ObserverZero(nn.Module):
     def _laplacian(self, state: Float[torch.Tensor, "batch channels height width"]) -> Float[torch.Tensor, "batch channels height width"]:
         """
         Computes the spatial Laplacian ∇² using a 2D convolution.
-        Uses circular padding to create a toroidal (wrap-around) space.
+        Uses replicate padding to create hard boundaries (no-flux).
         """
         # F.pad format for 4D tensor is (pad_left, pad_right, pad_top, pad_bottom)
-        padded = F.pad(state, (1, 1, 1, 1), mode='circular')
+        padded = F.pad(state, (1, 1, 1, 1), mode='replicate')
         return F.conv2d(padded, self.laplacian_kernel)
 
     def forward(self) -> tuple[Float[torch.Tensor, "batch channels height width"], Float[torch.Tensor, "batch channels height width"]]:

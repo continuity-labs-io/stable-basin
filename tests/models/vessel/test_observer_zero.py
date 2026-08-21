@@ -20,11 +20,13 @@ def test_laplacian_invariants():
     # Assertion 1: Shape consistency
     assert out.shape == x.shape, "Shape consistency failed for Laplacian"
     
-    # Assertion 2: Boundary conditions (Toroidal wrap-around)
-    # The kernel is 3x3, centered. The corners of the pulse at (0, 0) should wrap to (15, 15), (0, 15), (15, 0)
-    assert torch.isclose(out[0, 0, size-1, size-1], torch.tensor(0.05)), "Boundary condition failed: diagonal wrap"
-    assert torch.isclose(out[0, 0, size-1, 0], torch.tensor(0.20)), "Boundary condition failed: vertical wrap"
-    assert torch.isclose(out[0, 0, 0, size-1], torch.tensor(0.20)), "Boundary condition failed: horizontal wrap"
+    # Assertion 2: Boundary conditions (Hard Boundaries / No-Flux)
+    # The kernel is 3x3. With replicate padding, the pixel at (0, 0) is duplicated 
+    # outwards, so the corner (0, 0) receives the impact of the top-left, top, and left kernel elements.
+    # It should no longer wrap around to the opposite side of the grid.
+    assert torch.isclose(out[0, 0, size-1, size-1], torch.tensor(0.0)), "Boundary condition failed: should not wrap diagonally"
+    assert torch.isclose(out[0, 0, size-1, 0], torch.tensor(0.0)), "Boundary condition failed: should not wrap vertically"
+    assert torch.isclose(out[0, 0, 0, size-1], torch.tensor(0.0)), "Boundary condition failed: should not wrap horizontally"
     
     # Assertion 3: Gradient stability
     assert x.grad is not None, "Gradient stability failed: no gradient"

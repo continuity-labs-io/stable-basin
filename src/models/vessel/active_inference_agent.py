@@ -82,8 +82,8 @@ class ActiveInferenceAgent(nn.Module):
         return N.unsqueeze(0).unsqueeze(0).float() * 3.0  # Scale intensity for a strong gradient
 
     def _apply_conv(self, state: Float[torch.Tensor, "batch channels height width"], kernel: torch.Tensor) -> Float[torch.Tensor, "batch channels height width"]:
-        """Applies a 3x3 convolution with circular padding."""
-        padded = F.pad(state, (1, 1, 1, 1), mode='circular')
+        """Applies a 3x3 convolution with replicate padding (hard boundaries)."""
+        padded = F.pad(state, (1, 1, 1, 1), mode='replicate')
         return F.conv2d(padded, kernel)
 
     def compute_gradient(self, state: Float[torch.Tensor, "batch channels height width"]) -> tuple[Float[torch.Tensor, "batch channels height width"], Float[torch.Tensor, "batch channels height width"]]:
