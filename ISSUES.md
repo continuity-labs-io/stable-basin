@@ -12,6 +12,13 @@ codebase.
 * **The Solution:** The Orthogonal Subspace Router dynamically modulates the $\Delta t$ and $B$ parameters to mathematically freeze hidden channels when sensors drop offline.
 * **Why it Matters:** This establishes you as the engineer who solved the missing-data problem for modern state-space models. It requires no wet-lab data, making it fast to publish in top ML venues.
 
+### MASR Mamba on Toxic Shock test
+
+**The Problem:** The MASR Mamba architecture instantly trips the Thermodynamic Diagnostic Engine (KSM metric) after the burn-in grace period (frame 501) on simple synthetic sine waves, while linear SSMs remain perfectly stable until the simulated precursor spike at frame 950. Mamba's data-dependent state transition matrices ($B$, $C$, $\Delta t$) naturally inject non-linear chaos into the continuous state trajectory during periodic signals, causing its baseline KSM to hover below the strict `0.95` tripwire.
+
+**Action Items:** Investigate and tune the MASR Mamba to stabilize its baseline KSM so it can accurately detect the toxic shock phase transition. Evaluate one of the following approaches:
+- **Option A (Threshold Tuning):** Relax the `ksm_threshold` specifically for the Mamba architecture (e.g., to `0.90`) to accommodate its inherently chaotic, data-dependent state updates during healthy baseline periods.
+- **Option B (Architectural Regularization):** Tune the model's hyperparameters (e.g., lower the learning rate) or apply structural regularization (e.g., freeze specific projections or add state constraints) to force it to behave more rigidly like a linear SSM on stable periodic data.
 ### Paper 2: The Biological Physics Engine
 **"Hierarchical State-Space Models for Macroscopic Biological Entrainment"**
 * **The Vibe:** Computational Neuroscience / Systems Biology.
@@ -56,14 +63,6 @@ Several core modules were developed in isolation and currently contain technical
 - **Issue**: Now that we have a functional multimodal dataloader (`MultimodalBioDataset`) yielding phase, voltage, and RNA tensors, we need to test the `HierarchicalSSM` on it.
 - **Task**: Connect the `MultimodalBioDataset` outputs to the `HierarchicalSSM`'s input block tensor, effectively implementing the multi-rate multi-sensor polling architecture described above.
 
-
-## [COMPLETED] Add Neurospike data integration.
-
-FinalSpark Neuroplatform: Standard Intan MEA, Low: 32 to 64 channels per well,
-20 kHz to 30 kHz, Continuous 24/7 streaming for months. Use for Time: Perfect
-for testing Mamba-2's ability to handle infinite sequence lengths and compute
-thermodynamic drift over weeks, but it lacks the spatial density to show off
-Mamba's capacity.
 
 ## V2 Architecture: The 129-D Quintet Tensor
 

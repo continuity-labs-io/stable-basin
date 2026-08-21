@@ -69,14 +69,16 @@ def evaluate_model(trial_config):
     csv_prefix = config["evaluation"]["csv_prefix"]
     condition = config["data"]["condition"]
     
-    logger.info(f"Loading PharmacologicalShockDataset (seq_len={seq_len}) on worker")
-    try:
+    use_synthetic = config.get("use_synthetic", False)
+    
+    if not use_synthetic:
+        logger.info(f"Loading PharmacologicalShockDataset (seq_len={seq_len}) on worker")
         dataset = PharmacologicalShockDataset(condition=condition, seq_len=seq_len)
         telemetry = dataset[0].unsqueeze(0).to(device)  # shape: [1, seq_len, 1024]
         mask = torch.ones(1, seq_len, 1, device=device)
         logger.info(f"Successfully loaded Pharmacological Shock Data! Telemetry shape: {telemetry.shape}")
-    except FileNotFoundError:
-        logger.warning("Dataset file not found. Generating dummy telemetry for testing.")
+    else:
+        logger.info("Generating synthetic telemetry for testing with crash at seq_len // 2.")
         t = torch.linspace(0, 10 * np.pi, seq_len, device=device).unsqueeze(1)
         freqs = torch.linspace(0.5, 3.0, 1024, device=device)
         healthy = torch.sin(t * freqs) + (torch.randn(seq_len, 1024, device=device) * 0.1)
@@ -86,8 +88,7 @@ def evaluate_model(trial_config):
         telemetry[:, crash_frame_true:, :] = torch.randn_like(telemetry[:, crash_frame_true:, :]) * 0.5
         telemetry[:, crash_frame_true-50:crash_frame_true, 120:130] = telemetry[:, crash_frame_true-50:crash_frame_true, 120:130] + 5.0
         
-        mask = (torch.rand(1, seq_len, 1, device=device) > 0.90).float()
-        telemetry = telemetry * mask
+        mask = torch.ones(1, seq_len, 1, device=device)
 
     logger.info(f"Initializing {model_type} model")
     model = SensorFusionPredictor(
@@ -132,7 +133,7 @@ def evaluate_model(trial_config):
     ksm_np = np.array(ksm_trajectory)
     
     crash_frame = -1
-    for t in range(len(ksm_np)):
+    for t in range(burn_in_len, len(ksm_np)):
         if ksm_np[t] < ksm_threshold:
             crash_frame = t
             break
@@ -241,10 +242,13 @@ def main():
     import yaml
     parser = argparse.ArgumentParser(description="Clinical Diagnostic Runner (Distributed)")
     parser.add_argument("--config", type=str, required=True, help="Path to YAML config")
+    parser.add_argument("--use_synthetic", action="store_true", help="Force synthetic data for testing")
     args = parser.parse_args()
 
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
+        
+    config["use_synthetic"] = args.use_synthetic
         
     search_space = {
         "base_config": config,

@@ -14,6 +14,6 @@ training:
   lr: 0.001
   burn_in_frames: 500
 evaluation:
-  ksm_threshold: 0.85
+  ksm_threshold: 0.95
   png_prefix: "clinical_diagnostic_dashboard"
   csv_prefix: "clinical_diagnostic_metrics"

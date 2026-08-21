@@ -4,6 +4,9 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 
+MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(MODULE_DIR, "..", "..", ".."))
+
 class PharmacologicalShockDataset(Dataset):
     """
     Pharmacological Shock Dataset.
@@ -18,9 +21,9 @@ class PharmacologicalShockDataset(Dataset):
     """
     def __init__(self, condition: str = "control", base_path: str = None, seq_len: int = 1024):
         if base_path is None:
-            # Resolve relative to this file's location to always find the repo root
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            base_path = os.path.join(current_dir, "..", "..", "..", "data", "ephys", "pharmacological_shock")
+            # Resolve relative to the module's original absolute location 
+            # so it survives Ray Tune changing the worker's CWD
+            base_path = os.path.join(PROJECT_ROOT, "data", "ephys", "pharmacological_shock")
             
         self.data_path = os.path.abspath(os.path.join(base_path, f"Drug_2953_{condition}.raw.h5"))
         if not os.path.exists(self.data_path):
