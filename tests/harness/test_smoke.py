@@ -1,3 +1,4 @@
+import pytest
 import torch
 import torch.nn.functional as F
 import logging
@@ -6,6 +7,7 @@ from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
+@pytest.mark.integration
 def test_smoke():
     device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
     logger.info(f"Device: {device}")

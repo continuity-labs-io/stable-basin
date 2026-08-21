@@ -22,7 +22,11 @@ class BaselineTransformer(nn.Module):
             dim_feedforward=d_model * ff_expansion_factor,
             norm_first=True
         )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        self.transformer = nn.TransformerEncoder(
+            encoder_layer, 
+            num_layers=num_layers, 
+            enable_nested_tensor=False
+        )
 
     def forward(self, latent_x: torch.Tensor):
         batch, seq_len, d_model = latent_x.size()
