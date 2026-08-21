@@ -1,6 +1,7 @@
 import torch
 import math
 import torch.testing as testing
+import torch.nn.functional as F
 from src.models.ssm.masr_mamba import mamba_masr_reference_scan, PyTorchMambaMASR
 
 def test_mamba_masr_analytical_verification():
@@ -144,3 +145,32 @@ def test_masr_mamba_stasis_gradient_isolation():
     
     # Ensure gradients flow to other timesteps
     assert x.grad[:, masked_t + 1, :].abs().sum() > 0, "No gradients flowed to active time steps"
+
+def test_masr_mamba_log_space_dt_bounds():
+    """
+    Mathematical Invariant Test: Biological Temporal Boundaries (The Tempo Constraint)
+    
+    The network must prove it operates exclusively within biologically relevant temporal 
+    frequencies, proving the log-space initialization of the bias holds true under activation.
+    """
+    # ARRANGE
+    batch_size = 2
+    seq_len = 10
+    d_model = 16
+    d_state = 16
+    
+    model = PyTorchMambaMASR(d_model=d_model, d_state=d_state)
+    
+    # Create a completely zeroed input tensor to isolate the bias
+    x = torch.zeros(batch_size, seq_len, d_model)
+    
+    # ACT
+    # Intercept the values of the continuous time step dt exactly as the model computes it
+    dt = F.softplus(model.dt_proj(x))
+    
+    # ASSERT
+    min_dt = dt.min().item()
+    max_dt = dt.max().item()
+    
+    assert min_dt >= 0.0009, f"dt min value {min_dt} is below the biological threshold 0.0009"
+    assert max_dt <= 0.11, f"dt max value {max_dt} exceeds the biological threshold 0.11"
