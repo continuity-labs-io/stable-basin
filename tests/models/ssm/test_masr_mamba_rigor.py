@@ -1,0 +1,77 @@
+import torch
+import math
+import torch.testing as testing
+from src.models.ssm.masr_mamba import mamba_masr_reference_scan
+
+def test_mamba_masr_analytical_verification():
+    """
+    Mathematical Invariant Test: Analytical Exactness (The Scales)
+    
+    Verifies the pure discrete mathematical correctness of the Zero-Order Hold 
+    (ZOH) continuous discretization algorithm inside Mask-Aware Subspace Routing.
+    """
+    # ARRANGE
+    batch_size = 1
+    seq_len = 2
+    d_model = 1
+    d_state = 1
+    
+    # Input x
+    x = torch.tensor([[[2.0], [3.0]]], dtype=torch.float32)
+    
+    # Time step dt
+    dt = torch.tensor([[[0.1], [0.2]]], dtype=torch.float32)
+    
+    # Mask
+    mask = torch.tensor([[[1.0], [1.0]]], dtype=torch.float32)
+    
+    # Continuous A matrix (negative for stability)
+    A = torch.tensor([[-0.5]], dtype=torch.float32)
+    
+    # Data-dependent parameters B, C
+    B = torch.tensor([[[1.5], [2.5]]], dtype=torch.float32)
+    C = torch.tensor([[[0.8], [1.2]]], dtype=torch.float32)
+    
+    # D skip connection
+    D = torch.tensor([1.0], dtype=torch.float32)
+    
+    # ACT
+    y_out = mamba_masr_reference_scan(x, dt, mask, A, B, C, D)
+    
+    # 3. Manually calculate the expected mathematical output using float arithmetic
+    A_val = -0.5
+    D_val = 1.0
+    epsilon = 1e-8
+    
+    # Time step 0
+    x_0 = 2.0
+    dt_0 = 0.1
+    mask_0 = 1.0
+    B_0 = 1.5
+    C_0 = 0.8
+    
+    dt_masked_0 = dt_0 * mask_0
+    A_bar_0 = math.exp(dt_masked_0 * A_val)
+    B_bar_0 = (A_bar_0 - 1.0) / (A_val - epsilon) * B_0
+    
+    h_0 = A_bar_0 * 0.0 + B_bar_0 * x_0
+    y_0_expected = C_0 * h_0 + D_val * x_0
+    
+    # Time step 1
+    x_1 = 3.0
+    dt_1 = 0.2
+    mask_1 = 1.0
+    B_1 = 2.5
+    C_1 = 1.2
+    
+    dt_masked_1 = dt_1 * mask_1
+    A_bar_1 = math.exp(dt_masked_1 * A_val)
+    B_bar_1 = (A_bar_1 - 1.0) / (A_val - epsilon) * B_1
+    
+    h_1 = A_bar_1 * h_0 + B_bar_1 * x_1
+    y_1_expected = C_1 * h_1 + D_val * x_1
+    
+    y_expected = torch.tensor([[[y_0_expected], [y_1_expected]]], dtype=torch.float32)
+    
+    # ASSERT
+    testing.assert_close(y_out, y_expected, atol=1e-6, rtol=1e-6)
