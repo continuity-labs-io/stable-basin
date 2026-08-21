@@ -56,3 +56,24 @@ The `HierarchicalSSM` is currently a frozen mathematical toy simulator demonstra
 * **The Problem:** Even if an AI perfectly predicts a catastrophic biological event (e.g., a Waddington crash), it is useless to clinicians if it acts as a black box.
 * **The Solution:** You bring your `mamba_lrp.py` and `diagnostic_engine.py` modules into the spotlight. You introduce MambaLRPEpsilon, proving how to perfectly conserve attribution backward through the continuous $\exp(A \Delta t)$ matrix.
 * **Why it Matters:** Explainability is the ultimate bottleneck for FDA-approved biological foundation models. When the model predicts a crash, this engine traces the exact causal chain back to the root event (e.g., "A TP53 RNA flash at T-30 mins caused the collapse").
+
+## Integrate Isolated Modules into Main Training Loop
+
+Several core modules were developed in isolation and currently contain technical debt regarding their integration into the main training harness (`src.harness.clinical_diagnostic_runner`). 
+
+### 1. `SpatialCompressor` Integration
+- **Issue**: `src/models/encoders/spatial_compressor.py` is currently isolated.
+- **Task**: Integrate this encoder into the main pipeline to process volumetric (3D+time) optical data (e.g., from `AOLLSMDataset`) down to 1D latent vectors for the Mamba core.
+
+### 2. `TopoEncoder` Integration
+- **Issue**: `src/models/encoders/topo_encoder.py` is currently isolated.
+- **Task**: Hook this up to process continuous electrophysiological standing waves (e.g., from `SpikeProphecyDataset` or `BioelectricLoader`) to provide spatial priors to the main Thermodynamic State Space Model.
+
+### 3. `MeldLoss` Integration
+- **Issue**: `src/models/losses/meld_loss.py` is currently isolated.
+- **Task**: Apply this composite loss function in the main training loop to enforce thermodynamic constraints and time-reversal penalties on the model's predictions.
+
+## Hook Up `MultimodalBioDataset` to `HierarchicalSSM`
+
+- **Issue**: Now that we have a functional multimodal dataloader (`MultimodalBioDataset`) yielding phase, voltage, and RNA tensors, we need to test the `HierarchicalSSM` on it.
+- **Task**: Connect the `MultimodalBioDataset` outputs to the `HierarchicalSSM`'s input block tensor, effectively implementing the multi-rate multi-sensor polling architecture described above.

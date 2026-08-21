@@ -11,9 +11,7 @@ class MeldLoss(nn.Module):
     Incorporates Next-Frame Forecasting, Lipschitz continuous penalty, and Time-Reversal Error.
     Backcronym: multimodal evaluation of latent dynamics.
     
-    TODO: Apply this loss function in the main training loop (`src.harness.clinical_diagnostic_runner`)
-    to enforce thermodynamic constraints and time-reversal penalties on the model's predictions. 
-    Currently isolated.
+
     """
 
     def __init__(
