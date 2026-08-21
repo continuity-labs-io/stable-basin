@@ -211,7 +211,7 @@ class ThermodynamicMetrics:
         path_up = z_perturbed[:min_steps, :]
 
         # Euclidean distance between the paths at every time step
-        path_divergence = torch.norm(path_down - path_up, dim=1)
+        path_divergence = torch.linalg.vector_norm(path_down - path_up, dim=1)
 
         # Integrate the area under the divergence curve using the Trapezoidal Rule
         hysteresis_area = torch.trapz(path_divergence).item()

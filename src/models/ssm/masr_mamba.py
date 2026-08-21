@@ -2,10 +2,20 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from jaxtyping import Float
+from torch import Tensor
 
 from .physics import create_a_matrix
 
-def mamba_masr_reference_scan(x, dt, mask, A, B, C, D):
+def mamba_masr_reference_scan(
+    x: Float[Tensor, "batch seq d_model"],
+    dt: Float[Tensor, "batch seq d_model"],
+    mask: Float[Tensor, "batch seq d_model"],
+    A: Float[Tensor, "d_model d_state"],
+    B: Float[Tensor, "batch seq d_state"],
+    C: Float[Tensor, "batch seq d_state"],
+    D: Float[Tensor, "d_model"]
+) -> Float[Tensor, "batch seq d_model"]:
     """
     Pure PyTorch reference implementation of the Mask-Aware Subspace Routing (MASR) Mamba scan.
     

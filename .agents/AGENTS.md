@@ -26,3 +26,15 @@ All Unit Tests Must delineate the following three blocks: "ARRANGE", "ACT", and 
 ### Commit Guardrail
 
 Do not create commits unless the user explicitely asks you to do so.
+
+### The PyTorch Debugger `[MODE: PARANOID_DEBUGGER]`
+
+When instructed to debug PyTorch code or investigate NaNs, the agent MUST adopt this persona and adhere to the following tactical checklist:
+1. Inject `torch.autograd.set_detect_anomaly(True)` at the very top of the execution script to force PyTorch to track the exact forward pass operation that causes a NaN backward pass.
+2. Ensure the script runs on `device="cpu"` to guarantee exact synchronous tracebacks (GPU async execution obscures stack traces).
+3. Do NOT guess the bug based on the loss function. Insert print statements for tensor shapes and `torch.isnan().any()` checks before and after suspected non-linearities, divisions, or continuous integrations.
+4. Report back the exact line number where the singularity was born.
+
+### Enforcing Shape Discipline
+
+ALL new PyTorch neural network modules must use `jaxtyping` (e.g., `Float[Tensor, "batch seq d_model"]`) in their method signatures. Additionally, strictly use `einops` for complex reshapes/rearranges instead of native `.view()` or `.reshape()`.

@@ -24,4 +24,12 @@ sensor-fusion-all: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fus
 clinical-diagnostic:
 	python -m src.harness.clinical_diagnostic_runner --config configs/clinical_diagnostic.yaml
 
+.PHONY: lint-pytorch preflight
 
+lint-pytorch:
+	@echo "Running TorchFix..."
+	@echo "TorchFix will catch deprecated PyTorch symbols, missing autograd contexts, and dangerous in-place operations that break backpropagation."
+	torchfix src/ tests/
+
+preflight: lint-pytorch
+	pytest

@@ -3,6 +3,7 @@ import math
 import torch.testing as testing
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.autograd import gradcheck
 from src.models.ssm.masr_mamba import mamba_masr_reference_scan, PyTorchMambaMASR, MaskAwareMamba
 def test_mamba_masr_analytical_verification():
     """
@@ -213,3 +214,38 @@ def test_mask_aware_control_group_parity():
     assert pred_true.shape == pred_false.shape, "Prediction shapes diverged"
     assert recon_true.shape == recon_false.shape, "Reconstruction shapes diverged"
     assert pred_true.shape == (batch_size, seq_len, input_dim), f"Expected {(batch_size, seq_len, input_dim)} but got {pred_true.shape}"
+
+def test_mamba_masr_gradcheck():
+    """
+    Mathematical Invariant Test: The Calculus Tuning Fork (gradcheck)
+    
+    Uses torch.autograd.gradcheck to verify the mathematical correctness of 
+    mamba_masr_reference_scan by comparing analytical gradients against 
+    numerical approximations.
+    """
+    # ARRANGE
+    batch_size = 1
+    seq_len = 2
+    d_model = 2
+    d_state = 2
+    
+    # CRITICAL: All continuous float inputs MUST be cast to torch.float64 and require grad
+    x = torch.randn(batch_size, seq_len, d_model, dtype=torch.float64, requires_grad=True)
+    dt = torch.rand(batch_size, seq_len, d_model, dtype=torch.float64, requires_grad=True)
+    mask = torch.ones(batch_size, seq_len, d_model, dtype=torch.float64, requires_grad=True)
+    A = torch.randn(d_model, d_state, dtype=torch.float64, requires_grad=True)
+    B = torch.randn(batch_size, seq_len, d_state, dtype=torch.float64, requires_grad=True)
+    C = torch.randn(batch_size, seq_len, d_state, dtype=torch.float64, requires_grad=True)
+    D = torch.randn(d_model, dtype=torch.float64, requires_grad=True)
+    
+    # ACT
+    test_passed = gradcheck(
+        mamba_masr_reference_scan, 
+        (x, dt, mask, A, B, C, D), 
+        eps=1e-6, 
+        atol=1e-4,
+        raise_exception=True
+    )
+    
+    # ASSERT
+    assert test_passed is True, "gradcheck failed for mamba_masr_reference_scan"
