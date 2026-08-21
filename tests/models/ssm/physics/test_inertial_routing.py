@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 from src.data.sim2real.gevi_dataloader import GEVIDataloader
 from src.models.encoders.gevi_encoder import GEVIEncoder
+
 class MockKinematicRouting(nn.Module):
     def __init__(self, in_channels=1):
         super().__init__()

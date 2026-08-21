@@ -1,1 +1,0 @@
-# Stasis Gradient Integrity Test

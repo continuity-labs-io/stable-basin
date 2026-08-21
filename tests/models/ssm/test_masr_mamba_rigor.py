@@ -35,10 +35,7 @@ def test_mamba_masr_analytical_verification():
     # D skip connection
     D = torch.tensor([1.0], dtype=torch.float32)
     
-    # ACT
-    y_out = mamba_masr_reference_scan(x, dt, mask, A, B, C, D)
-    
-    # 3. Manually calculate the expected mathematical output using float arithmetic
+    # Manually calculate the expected mathematical output using float arithmetic
     A_val = -0.5
     D_val = 1.0
     epsilon = 1e-8
@@ -72,6 +69,9 @@ def test_mamba_masr_analytical_verification():
     y_1_expected = C_1 * h_1 + D_val * x_1
     
     y_expected = torch.tensor([[[y_0_expected], [y_1_expected]]], dtype=torch.float32)
+    
+    # ACT
+    y_out = mamba_masr_reference_scan(x, dt, mask, A, B, C, D)
     
     # ASSERT
     testing.assert_close(y_out, y_expected, atol=1e-6, rtol=1e-6)

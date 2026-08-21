@@ -10,3 +10,19 @@
 
 ### Execution Scope Guardrail
 - **Single Plan Execution**: Only execute, plan, or focus on exactly 1 prompt, plan, or directive at a time. Do not bundle multiple plans or feature requests into a single implementation plan unless explicitly requested by the user. If the user mentions a specific plan, strictly limit the scope of the work to that single plan.
+
+### The 1-to-1 Invariant Rule.
+
+For every non-standard tensor operation (e.g., continuous discretization, masking, state-routing), there must be exactly one isolated mathematical invariant test. N lines of dense, continuous-time physics require a minimum of 3*N assertions covering boundary conditions, gradient stability, and shape consistency.
+
+### Unit Test Structure
+
+All Unit Tests Must delineate the following three blocks: "ARRANGE", "ACT", and "ASSERT".
+
+- **ARRANGE**: Define all inputs, constants, and expected values.
+- **ACT**: Execute the function under test.
+- **ASSERT**: Compare the actual output against the expected values.
+
+### Commit Guardrail
+
+Do not create commits unless the user explicitely asks you to do so.

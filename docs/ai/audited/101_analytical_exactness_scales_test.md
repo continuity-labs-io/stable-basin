@@ -1,1 +1,0 @@
-# Analytical Exactness Scales Test
