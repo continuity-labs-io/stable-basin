@@ -19,6 +19,7 @@ codebase.
 **Action Items:** Investigate and tune the MASR Mamba to stabilize its baseline KSM so it can accurately detect the toxic shock phase transition. Evaluate one of the following approaches:
 - **Option A (Threshold Tuning):** Relax the `ksm_threshold` specifically for the Mamba architecture (e.g., to `0.90`) to accommodate its inherently chaotic, data-dependent state updates during healthy baseline periods.
 - **Option B (Architectural Regularization):** Tune the model's hyperparameters (e.g., lower the learning rate) or apply structural regularization (e.g., freeze specific projections or add state constraints) to force it to behave more rigidly like a linear SSM on stable periodic data.
+
 ### Paper 2: The Biological Physics Engine
 **"Hierarchical State-Space Models for Macroscopic Biological Entrainment"**
 * **The Vibe:** Computational Neuroscience / Systems Biology.
