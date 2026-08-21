@@ -110,7 +110,7 @@ class RejuvenationFlightController:
 
 if __name__ == "__main__":
     from src.metrics.metrics import ThermodynamicMetrics
-    from src.models.ssm.mask_aware_mamba import MaskAwareMamba
+    from src.models.ssm.masr_mamba import MaskAwareMamba
     
     # Initialize components
     engine = MaskAwareMamba(input_dim=6, d_model=32, mask_aware=True)

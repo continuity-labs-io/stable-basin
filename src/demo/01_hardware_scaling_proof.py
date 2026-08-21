@@ -1,7 +1,7 @@
 """
-Demo 01: Bio-Blade Engine
+Demo 01: Hardware Scaling Proof
 
-This script demonstrates the Bio-Blade engine, which simulates high-throughput processing of
+This script demonstrates the edge compute engine, which simulates high-throughput processing of
 biological data (like electrophysiology). It shows how the system can ingest raw telemetry
 and score it (e.g., KSM/CSD scores) to detect biological events at high speeds.
 """
@@ -17,12 +17,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from src.data.ephys.maxwell_dataset import MaxWellHDMEADataset
-from src.models.ssm.mask_aware_mamba import MaskAwareMamba
+from src.models.ssm.masr_mamba import MaskAwareMamba
 from src.metrics.metrics import ThermodynamicMetrics
 from src.utils.device import get_optimal_device
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
-logger = logging.getLogger("BioBladeEngine")
+logger = logging.getLogger("HardwareScalingProofEngine")
 
 
 def format_bytes(size: int) -> str:
@@ -43,7 +43,7 @@ def format_iops(iops: float) -> str:
     return f"{iops:.2f} IOPS"
 
 
-def plot_bio_blade_dashboard(raw_telemetry, ksm_scores, csd_scores, event_frame):
+def plot_dashboard(raw_telemetry, ksm_scores, csd_scores, event_frame):
     plt.style.use("dark_background")
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 12))
 
@@ -192,7 +192,7 @@ def main():
     iops = (BATCH_SIZE * SEQ_LEN) / avg_latency
 
     print("\n" + "=" * 60)
-    print(" BIO-BLADE ENGINE BENCHMARK ")
+    print(" EDGE COMPUTE ENGINE BENCHMARK ")
     print("=" * 60)
     print(f"Batch Size:      {BATCH_SIZE}")
     print(f"Sequence Length: {SEQ_LEN} frames ({SEQUENCE_LENGTH_MS} ms)")
@@ -257,9 +257,9 @@ def main():
         csd_scores_decimated,
     )
 
-    logger.info("[*] Rendering 3-Panel Bio-Blade Dashboard...")
+    logger.info("[*] Rendering 3-Panel Dashboard...")
     raw_telemetry = val_seq[0].detach().cpu().numpy().T
-    plot_bio_blade_dashboard(raw_telemetry, ksm_scores, csd_scores, EVENT_FRAME)
+    plot_dashboard(raw_telemetry, ksm_scores, csd_scores, EVENT_FRAME)
 
     logger.info("[+] Demo 1 Complete.")
 

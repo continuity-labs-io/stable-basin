@@ -12,7 +12,7 @@ import torch
 import numpy as np
 import logging
 
-from src.models.ssm.mask_aware_mamba import MaskAwareMamba
+from src.models.ssm.masr_mamba import MaskAwareMamba
 from src.metrics.metrics import ThermodynamicMetrics
 from src.system.telemetry_logger import TelemetryLogger
 from src.utils.device import get_optimal_device

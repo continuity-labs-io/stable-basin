@@ -18,7 +18,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import logging
 
-from src.models.ssm.mask_aware_mamba import MaskAwareMamba
+from src.models.ssm.masr_mamba import MaskAwareMamba
 from src.metrics.mamba_lrp import MambaLRPEpsilon
 from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
 from src.utils.device import get_optimal_device

@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("IndestructibleEdge")
 
 
-from src.models.ssm.mask_aware_mamba import MaskAwareMamba
+from src.models.ssm.masr_mamba import MaskAwareMamba
 
 
 # --- Data Generator ---
