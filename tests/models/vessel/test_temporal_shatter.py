@@ -128,6 +128,8 @@ def run_temporal_shatter_demo():
             ax_var.set_ylim(0, max_var * 1.5)
             
         if shatter_counter[0] > 100:  # e.g., 20 frames after shatter happens
+            if ani.event_source:
+                ani.event_source.stop()
             plt.close(fig)
             
         return heatmap, line_dt, line_var
