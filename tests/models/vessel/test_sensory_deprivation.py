@@ -2,6 +2,7 @@ import math
 import torch
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.widgets import Button
 from src.models.vessel.vessel_baseline import VesselBaseline
 
 class DeprivationVessel(VesselBaseline):
@@ -113,11 +114,29 @@ def run_sensory_deprivation_demo():
         if flatline_counter[0] > 100:  # ~20 frames of flatline
             if ani.event_source:
                 ani.event_source.stop()
-            plt.close(fig)
+            # Don't close the figure so the user can inspect the final state
             
         return heatmap, line_var
         
     ani = FuncAnimation(fig, update, frames=500, interval=40, blit=False, repeat=False)
+    
+    # Pause button
+    is_paused = [False]
+    def toggle_pause(event):
+        if is_paused[0]:
+            ani.event_source.start()
+            is_paused[0] = False
+            bpause.label.set_text("Pause")
+        else:
+            ani.event_source.stop()
+            is_paused[0] = True
+            bpause.label.set_text("Resume")
+            
+    ax_pause = plt.axes([0.85, 0.02, 0.1, 0.05])
+    bpause = Button(ax_pause, 'Pause', color='#1e1e1e', hovercolor='#3a3a3a')
+    bpause.label.set_color('white')
+    bpause.on_clicked(toggle_pause)
+    
     plt.show()
 
 if __name__ == "__main__":
