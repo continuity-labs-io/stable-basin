@@ -123,9 +123,4 @@ class PsiTranscriptomicLoader:
         return event_tensor
 
 
-if __name__ == "__main__":
-    # Execution Demo
-    loader = PsiTranscriptomicLoader(crash_minute=10)
-    tensor = loader.build_continuous_event_tensor()
-    logger.info("Sample Event Stream [Time_ms, Gene_Index, Intensity]:")
-    logger.info(tensor[:5])  # Show first 5 events
+

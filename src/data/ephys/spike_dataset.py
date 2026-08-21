@@ -141,24 +141,4 @@ class SpikeProphecyDataset(IterableDataset):
                 yield tensor_window
 
 
-if __name__ == "__main__":
-    from torch.utils.data import DataLoader
 
-    logger.info("--- Testing SpikeProphecyDataset ---")
-    # Initialize dataset with time_steps=10
-    dataset = SpikeProphecyDataset(time_steps=10, split="train")
-
-    # Use num_workers=2 to test multi-processing sharding
-    dataloader = DataLoader(dataset, batch_size=32, num_workers=2)
-
-    logger.info(f"Dataset M_max: {dataset.m_max}")
-    logger.info(f"Total Sessions: {dataset.num_sessions}")
-
-    # Iterate a few batches to verify
-    for i, batch in enumerate(dataloader):
-        logger.info(f"Batch {i} shape: {batch.shape}, dtype: {batch.dtype}")
-        # Expected shape: [32, 10, 1240]
-        if i >= 2:
-            break
-
-    logger.info("Test completed successfully.")

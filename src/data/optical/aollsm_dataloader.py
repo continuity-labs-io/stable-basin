@@ -203,31 +203,4 @@ class AOLLSMDataset(Dataset):
 
 
 # --- Prototyping Execution ---
-if __name__ == "__main__":
-    import time
 
-    # 1. Test original MeldTemporalDataset if path is present (fallback to data/raw_tiffs if needed)
-    raw_tiffs_dir = "./data/raw_tiffs"
-    if os.path.exists(raw_tiffs_dir):
-        logger.info(f"\n--- Testing MeldTemporalDataset on {raw_tiffs_dir} ---")
-        dataset_original = MeldTemporalDataset(data_dir=raw_tiffs_dir, sequence_length=10)
-        dataloader_original = DataLoader(dataset_original, batch_size=1, shuffle=False)
-        for batch in dataloader_original:
-            logger.info(f"Loaded Batch Shape [Batch, Channel, Time, Z, Y, X]: {batch.shape}")
-            break
-
-        logger.info(f"\n--- Testing AOLLSMDataset on {raw_tiffs_dir} (10 frames) ---")
-        t0 = time.time()
-        # Using num_frames=10 for local testing on the 10 downloaded frames
-        dataset_aollsm = AOLLSMDataset(
-            data_dir=raw_tiffs_dir, num_frames=10, crop_size=(128, 128, 128)
-        )
-        dataloader_aollsm = DataLoader(dataset_aollsm, batch_size=1, shuffle=False)
-        for batch in dataloader_aollsm:
-            logger.info(
-                f"Loaded Batch Shape [Batch, Time, Channels, Depth, Height, Width]: {batch.shape}"
-            )
-            logger.info(f"Loaded in {time.time() - t0:.2f} seconds.")
-            break
-    else:
-        logger.info(f"Directory {raw_tiffs_dir} not found. Skipping execution test.")

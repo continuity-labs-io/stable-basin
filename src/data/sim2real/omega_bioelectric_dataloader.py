@@ -94,27 +94,3 @@ class OmegaBioelectricLoader:
 # ==========================================
 # EXECUTION (Drop this in the Jupyter Notebook)
 # ==========================================
-if __name__ == "__main__":
-    logger.info("Initializing MELD Master Clock (500Hz Bursts)...")
-    master_clock_ms = []
-    time_minutes = []
-
-    for minute in [0, 5, 10, 15]:
-        # 4.5 seconds of 500Hz = 2250 frames per burst
-        burst = np.linspace(minute * 60000, minute * 60000 + 4500, 2250)
-        master_clock_ms.extend(burst)
-        time_minutes.extend([minute + (t / 60000) for t in np.linspace(0, 4500, 2250)])
-
-    master_clock_ms = np.array(master_clock_ms)
-    time_minutes = np.array(time_minutes)
-
-    loader = OmegaBioelectricLoader(sample_rate_hz=500, crash_minute=10)
-    raw_spikes = loader.fetch_gevi_traces(total_frames=len(master_clock_ms))
-    df_omega = loader.apply_hardware_physics(raw_spikes, time_minutes)
-    final_df = loader.align_to_master_clock(df_omega, master_clock_ms)
-
-    logger.info("\n[SUCCESS] Sim2Real Omega Tensor Generated.")
-    logger.info("Pre-Crash (Stable Normalized Baseline):")
-    logger.info(final_df.head(3))
-    logger.info("\nPost-Crash (Variance Explosion at Minute 10):")
-    logger.info(final_df.iloc[4500:4503])

@@ -40,16 +40,4 @@ class EpigeneticEntropyLoader(Dataset):
             
         return {"cpg_tensor": cpg_tensor, "biological_age": self.biological_age}
 
-if __name__ == "__main__":
-    import time
-    start = time.time()
-    # Test generation
-    dataset_45 = EpigeneticEntropyLoader(biological_age=45, size=1, seq_len=10)
-    dataset_50 = EpigeneticEntropyLoader(biological_age=50, size=1, seq_len=10)
-    
-    t_45 = dataset_45[0]["cpg_tensor"]
-    t_50 = dataset_50[0]["cpg_tensor"]
-    
-    print(f"Age 45 Tensor Shape: {t_45.shape}")
-    print(f"Age 50 Tensor Shape: {t_50.shape}")
-    print(f"Generation took: {time.time() - start:.2f} seconds")
+

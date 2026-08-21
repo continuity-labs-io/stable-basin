@@ -116,26 +116,4 @@ class SyntheticWaddingtonDataset(Dataset):
         x_raw = torch.cat([modality_0, modality_1], dim=1)
         return {"x_raw": x_raw, "mask": mask, "y_true": y_true}
 
-if __name__ == "__main__":
-    dataset = SyntheticWaddingtonDataset(size=1)
-    batch = dataset[0]
 
-    y_true = batch["y_true"]
-    x_raw = batch["x_raw"]
-    mask = batch["mask"]
-
-    fig, axes = plt.subplots(3, 1, figsize=(10, 12))
-
-    axes[0].plot(y_true.numpy(), color="black", linewidth=2)
-    axes[0].set_title("y_true Trajectory (Fast Variable v)")
-
-    im1 = axes[1].imshow(x_raw.numpy().T, aspect="auto", cmap="viridis", interpolation="none")
-    axes[1].set_title("x_raw Heatmap (Top 20=Continuous w, Bottom 10=Sparse v)")
-
-    im2 = axes[2].imshow(mask.numpy().T, aspect="auto", cmap="binary", interpolation="none")
-    axes[2].set_title("mask Heatmap")
-
-    plt.tight_layout()
-    os.makedirs("output/data", exist_ok=True)
-    plt.savefig("output/data/00_synthetic_data_preview.png")
-    print("Saved diagnostic preview to output/data/00_synthetic_data_preview.png")

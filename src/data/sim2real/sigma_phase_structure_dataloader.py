@@ -148,22 +148,4 @@ class SigmaPhaseLoader:
 # ==========================================
 # EXECUTION (Drop this in the Jupyter Notebook)
 # ==========================================
-if __name__ == "__main__":
-    # 1. Boot the Master MELD Clock
-    # Simulating 15 minutes. A 500Hz burst (2ms) for 4.5 seconds every 5 minutes.
-    logger.info("Initializing MELD Master Clock...")
-    master_clock_ms = []
-    for minute in [0, 5, 10, 15]:
-        # 4.5 seconds of 500Hz = 2250 frames per burst
-        burst = np.linspace(minute * 60000, minute * 60000 + 4500, 2250)
-        master_clock_ms.extend(burst)
-    master_clock_ms = np.array(master_clock_ms)
 
-    # 2. Run the Dataloader
-    loader = SigmaPhaseLoader()
-    times, raw_feats = loader.fetch_and_segment()
-    latents = loader.compress_to_latent(raw_feats)
-    final_df = loader.align_to_master_clock(times, latents, master_clock_ms)
-
-    logger.info("\n[SUCCESS] Sim2Real Sigma Tensor Generated.")
-    logger.info(final_df.head())

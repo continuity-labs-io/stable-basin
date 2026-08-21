@@ -128,23 +128,4 @@ class HumanTelemetryLoader(Dataset):
         
         return {"x_raw": x_raw, "mask": mask, "y_true": y_true}
 
-if __name__ == "__main__":
-    # Verification
-    # 2 minutes of data at 250Hz = 30000 steps
-    dataset = HumanTelemetryLoader(size=1, seq_len=30000)
-    batch = dataset[0]
-    
-    x = batch["x_raw"]
-    m = batch["mask"]
-    
-    print(f"Data Shape: {x.shape}")
-    print(f"Mask Shape: {m.shape}")
-    
-    # Assert feature dimensions
-    assert x.shape[1] == 6, "Expected 6 features"
-    
-    # Check CGM masking (should only have 2 active ticks in 2 minutes: at t=0 and t=1min)
-    cgm_active_count = m[:, 5].sum().item()
-    print(f"CGM Active Ticks (expected 2): {cgm_active_count}")
-    
-    print("Verification Passed!")
+

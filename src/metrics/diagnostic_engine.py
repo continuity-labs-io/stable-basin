@@ -153,20 +153,4 @@ class ThermodynamicDiagnosticEngine:
         }
 
 
-if __name__ == "__main__":
-    from src.models.ssm.neocortical_engine import NeocorticalEngine
 
-    # Mock initialization
-    model = NeocorticalEngine(input_dim=114, d_model=256, d_state=32)
-    engine = ThermodynamicDiagnosticEngine(model)
-
-    # Dummy sequence (Batch=1, Time=50, Features=114)
-    x_sequence = torch.randn(1, 50, 114)
-
-    # Injected crash at T=45
-    crash_time_step = 45
-
-    # Generate diagnostic report
-    diagnostic_report = engine.generate_diagnostic(x_sequence, crash_time_step)
-
-    logger.info(json.dumps(diagnostic_report, indent=2))
