@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 class SpatialCompressor(nn.Module):
     """
     SpatialCompressor serves as the bridge between raw biological voxels and the temporal latent space.
+    
+    TODO: Integrate this encoder into the main pipeline to process volumetric (3D+time) optical data 
+    (e.g., from AOLLSMDataset) down to 1D latent vectors for the Mamba core. Currently isolated.
     """
 
     def __init__(self, model_name="vit_base_patch16_224"):

@@ -8,6 +8,10 @@ class TopoEncoder(nn.Module):
     """
     Ingests continuous E-field flow and uses Mamba-2 to extract the
     macroscopic geometric shape (Dynamic Attractor Basin) into a fixed latent vector.
+    
+    TODO: Hook this up to process continuous electrophysiological standing waves (e.g., from 
+    SpikeProphecyDataset or OmegaBioelectricLoader) to provide spatial priors to the main 
+    Thermodynamic State Space Model. Currently isolated.
     """
 
     def __init__(

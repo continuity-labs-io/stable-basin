@@ -10,8 +10,8 @@ Modules that provide core value and are depended upon by many others.
 | `src` | 10 |
 | `src.models.ssm.physics` | 5 |
 | `src.config` | 4 |
-| `src.models` | 4 |
-| `src.models.ssm` | 4 |
+| `src.models` | 3 |
+| `src.models.ssm` | 3 |
 | `src.data` | 2 |
 | `src.harness` | 2 |
 | `src.harness.sensor_fusion_predictor` | 2 |
@@ -38,31 +38,37 @@ Modules that orchestrate or combine many different components (more bug-prone).
 | `src.harness.sensor_fusion_predictor` | 15 |
 | `src.metrics.metrics` | 8 |
 | `src.data.sim2real.sigma_phase_structure_dataloader` | 7 |
-| `src.metrics.diagnostic_engine` | 7 |
 | `src.models.ssm.async_ssm` | 7 |
 | `src.models.ssm.dynamic_integrator` | 7 |
 | `src.data.sim2real.human_telemetry_dataloader` | 6 |
 | `src.data.waddington_dataset` | 6 |
 | `src.models.losses.meld_loss` | 6 |
-| `src.models.ssm.masr_mamba` | 6 |
 | `src.data.ephys.pharma_shock_dataset` | 5 |
+| `src.metrics.diagnostic_engine` | 5 |
 | `src.models.encoders.topo_encoder` | 5 |
 | `src.data.sim2real.epigenetic_entropy_dataloader` | 4 |
 | `src.data.sim2real.gevi_injector` | 4 |
 | `src.data.sim2real.omega_bioelectric_dataloader` | 4 |
 | `src.harness.trainer` | 4 |
 | `src.models.encoders.spatial_compressor` | 4 |
+| `src.models.ssm.masr_mamba` | 4 |
 | `src.data.sim2real.neocortical_assembloid_dataloader` | 3 |
+
+## Entry Points
+Known entry points and runner scripts that are not imported by other internal modules.
+
+| Module |
+|---|
+| `src.demo` |
+| `src.harness.clinical_diagnostic_runner` |
+| `src.harness.sensor_fusion_sweep` |
+| `src.harness.summarize_results` |
 
 ## Isolated / Dead Code (In-Degree = 0)
 Internal modules that are NEVER imported by anything else in the package. These are prime candidates for deletion or iceboxing (unless they are top-level entry point scripts).
 
 | Module |
 |---|
-
-# AI: let's remove sim2real. it's combining too many ideas into one place.
-
-
 | `src.data.sim2real` |
 | `src.data.sim2real.epigenetic_entropy_dataloader` |
 | `src.data.sim2real.gevi_injector` |
@@ -72,22 +78,9 @@ Internal modules that are NEVER imported by anything else in the package. These 
 | `src.data.sim2real.omega_bioelectric_dataloader` |
 | `src.data.sim2real.psi_rna_dataloader` |
 | `src.data.sim2real.sigma_phase_structure_dataloader` |
-
-# AI: let's allow list src.demo.* and src.harness.* since they are entry points.
-
-| `src.demo` |
-| `src.harness.clinical_diagnostic_runner` |
-| `src.harness.sensor_fusion_sweep` |
-| `src.harness.summarize_results` |
-
-# AI: let's document how we might expect to use these with a TODO comment.
-
 | `src.models.encoders.spatial_compressor` |
 | `src.models.encoders.topo_encoder` |
 | `src.models.losses` |
 | `src.models.losses.meld_loss` |
-
-# AI: please explain to me what these are doing.
-
 | `src.models.ssm.dynamic_integrator` |
 | `src.models.ssm.state_unpacker` |

@@ -59,12 +59,17 @@ def main():
         # Sort by in-degree (Hubs) and out-degree (Consumers)
         top_hubs = sorted(in_degree.items(), key=lambda x: x[1], reverse=True)
         
-        # Find isolated code (In-Degree = 0)
+        # Find isolated code (In-Degree = 0) and Entry Points
         isolated_modules = []
+        entry_points = []
         for mod in internal_modules:
             if in_degree[mod] == 0:
-                isolated_modules.append(mod)
+                if mod.startswith(f"{base_pkg}.demo") or mod.startswith(f"{base_pkg}.harness"):
+                    entry_points.append(mod)
+                else:
+                    isolated_modules.append(mod)
         isolated_modules.sort()
+        entry_points.sort()
         
         # Consumers (we can keep external imports in the count, or filter to only internal)
         # We will keep the out-degree as total imports to show complexity
@@ -85,6 +90,12 @@ def main():
         md_content += "| Module | Out-Degree (Imports Made) |\n|---|---|\n"
         for mod, deg in top_consumers[:20]:
             md_content += f"| `{mod}` | {deg} |\n"
+
+        md_content += "\n## Entry Points\n"
+        md_content += "Known entry points and runner scripts that are not imported by other internal modules.\n\n"
+        md_content += "| Module |\n|---|\n"
+        for mod in entry_points:
+            md_content += f"| `{mod}` |\n"
             
         md_content += "\n## Isolated / Dead Code (In-Degree = 0)\n"
         md_content += "Internal modules that are NEVER imported by anything else in the package. These are prime candidates for deletion or iceboxing (unless they are top-level entry point scripts).\n\n"
