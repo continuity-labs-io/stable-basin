@@ -21,7 +21,6 @@ sensor-fusion-all: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fus
 
 .PHONY: clinical-diagnostic
 
-EPOCHS ?= 15
 
 clinical-diagnostic:
 	python -m src.harness.clinical_diagnostic_runner --config configs/clinical_diagnostic.yaml
