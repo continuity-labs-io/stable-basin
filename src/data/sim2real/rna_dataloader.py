@@ -70,7 +70,7 @@ class StateSpacePointProcess:
         return torch.tensor(events, dtype=torch.float32)
 
 
-class PsiTranscriptomicLoader:
+class TranscriptomicLoader:
     def __init__(self, crash_minute=10):
         self.crash_minute = crash_minute
         self.source_url = "s3://czb-cellxgene/wyss-coray-microglia-aging.h5ad"

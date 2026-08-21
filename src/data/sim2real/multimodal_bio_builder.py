@@ -6,13 +6,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def generate_meld_sim2real_stub(total_minutes=15, crash_minute=10):
+def generate_sim2real_stub(total_minutes=15, crash_minute=10):
     """
-    MELD Xi-114 Sim2Real Engine
+    Sim2Real Sim2Real Engine
     Generates a 15-minute multi-scale tensor for 1 cell.
     Demonstrates the Hierarchical Entrainment Crash.
     """
-    logger.info("Booting Xi-114 Physics Engine...")
+    logger.info("Booting Sim2Real Physics Engine...")
 
     # 1. TIME CONSTANTS (The Multi-Scale Problem)
     burst_freq_hz = 500
@@ -43,11 +43,11 @@ def generate_meld_sim2real_stub(total_minutes=15, crash_minute=10):
     # ML TEAM: Replace random drift with CZ Biohub real PCA embeddings
     # ---------------------------------------------------------
     logger.info("Generating Sigma (100D)...")
-    sigma_cols = [f"Sigma_PC{i:03d}" for i in range(1, 101)]
+    phase_cols = [f"PC{i:03d}" for i in range(1, 101)]
     # Synthetic: smooth drift, accelerating after crash
     drift = np.cumsum(np.random.normal(0, 0.005, (total_rows, 100)), axis=0)
     crash_penalty = np.where(df["Minute"].values[:, None] >= crash_minute, -0.02, 0)
-    sigma_df = pd.DataFrame(drift + crash_penalty, columns=sigma_cols)
+    phase_df = pd.DataFrame(drift + crash_penalty, columns=phase_cols)
 
     # ---------------------------------------------------------
     # [TASK 2] OMEGA (Voltage - 2D)
@@ -55,7 +55,7 @@ def generate_meld_sim2real_stub(total_minutes=15, crash_minute=10):
     # ---------------------------------------------------------
     logger.info("Generating Omega (2D)...")
     # Red Baseline (Stable)
-    omega_red = np.random.normal(1.0, 0.01, total_rows)
+    volt_red = np.random.normal(1.0, 0.01, total_rows)
 
     # Green Active (Variance Explosion at crash)
     is_crashing = df["Minute"] >= crash_minute
@@ -63,31 +63,31 @@ def generate_meld_sim2real_stub(total_minutes=15, crash_minute=10):
     jitter = np.where(
         is_crashing, np.random.normal(0, 0.50, total_rows), np.random.normal(0, 0.05, total_rows)
     )
-    omega_grn = 1.0 + jitter
-    omega_df = pd.DataFrame({"Omega_VoltRed": omega_red, "Omega_VoltGrn": omega_grn})
+    volt_grn = 1.0 + jitter
+    bioelectric_df = pd.DataFrame({"VoltRed": volt_red, "VoltGrn": volt_grn})
 
     # ---------------------------------------------------------
     # [TASK 3] PSI (RNA Software - 12D)
     # ML TEAM: Replace Poisson generator with Gao/Wyss-Coray real scRNA-seq counts
     # ---------------------------------------------------------
     logger.info("Generating Psi (12D)...")
-    psi_cols = [
-        "Psi_NFE2L2",
-        "Psi_TP53",
-        "Psi_CDKN2A",
-        "Psi_TREM2",
-        "Psi_APOE",
-        "Psi_IL6",
-        "Psi_GFAP",
-        "Psi_MAPT",
-        "Psi_NANOG",
-        "Psi_CASP3",
-        "Psi_CAS13",
-        "Psi_GAPDH",
+    rna_cols = [
+        "RNA_NFE2L2",
+        "RNA_TP53",
+        "RNA_CDKN2A",
+        "RNA_TREM2",
+        "RNA_APOE",
+        "RNA_IL6",
+        "RNA_GFAP",
+        "RNA_MAPT",
+        "RNA_NANOG",
+        "RNA_CASP3",
+        "RNA_CAS13",
+        "RNA_GAPDH",
     ]
 
     # Fill with NaNs (The shutter is closed 99% of the time)
-    psi_df = pd.DataFrame(np.nan, index=df.index, columns=psi_cols)
+    rna_df = pd.DataFrame(np.nan, index=df.index, columns=rna_cols)
 
     # Only sample at the very first frame of each 5-min burst
     sample_indices = np.arange(0, total_rows, frames_per_burst)
@@ -96,25 +96,25 @@ def generate_meld_sim2real_stub(total_minutes=15, crash_minute=10):
         minute = df.loc[idx, "Minute"]
         if minute < crash_minute:
             # Healthy baseline (Normal Poisson counts)
-            psi_df.loc[idx, psi_cols] = np.random.poisson(lam=5, size=12)
+            rna_df.loc[idx, rna_cols] = np.random.poisson(lam=5, size=12)
         else:
             # Transcriptomic Hysteresis (Panic genes get stuck ON)
-            psi_df.loc[idx, psi_cols] = np.random.poisson(lam=5, size=12)
+            rna_df.loc[idx, rna_cols] = np.random.poisson(lam=5, size=12)
             # TP53, IL6, and CASP3 spike massively
-            psi_df.loc[idx, ["Psi_TP53", "Psi_IL6", "Psi_CASP3"]] = np.random.poisson(
+            rna_df.loc[idx, ["RNA_TP53", "RNA_IL6", "RNA_CASP3"]] = np.random.poisson(
                 lam=50, size=3
             )
 
     # Reorder for clean UX
-    cols = ["Time_ms", "Minute", "Omega_VoltGrn", "Omega_VoltRed"] + psi_cols + sigma_cols
-    df = pd.concat([df, omega_df, psi_df, sigma_df], axis=1)[cols]
+    cols = ["Time_ms", "Minute", "VoltGrn", "VoltRed"] + rna_cols + phase_cols
+    df = pd.concat([df, bioelectric_df, rna_df, phase_df], axis=1)[cols]
 
     logger.info(f"Success! Generated Sim2Real Tensor: {total_rows} rows x {len(cols)} columns.")
     return df
 
 
 # Execute the engine
-meld_tensor = generate_meld_sim2real_stub()
+meld_tensor = generate_sim2real_stub()
 
 # Save a snapshot so the ML team can visualize the NaN gaps
 meld_tensor.head(2255).to_csv("data/MELD_Xi114_Sim2Real_Stub.csv", index=False)

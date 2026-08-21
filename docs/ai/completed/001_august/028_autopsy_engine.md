@@ -21,11 +21,11 @@ diagnostic diagnostic report.
 
    - `__init__(self, model, feature_names=None)`: Stores the trained model and
      an optional list of 114 feature names. If `feature_names` is None,
-     auto-generate them matching the Trifecta layout: `Sigma_PC001` to
-     `Sigma_PC100`, followed by 12 RNA anchors (`Psi_NFE2L2`, `Psi_TP53`,
-     `Psi_CDKN2A`, `Psi_TREM2`, `Psi_APOE`, `Psi_IL6`, `Psi_GFAP`, `Psi_MAPT`,
-     `Psi_NANOG`, `Psi_CASP3`, `Psi_CAS13`, `Psi_GAPDH`), and 2 voltage tracks
-     (`Omega_VoltRed`, `Omega_VoltGrn`).
+     auto-generate them matching the Trifecta layout: `PC001` to
+     `PC100`, followed by 12 RNA anchors (`RNA_NFE2L2`, `RNA_TP53`,
+     `RNA_CDKN2A`, `RNA_TREM2`, `RNA_APOE`, `RNA_IL6`, `RNA_GFAP`, `RNA_MAPT`,
+     `RNA_NANOG`, `RNA_CASP3`, `RNA_CAS13`, `RNA_GAPDH`), and 2 voltage tracks
+     (`VoltRed`, `VoltGrn`).
 
 2. **Method
    `generate_diagnostic(self, x_sequence, crash_time_step, confidence_score=0.98)`**:

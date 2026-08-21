@@ -1,4 +1,4 @@
-Target File: src/pipeline/sim2real/psi_rna_dataloader.py
+Target File: src/pipeline/sim2real/rna_dataloader.py
 
 Context: We need to fundamentally alter how we handle sparse transcriptomic
 reads. The current `align_to_master_clock` method injects 12-D Poisson RNA
@@ -82,7 +82,7 @@ self.panic_genes = {"TP53", "IL6", "CASP3"}
         events.sort(key=lambda x: x[0])
         return torch.tensor(events, dtype=torch.float32)
 
-class PsiTranscriptomicLoader: def **init**(self, crash_minute=10):
+class TranscriptomicLoader: def **init**(self, crash_minute=10):
 self.crash_minute = crash_minute self.source_url =
 "s3://czb-cellxgene/wyss-coray-microglia-aging.h5ad"
 
@@ -122,7 +122,7 @@ self.crash_minute = crash_minute self.source_url =
 # ==========================================
 
 def run_tests(): print("\n--- Running S2P2 Unit Tests ---") loader =
-PsiTranscriptomicLoader(crash_minute=10) event_tensor =
+TranscriptomicLoader(crash_minute=10) event_tensor =
 loader.build_continuous_event_tensor(total_minutes=15)
 
     print(f"Generated Event Tensor Shape: {event_tensor.shape}")
@@ -153,7 +153,7 @@ loader.build_continuous_event_tensor(total_minutes=15)
 if **name** == "**main**": run_tests()
 
     # Execution Demo
-    loader = PsiTranscriptomicLoader(crash_minute=10)
+    loader = TranscriptomicLoader(crash_minute=10)
     tensor = loader.build_continuous_event_tensor()
     print("Sample Event Stream [Time_ms, Gene_Index, Intensity]:")
     print(tensor[:5]) # Show first 5 events

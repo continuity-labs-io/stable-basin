@@ -14,7 +14,7 @@
 ### 2. The Big Data Plumber Quest: "The Sim2Real Cloud Bridge"
 
 * **Target:** Data Engineers, MLOps, Bioinformatics Devs.
-* **Where it lives in your code:** The `[TASK X] DATA ENGINEER` comments in `sigma_phase_structure_dataloader.py` and `omega_bioelectric_dataloader.py`.
+* **Where it lives in your code:** The `[TASK X] DATA ENGINEER` comments in `phase_structure_dataloader.py` and `bioelectric_dataloader.py`.
 * **The Problem:** The engine's temporal alignment physics are solved, but the dataloaders are currently generating synthetic Poisson distributions and random walks.
 * **The Pitch:** *"The physics engine is dreaming on synthetic data. We need Data Engineers to connect our PyTorch scaffolding to actual public biological cloud datalakes. Replace our synthetic generators with lazy-loaded, streaming API calls to AWS OME-Zarr (Optical Phase Imaging) and NWB (kilohertz voltage traces)."*
 

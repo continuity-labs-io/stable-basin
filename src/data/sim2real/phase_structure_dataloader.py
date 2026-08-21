@@ -23,10 +23,10 @@ class MorphologicalVectorField(nn.Module):
         return self.net(zt)
 
 
-class SigmaPhaseLoader:
+class PhaseStructureLoader:
     def __init__(self, target_components=100):
         """
-        MELD Sigma (Phase Structure) Dataloader V1
+        MELD Phase Structure (Phase Structure) Dataloader V1
         Scaffold for streaming Quantitative Phase Imaging (QPI) from cloud storage,
         extracting single-cell super-voxels, and compressing to 100D latent vectors.
         """
@@ -138,7 +138,7 @@ class SigmaPhaseLoader:
                 aligned_sigma[indices] = pred_z.numpy()
 
         # Format output
-        cols = [f"Sigma_PC{i:03d}" for i in range(1, self.target_components + 1)]
+        cols = [f"PC{i:03d}" for i in range(1, self.target_components + 1)]
         df_sigma = pd.DataFrame(aligned_sigma, columns=cols)
         df_sigma.insert(0, "Time_ms", master_time_ms)
 

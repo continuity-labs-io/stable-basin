@@ -7,10 +7,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class OmegaBioelectricLoader:
+class BioelectricLoader:
     def __init__(self, sample_rate_hz=500, crash_minute=10):
         """
-        MELD Omega (Bioelectric) Dataloader V1
+        Bioelectric Dataloader V1
         Scaffold for ingesting high-speed kilohertz voltage imaging (GEVI) traces,
         applying ratiometric motion-cancellation, and detecting Variance Explosions.
         """
@@ -70,15 +70,15 @@ class OmegaBioelectricLoader:
         # Construct the 2 Dimensions
         df = pd.DataFrame()
         # RED (D002): Baseline fluorophore. Blind to voltage. Only sees wobble.
-        df["Omega_VoltRed"] = 1.0 + wobble
+        df["VoltRed"] = 1.0 + wobble
 
         # GREEN (D001): Voltage sensor. Sees voltage + wobble + crash jitter.
-        df["Omega_VoltGrn"] = pure_voltage + wobble + baseline_jitter
+        df["VoltGrn"] = pure_voltage + wobble + baseline_jitter
 
         # [TASK 3] EDGE COMPUTE SIMULATION
         # The AI doesn't get raw green. It gets Normalized Input = Green / Red.
         # Notice how the `wobble` mathematically vanishes.
-        df["Omega_Normalized"] = df["Omega_VoltGrn"] / df["Omega_VoltRed"]
+        df["VoltNormalized"] = df["VoltGrn"] / df["VoltRed"]
 
         return df
 
@@ -88,7 +88,7 @@ class OmegaBioelectricLoader:
         """
         df_omega["Time_ms"] = master_time_ms
         # Reorder columns
-        return df_omega[["Time_ms", "Omega_VoltGrn", "Omega_VoltRed", "Omega_Normalized"]]
+        return df_omega[["Time_ms", "VoltGrn", "VoltRed", "VoltNormalized"]]
 
 
 # ==========================================

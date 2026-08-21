@@ -1,10 +1,10 @@
 import numpy as np
 import pytest
-from src.data.sim2real.psi_rna_dataloader import PsiTranscriptomicLoader
+from src.data.sim2real.rna_dataloader import TranscriptomicLoader
 
 
 def test_psi_dataloader_event_tensor():
-    loader = PsiTranscriptomicLoader(crash_minute=10)
+    loader = TranscriptomicLoader(crash_minute=10)
     event_tensor = loader.build_continuous_event_tensor(total_minutes=15)
 
     # Test 1: Shape Validation

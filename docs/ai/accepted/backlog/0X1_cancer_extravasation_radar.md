@@ -1,6 +1,6 @@
 Create a new sim2real dataloader and visual simulation script for my biological physics engine. We are mocking 'Cancer Extravasation' based on LLSM imaging.
 
-1 In src/data/sim2real/sigma_phase_structure_dataloader.py, create ExtravasationSigmaLoader. Generate a 3000-step 100-D latent sequence ($\Sigma$).
+1 In src/data/sim2real/phase_structure_dataloader.py, create ExtravasationSigmaLoader. Generate a 3000-step 100-D latent sequence ($\Sigma$).
 
 Phase 1: Rolling (T=0 to 1000): Fast, stable oscillation with low variance.
 

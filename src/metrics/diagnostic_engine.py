@@ -24,25 +24,25 @@ class ThermodynamicDiagnosticEngine:
     def _generate_feature_names(self):
         names = []
         for i in range(1, 101):
-            names.append(f"Sigma_PC{i:03d}")
+            names.append(f"PC{i:03d}")
 
         rna_anchors = [
-            "Psi_NFE2L2",
-            "Psi_TP53",
-            "Psi_CDKN2A",
-            "Psi_TREM2",
-            "Psi_APOE",
-            "Psi_IL6",
-            "Psi_GFAP",
-            "Psi_MAPT",
-            "Psi_NANOG",
-            "Psi_CASP3",
-            "Psi_CAS13",
-            "Psi_GAPDH",
+            "RNA_NFE2L2",
+            "RNA_TP53",
+            "RNA_CDKN2A",
+            "RNA_TREM2",
+            "RNA_APOE",
+            "RNA_IL6",
+            "RNA_GFAP",
+            "RNA_MAPT",
+            "RNA_NANOG",
+            "RNA_CASP3",
+            "RNA_CAS13",
+            "RNA_GAPDH",
         ]
         names.extend(rna_anchors)
 
-        voltage_tracks = ["Omega_VoltRed", "Omega_VoltGrn"]
+        voltage_tracks = ["VoltRed", "VoltGrn"]
         names.extend(voltage_tracks)
         return names
 
@@ -64,7 +64,7 @@ class ThermodynamicDiagnosticEngine:
                     "predicted_crash_time": str,         # E.g., "T=140"
                     "confidence_score": float,           # E.g., 0.98
                     "anomaly_ontology": {
-                        "primary_latent_driver": str,    # E.g., "Psi_TP53"
+                        "primary_latent_driver": str,    # E.g., "RNA_TP53"
                         "causal_trace": list[dict]       # Top 3 anomalous events leading to the crash
                     }
                 }

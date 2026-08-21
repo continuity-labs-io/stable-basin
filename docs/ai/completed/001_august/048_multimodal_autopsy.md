@@ -48,7 +48,7 @@ Requirements:
    - Clone a new validation sequence from the clean data.
    - **Inject the Root Cause (The Trigger):** At `TRIGGER_FRAME = 110`,
      artificially spike the values of the RNA panic genes. Specifically, target
-     indices `101` and `102` (representing `Psi_TP53` and `Psi_CDKN2A` in our
+     indices `101` and `102` (representing `RNA_TP53` and `RNA_CDKN2A` in our
      114-D Trifecta layout). Add `+5.0` to their amplitude for frames 110-120.
    - **Inject the Thermodynamic Crash:** At `EVENT_FRAME = 140`, simulate the
      structural collapse (apoptosis). Multiply all 114 dimensions for frames 140
