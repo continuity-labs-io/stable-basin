@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -72,7 +73,6 @@ class PyTorchMambaMASR(nn.Module):
         self.C_proj = nn.Linear(d_model, d_state)
         self.dt_proj = nn.Linear(d_model, d_model)
         
-        import math
         self.dt_proj.bias.data.uniform_(math.log(0.001), math.log(0.1))
         
     def forward(self, x, mask):

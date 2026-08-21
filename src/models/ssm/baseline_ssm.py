@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 
@@ -24,7 +25,6 @@ class BaselineSSM(nn.Module):
         self.B_proj = nn.Linear(d_model, d_model, bias=False)
         self.dt_proj = nn.Linear(d_model, d_model)
         
-        import math
         self.dt_proj.bias.data.uniform_(math.log(0.001), math.log(0.1))
 
     def forward(self, latent_x: torch.Tensor):
