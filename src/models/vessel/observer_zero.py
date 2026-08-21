@@ -76,3 +76,31 @@ class ObserverZero(nn.Module):
         self.v = self.v + self.dt * dv
 
         return self.u, self.v
+
+    def inject_wound(self, x: int, y: int, radius: int = 5, u_val: float = 3.0, v_val: float = -1.0):
+        """
+        Injects a massive localized spike of energy into the substrate at (x, y)
+        to simulate an external perturbation (sensation).
+        """
+        # Create a coordinate grid
+        Y, X = torch.meshgrid(
+            torch.arange(self.size, device=self.u.device), 
+            torch.arange(self.size, device=self.u.device), 
+            indexing='ij'
+        )
+        
+        # Calculate distance squared from the center
+        dist_sq = (X - x) ** 2 + (Y - y) ** 2
+        
+        # Create mask for the circular region
+        mask = dist_sq <= radius ** 2
+        
+        # Reshape mask to match state tensor shape (1, 1, H, W)
+        mask = mask.unsqueeze(0).unsqueeze(0)
+        
+        # Inject the wound using torch.where for gradient stability
+        u_tensor = torch.tensor(u_val, device=self.u.device, dtype=self.u.dtype)
+        v_tensor = torch.tensor(v_val, device=self.v.device, dtype=self.v.dtype)
+        
+        self.u = torch.where(mask, u_tensor, self.u)
+        self.v = torch.where(mask, v_tensor, self.v)

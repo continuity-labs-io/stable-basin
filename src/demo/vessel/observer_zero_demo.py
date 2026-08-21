@@ -11,13 +11,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 from src.models.vessel.observer_zero import ObserverZero
 
 def main():
-    # Set device to CPU/Metal backend
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     
     # Initialize the model
     size = 128
     model = ObserverZero(size=size, dt=0.01, D_u=0.16, D_v=0.08, epsilon=0.01, 
-                         gamma=0.5, sigma=0.0001).to(device)
+                         gamma=0.5, sigma=0.0).to(device)
     model.eval()
     
     # Setup matplotlib figure
@@ -42,6 +41,20 @@ def main():
         u_state_np = model.u.detach().cpu().squeeze().numpy()
         im.set_array(u_state_np)
         return [im]
+
+    def on_click(event):
+        if event.inaxes != ax:
+            return
+        if event.xdata is None or event.ydata is None:
+            return
+            
+        x = int(event.xdata)
+        y = int(event.ydata)
+        
+        with torch.no_grad():
+            model.inject_wound(x, y, radius=8, u_val=3.0, v_val=-1.0)
+            
+    fig.canvas.mpl_connect('button_press_event', on_click)
 
     # Create the animation
     ani = animation.FuncAnimation(

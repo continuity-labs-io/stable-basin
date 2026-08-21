@@ -65,3 +65,35 @@ def test_continuous_update_invariants():
     assert v_init.grad is not None, "Gradient stability failed: v missing grad"
     assert not torch.isnan(u_init.grad).any(), "Gradient stability failed: NaNs in u.grad"
     assert not torch.isnan(v_init.grad).any(), "Gradient stability failed: NaNs in v.grad"
+
+def test_inject_wound_invariants():
+    # ARRANGE
+    size = 16
+    model = ObserverZero(size=size)
+    model.u.requires_grad = True
+    model.v.requires_grad = True
+    
+    u_init = model.u
+    
+    # ACT
+    model.inject_wound(x=8, y=8, radius=3, u_val=5.0, v_val=-5.0)
+    
+    loss = model.u.sum() + model.v.sum()
+    loss.backward()
+    
+    # ASSERT
+    # 1. Shape consistency
+    assert model.u.shape == (1, 1, size, size), "Shape consistency failed for wound u"
+    assert model.v.shape == (1, 1, size, size), "Shape consistency failed for wound v"
+    
+    # 2. Boundary conditions / Spatial assignment check
+    # Check that the wound actually changed the values precisely in the radius
+    assert torch.isclose(model.u[0, 0, 8, 8], torch.tensor(5.0)), "Boundary condition failed: wound center unassigned"
+    # A point outside the radius (e.g. 0, 0) should remain unchanged
+    assert torch.isclose(model.u[0, 0, 0, 0], u_init[0, 0, 0, 0]), "Boundary condition failed: wound bled outside radius"
+    
+    # 3. Gradient stability
+    # Our implementation uses torch.where, which should safely route gradients to the unmodified elements 
+    # of the original tensor.
+    assert u_init.grad is not None, "Gradient stability failed: wound broke u grad"
+    assert not torch.isnan(u_init.grad).any(), "Gradient stability failed: wound introduced NaNs in grad"
