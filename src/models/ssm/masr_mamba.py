@@ -81,15 +81,18 @@ class PyTorchMambaMASR(nn.Module):
         x: (batch_size, seq_len, d_model)
         mask: (batch_size, seq_len, d_model)
         """
+        # Sever the backward pass for missing data by masking input immediately
+        x_masked = x * mask
+        
         # Compute continuous data-dependent parameters
-        B = self.B_proj(x) # (batch_size, seq_len, d_state)
-        C = self.C_proj(x) # (batch_size, seq_len, d_state)
+        B = self.B_proj(x_masked) # (batch_size, seq_len, d_state)
+        C = self.C_proj(x_masked) # (batch_size, seq_len, d_state)
         
         # Softplus ensures Δt is strictly positive
-        dt = F.softplus(self.dt_proj(x)) # (batch_size, seq_len, d_model)
+        dt = F.softplus(self.dt_proj(x_masked)) # (batch_size, seq_len, d_model)
         
         A = self.A_init()
-        y = mamba_masr_reference_scan(x, dt, mask, A, B, C, self.D)
+        y = mamba_masr_reference_scan(x_masked, dt, mask, A, B, C, self.D)
         return y
 
 class MaskAwareMamba(nn.Module):

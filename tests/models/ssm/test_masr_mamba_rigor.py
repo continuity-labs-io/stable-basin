@@ -1,7 +1,7 @@
 import torch
 import math
 import torch.testing as testing
-from src.models.ssm.masr_mamba import mamba_masr_reference_scan
+from src.models.ssm.masr_mamba import mamba_masr_reference_scan, PyTorchMambaMASR
 
 def test_mamba_masr_analytical_verification():
     """
@@ -106,3 +106,41 @@ def test_mamba_masr_singularity_prevention():
         # ASSERT
         assert not torch.isnan(y_out).any(), f"NaN detected in output for A={a_val}"
         assert not torch.isinf(y_out).any(), f"Inf detected in output for A={a_val}"
+
+def test_masr_mamba_stasis_gradient_isolation():
+    """
+    Mathematical Invariant Test: Stasis Gradient Integrity (The Rests)
+    
+    Ensures that when a sensor is masked (missing data), no error signal leaks 
+    across the void during the backward pass.
+    """
+    # ARRANGE
+    batch_size = 2
+    seq_len = 5
+    d_model = 4
+    d_state = 8
+    
+    model = PyTorchMambaMASR(d_model=d_model, d_state=d_state)
+    # Force D to 0.0 to prevent direct skip connection gradient leakage
+    model.D.data.fill_(0.0)
+    
+    x = torch.randn(batch_size, seq_len, d_model, requires_grad=True)
+    mask = torch.ones(batch_size, seq_len, d_model)
+    
+    # Mask exactly t=2
+    masked_t = 2
+    mask[:, masked_t, :] = 0.0
+    
+    # ACT
+    y_out = model(x, mask)
+    loss = y_out.sum()
+    loss.backward()
+    
+    # ASSERT
+    assert x.grad is not None, "Gradients were not computed for x"
+    
+    masked_grad = x.grad[:, masked_t, :]
+    testing.assert_close(masked_grad, torch.zeros_like(masked_grad), atol=1e-8, rtol=1e-8, msg="Gradient leaked at masked time step!")
+    
+    # Ensure gradients flow to other timesteps
+    assert x.grad[:, masked_t + 1, :].abs().sum() > 0, "No gradients flowed to active time steps"
