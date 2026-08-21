@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import torch
 
 import logging
 
@@ -113,8 +114,36 @@ def generate_sim2real_stub(total_minutes=15, crash_minute=10):
     return df
 
 
-# Execute the engine
-meld_tensor = generate_sim2real_stub()
-
-meld_tensor.head(2255).to_csv("data/Xi114_Sim2Real_Stub.csv", index=False)
-logger.info("Saved to data/Xi114_Sim2Real_Stub.csv")
+class MultimodalBioDataset(torch.utils.data.Dataset):
+    """
+    A PyTorch Dataset that wraps the Sim2Real stub generator.
+    It returns sequences of length `sequence_length` containing:
+    - Phase Structure (Sigma)
+    - Bioelectric Voltage (Omega)
+    - Transcriptomic Counts (Psi)
+    """
+    def __init__(self, total_minutes=15, crash_minute=10, sequence_length=100):
+        super().__init__()
+        self.sequence_length = sequence_length
+        self.df = generate_sim2real_stub(total_minutes, crash_minute)
+        
+        # Pre-extract columns
+        self.phase_cols = [c for c in self.df.columns if c.startswith("PC")]
+        self.volt_cols = ["VoltGrn", "VoltRed"]
+        self.rna_cols = [c for c in self.df.columns if c.startswith("RNA_")]
+        
+    def __len__(self):
+        return len(self.df) - self.sequence_length + 1
+        
+    def __getitem__(self, idx):
+        window = self.df.iloc[idx : idx + self.sequence_length]
+        
+        phase_tensor = torch.tensor(window[self.phase_cols].values, dtype=torch.float32)
+        volt_tensor = torch.tensor(window[self.volt_cols].values, dtype=torch.float32)
+        rna_tensor = torch.tensor(window[self.rna_cols].values, dtype=torch.float32)
+        
+        return {
+            "phase": phase_tensor,
+            "voltage": volt_tensor,
+            "rna": rna_tensor
+        }

@@ -4,8 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
-from src.data.sim2real.gevi_injector import GEVIInjector
-
+from src.data.sim2real.gevi_dataloader import GEVIDataloader
+from src.models.encoders.gevi_encoder import GEVIEncoder
 class MockKinematicRouting(nn.Module):
     def __init__(self, in_channels=1):
         super().__init__()
@@ -36,10 +36,9 @@ class MockKinematicRouting(nn.Module):
         return dt.squeeze(1)
 
 def test_inertial_routing_plot():
-    injector = GEVIInjector(
+    dataloader = GEVIDataloader(
         gevi_sample_rate=1000, 
         target_clock_hz=1000, # 1:1 compression so we can see the raw wave
-        gevi_dim=1,
         baseline_mv=-70.0,
         noise_std=2.0,
         spike_prob=0.01,
@@ -49,7 +48,7 @@ def test_inertial_routing_plot():
     )
     
     # Generate synthetic GEVI sequence (1 batch, 1 channel, 500 steps)
-    raw_signal = injector.generate_synthetic_gevi(
+    raw_signal = dataloader.generate_synthetic_gevi(
         batch_size=1, 
         target_time_steps=500, 
         device=torch.device('cpu'), 

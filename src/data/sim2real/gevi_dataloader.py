@@ -1,19 +1,16 @@
 import torch
-import torch.nn as nn
-
 from src.config import settings
 
 
-class GEVIInjector(nn.Module):
+class GEVIDataloader:
     """
-    Simulates a high-frequency bioelectric data stream (GEVI) and temporally pools it
-    to match a lower frequency optical framerate. Generates synthetic membrane potentials,
-    action potentials, and optionally injects a variance explosion anomaly.
+    Simulates a high-frequency bioelectric data stream (GEVI).
+    Generates synthetic membrane potentials, action potentials, 
+    and optionally injects a variance explosion anomaly.
 
     Args:
         gevi_sample_rate (int): The sampling rate of the high-frequency GEVI data in Hz.
         target_clock_hz (int): The target framerate to pool the data down to in Hz.
-        gevi_dim (int): The output dimension (channels) after temporal compression.
         baseline_mv (float): The baseline membrane potential in millivolts (mV).
         noise_std (float): The standard deviation of the thermal noise in millivolts (mV).
         spike_prob (float): The probability of an action potential spike occurring
@@ -29,7 +26,6 @@ class GEVIInjector(nn.Module):
         self,
         gevi_sample_rate=settings.GEVI_HZ,
         target_clock_hz=settings.OPTICS_HZ,
-        gevi_dim=settings.MAMBA_D_STATE,
         baseline_mv=-70.0,
         noise_std=2.0,
         spike_prob=0.01,
@@ -37,7 +33,6 @@ class GEVIInjector(nn.Module):
         anomaly_start_frame=6,
         anomaly_noise_std=40.0,
     ):
-        super().__init__()
         self.compression_ratio = int(gevi_sample_rate / target_clock_hz)
         self.baseline_mv = baseline_mv
         self.noise_std = noise_std
@@ -45,13 +40,6 @@ class GEVIInjector(nn.Module):
         self.spike_mv = spike_mv
         self.anomaly_start_frame = anomaly_start_frame
         self.anomaly_noise_std = anomaly_noise_std
-
-        self.compressor = nn.Conv1d(
-            in_channels=1,
-            out_channels=gevi_dim,
-            kernel_size=self.compression_ratio,
-            stride=self.compression_ratio,
-        )
 
     def generate_synthetic_gevi(self, batch_size, target_time_steps, device, is_healthy=True):
         total_steps = target_time_steps * self.compression_ratio
@@ -72,10 +60,3 @@ class GEVIInjector(nn.Module):
                 tensor[:, :, start_idx:] += variance_injection
 
         return tensor
-
-    def forward(self, batch_size, target_time_steps, device, is_healthy=True):
-        synthetic_gevi = self.generate_synthetic_gevi(
-            batch_size, target_time_steps, device, is_healthy
-        )
-        compressed = self.compressor(synthetic_gevi)
-        return compressed.transpose(1, 2)

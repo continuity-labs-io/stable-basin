@@ -28,7 +28,8 @@ from torch.utils.data import DataLoader
 
 from src.system.hardware_monitor import HardwareMonitor
 from src.metrics.metrics import ThermodynamicMetrics
-from src.data.sim2real.gevi_injector import GEVIInjector
+from src.data.sim2real.gevi_dataloader import GEVIDataloader
+from src.models.encoders.gevi_encoder import GEVIEncoder
 from src.models.encoders.spatial_compressor import SpatialCompressor
 from src.models.ssm.state_space_engine import StateSpaceEngine
 from src.data.optical.aollsm_dataloader import AOLLSMDataset
@@ -330,14 +331,15 @@ def main():
     GEVI_EMBEDDING_DIM = 64
     compressor = SpatialCompressor().to(device)
     mamba_engine_optical = StateSpaceEngine(d_model=OPTICAL_EMBEDDING_DIM).to(device)
-    gevi_injector = GEVIInjector().to(device)
+    gevi_dataloader = GEVIDataloader()
+    gevi_encoder = GEVIEncoder(gevi_dim=GEVI_EMBEDDING_DIM).to(device)
     mamba_engine_fused = StateSpaceEngine(d_model=OPTICAL_EMBEDDING_DIM + GEVI_EMBEDDING_DIM).to(
         device
     )
 
     compressor.eval()
     mamba_engine_optical.eval()
-    gevi_injector.eval()
+    gevi_encoder.eval()
     mamba_engine_fused.eval()
 
     print("[*] Executing Level 1: Spatial Compression (ViT-Base)...")
@@ -351,10 +353,13 @@ def main():
 
         print(f"    -> Compressed Latent Sequence Shape: {opt_anom_norm.shape}")
 
-        gevi_anomalous = gevi_injector(
+        gevi_anomalous_raw = gevi_dataloader.generate_synthetic_gevi(
             experimental_batch.size(0), experimental_batch.size(1), device, is_healthy=False
         )
-        gevi_healthy = gevi_injector(raw_batch.size(0), raw_batch.size(1), device, is_healthy=True)
+        gevi_healthy_raw = gevi_dataloader.generate_synthetic_gevi(raw_batch.size(0), raw_batch.size(1), device, is_healthy=True)
+        
+        gevi_anomalous = gevi_encoder(gevi_anomalous_raw)
+        gevi_healthy = gevi_encoder(gevi_healthy_raw)
 
         # Normalize GEVI before fusion
         gevi_anom_norm = F.layer_norm(gevi_anomalous, [gevi_anomalous.shape[-1]])
