@@ -44,9 +44,10 @@ def mamba_masr_reference_scan(x, dt, mask, A, B, C, D):
         # B̄ ≈ Δt * B (simplified Mamba ZOH approximation)
         dt_masked_t_exp = dt_masked_t.unsqueeze(-1) # (batch_size, d_model, 1)
         
-        # When mask is 0, dt_masked_t is 0, so Ā = exp(0) = 1 (Identity), and B̄ = 0
+        # Prevent division by zero during ZOH discretization
+        A_safe = torch.where(A.abs() <= 1e-8, torch.full_like(A, -1e-8), A)
         A_bar = torch.exp(dt_masked_t_exp * A) # (batch_size, d_model, d_state)
-        B_bar = (A_bar - 1.0) / (A - 1e-8) * B_t.unsqueeze(1) # (batch_size, d_model, d_state)
+        B_bar = (A_bar - 1.0) / A_safe * B_t.unsqueeze(1) # (batch_size, d_model, d_state)
         
         # Update hidden state h_t = Ā * h_{t-1} + B̄ * x_t
         # Perfectly freezing the hidden state (h_t = h_{t-1}) when mask is 0

@@ -75,3 +75,34 @@ def test_mamba_masr_analytical_verification():
     
     # ASSERT
     testing.assert_close(y_out, y_expected, atol=1e-6, rtol=1e-6)
+
+def test_mamba_masr_singularity_prevention():
+    """
+    Mathematical Invariant Test: The Singularity Threshold (The Dissonance Check)
+    
+    Proves the epsilon stabilizer in the MASR continuous-time integration
+    prevents silent numerical explosion when the state matrix A approaches zero.
+    """
+    # ARRANGE
+    batch_size = 1
+    seq_len = 2
+    d_model = 1
+    d_state = 1
+    
+    x = torch.ones(batch_size, seq_len, d_model)
+    dt = torch.ones(batch_size, seq_len, d_model) * 0.1
+    mask = torch.ones(batch_size, seq_len, d_model)
+    B = torch.ones(batch_size, seq_len, d_state)
+    C = torch.ones(batch_size, seq_len, d_state)
+    D = torch.ones(d_model)
+    
+    adversarial_A_values = [1e-8, 0.0, -1e-9]
+    for a_val in adversarial_A_values:
+        A = torch.tensor([[a_val]], dtype=torch.float32)
+        
+        # ACT
+        y_out = mamba_masr_reference_scan(x, dt, mask, A, B, C, D)
+        
+        # ASSERT
+        assert not torch.isnan(y_out).any(), f"NaN detected in output for A={a_val}"
+        assert not torch.isinf(y_out).any(), f"Inf detected in output for A={a_val}"
