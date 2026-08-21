@@ -1,9 +1,9 @@
 import torch
 import math
 import torch.testing as testing
+import torch.nn as nn
 import torch.nn.functional as F
-from src.models.ssm.masr_mamba import mamba_masr_reference_scan, PyTorchMambaMASR
-
+from src.models.ssm.masr_mamba import mamba_masr_reference_scan, PyTorchMambaMASR, MaskAwareMamba
 def test_mamba_masr_analytical_verification():
     """
     Mathematical Invariant Test: Analytical Exactness (The Scales)
@@ -174,3 +174,42 @@ def test_masr_mamba_log_space_dt_bounds():
     
     assert min_dt >= 0.0009, f"dt min value {min_dt} is below the biological threshold 0.0009"
     assert max_dt <= 0.11, f"dt max value {max_dt} exceeds the biological threshold 0.11"
+
+def test_mask_aware_control_group_parity():
+    """
+    Mathematical Invariant Test: The Control Group Parity (The Symmetrical Hands)
+    
+    Verifies that the control group (mask_aware=False) is structurally and dimensionally
+    identical to the experimental group, avoiding hidden inductive biases.
+    """
+    # ARRANGE
+    batch_size = 2
+    seq_len = 10
+    input_dim = 16
+    d_model = 16
+    d_state = 16
+    
+    model_true = MaskAwareMamba(input_dim=input_dim, d_model=d_model, d_state=d_state, mask_aware=True)
+    model_false = MaskAwareMamba(input_dim=input_dim, d_model=d_model, d_state=d_state, mask_aware=False)
+    
+    x = torch.randn(batch_size, seq_len, input_dim)
+    mask = torch.ones(batch_size, seq_len, input_dim)
+    
+    # ACT
+    pred_true, recon_true = model_true(x, mask=mask)
+    pred_false, recon_false = model_false(x)
+    
+    # ASSERT
+    assert len(model_true.input_proj) == len(model_false.input_proj), "Projection depth mismatch!"
+    
+    def check_proj(model):
+        has_ln = any(isinstance(m, nn.LayerNorm) for m in model.input_proj)
+        has_gelu = any(isinstance(m, nn.GELU) for m in model.input_proj)
+        return has_ln and has_gelu
+        
+    assert check_proj(model_true), "mask_aware=True missing LayerNorm or GELU"
+    assert check_proj(model_false), "mask_aware=False missing LayerNorm or GELU"
+    
+    assert pred_true.shape == pred_false.shape, "Prediction shapes diverged"
+    assert recon_true.shape == recon_false.shape, "Reconstruction shapes diverged"
+    assert pred_true.shape == (batch_size, seq_len, input_dim), f"Expected {(batch_size, seq_len, input_dim)} but got {pred_true.shape}"

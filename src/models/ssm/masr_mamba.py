@@ -120,7 +120,8 @@ class MaskAwareMamba(nn.Module):
             self.input_proj = nn.Sequential(
                 nn.Linear(input_dim, d_model),
                 nn.LayerNorm(d_model),
-                nn.GELU()
+                nn.GELU(),
+                nn.Linear(d_model, d_model),
             )
             
         self.mamba = PyTorchMambaMASR(d_model=d_model, d_state=d_state, a_init_type=a_init_type)
