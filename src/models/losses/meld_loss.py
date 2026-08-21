@@ -10,8 +10,6 @@ class MeldLoss(nn.Module):
     Composite loss function for the state-space training loop.
     Incorporates Next-Frame Forecasting, Lipschitz continuous penalty, and Time-Reversal Error.
     Backcronym: multimodal evaluation of latent dynamics.
-    
-
     """
 
     def __init__(

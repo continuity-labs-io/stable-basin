@@ -14,19 +14,44 @@ from src.data.ephys.uhd_lfp_dataset import ContinuousLFPDataset
 
 
 def test_finalspark_dataset(tmp_path):
-    h5_path = tmp_path / "fs437_raw.hdf5"
-    with h5py.File(h5_path, 'w') as f:
-        grp = f.create_group("fs437_wholelife_raw")
-        # Create a structured array matching the FinalSpark format
-        dt = np.dtype([('index', '<i8'), ('values_block_0', '<f8', (1,)), ('time', '<i8'), ('electrode', '<i8')])
-        data = np.zeros(2048, dtype=dt)
-        grp.create_dataset("table", data=data)
-        
-    ds = FinalSparkDataset(data_path=str(h5_path), seq_len=1024)
+    import pandas as pd
+    
+    # 1. Package HDF5
+    package_path = tmp_path / "fs437_package.hdf5"
+    events = pd.DataFrame({"time_of_event": ["2023-01-01T00:00:00Z", "2023-01-01T00:01:00Z"], "electrode": [0, 1]})
+    events.to_hdf(package_path, key="fs437_wholelife_events")
+    door = pd.DataFrame({"time": ["2023-01-01T00:00:00Z"], "fs437_wholelife_incubator_door_opening": [1.0]})
+    door.to_hdf(package_path, key="fs437_wholelife_incubator_door_opening")
+    
+    # 2. Raw HDF5
+    raw_path = tmp_path / "fs437_raw.hdf5"
+    times_0 = pd.date_range("2023-01-01T00:00:00Z", periods=1024, freq="ms")
+    times_1 = pd.date_range("2023-01-01T00:01:00Z", periods=1024, freq="ms")
+    raw_df = pd.DataFrame({
+        "time": times_0.append(times_1),
+        "electrode": [0]*1024 + [1]*1024,
+        "voltage_uv": np.random.randn(2048).astype(np.float32)
+    })
+    raw_df.to_hdf(raw_path, key="fs437_wholelife_raw", format="table", data_columns=True)
+    
+    # 3. Segment Index
+    idx_path = tmp_path / "fs437_segment_index.parquet"
+    seg = pd.DataFrame({
+        "electrode": [0, 1],
+        "t_start": [times_0[0], times_1[0]],
+        "t_end": [times_0[-1], times_1[-1]],
+        "row_start": [0, 1024],
+        "row_end": [1023, 2047]
+    })
+    seg.to_parquet(idx_path)
+    
+    ds = FinalSparkDataset(export_dir=str(tmp_path), seq_len=1024)
     assert len(ds) == 2
     batch = ds[0]
-    assert batch.shape == (1024, 1)
-    assert batch.dtype == torch.float32
+    assert batch["x_raw"].shape == (1024, 1)
+    assert batch["x_raw"].dtype == torch.float32
+    assert batch["env_door"].shape == (1,)
+    assert batch["electrode"].shape == (1,)
 
 def test_pharma_shock_dataset(tmp_path):
     base_path = tmp_path

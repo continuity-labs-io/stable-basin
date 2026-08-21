@@ -21,17 +21,7 @@ sensor-fusion-all: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fus
 
 .PHONY: clinical-diagnostic
 
-
 clinical-diagnostic:
 	python -m src.harness.clinical_diagnostic_runner --config configs/clinical_diagnostic.yaml
 
-.PHONY: preflight docker-build
 
-preflight:
-	@echo "Running Preflight Smoke Tests..."
-	pytest tests/harness/test_smoke.py
-	@echo "Smoke tests passed! The registry is stable."
-
-# docker-build:
-# 	@echo "Building Stable Basin Docker Image..."
-# 	docker build -t stable-basin:latest .
