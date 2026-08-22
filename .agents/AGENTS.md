@@ -41,3 +41,7 @@ ALL new PyTorch neural network modules must use `jaxtyping` (e.g., `Float[Tensor
 
 ### Proper Package Imports
 Since the workspace is set up as a proper Python package and installed via `pip install -e .`, manually hacking `sys.path` to resolve imports is totally unnecessary and adds technical debt. Do not use `sys.path.insert` or `sys.path.append` for local imports.
+
+### Design Docs and Executable Prompts Guardrail
+- **Context Only (Design Docs)**: Design docs (e.g., in `docs/ai/accepted/design/`) provide high-level context and should not be used as direct coding instructions. Do not write code directly from them.
+- **Executable Prompts (`docs/ai/audited/`)**: Actionable prompts for the coding agent to execute will be placed in the `docs/ai/audited/` folder. Only execute coding tasks based on these prompts.

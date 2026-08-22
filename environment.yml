@@ -1,4 +1,4 @@
-name: stable-basin
+name: sb
 channels:
   - conda-forge
 dependencies:
