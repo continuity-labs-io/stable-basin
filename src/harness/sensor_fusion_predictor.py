@@ -3,7 +3,7 @@ import torch.nn as nn
 from src.models.encoders.orthogonal_modality_encoder import OrthogonalModalityEncoder
 from src.models.ssm.baseline_ssm import BaselineSSM
 from src.models.ssm.masr_ssm import MaskAwareSSM
-from src.models.ssm.masr_mamba import MaskAwareMamba
+from src.icebox.models.ssm.masr_mamba import MaskAwareMamba
 from src.models.attention.baseline_transformer import BaselineTransformer
 from src.models.rnn.gru_d import GRUDModel
 from src.models.rnn.ode_rnn import ODERNNModel

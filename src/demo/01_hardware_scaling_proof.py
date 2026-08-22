@@ -17,7 +17,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from src.data.ephys.maxwell_dataset import MaxWellHDMEADataset
-from src.models.ssm.masr_mamba import MaskAwareMamba
+from src.icebox.models.ssm.masr_mamba import MaskAwareMamba
 from src.metrics.metrics import ThermodynamicMetrics
 from src.utils.device import get_optimal_device
 

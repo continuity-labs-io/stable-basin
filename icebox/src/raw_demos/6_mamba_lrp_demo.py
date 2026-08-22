@@ -20,7 +20,7 @@ matplotlib.use("Agg")
 from src.models.ssm.spike_forecaster import SpikeForecaster
 from src.utils.device import get_optimal_device
 
-from src.metrics.mamba_lrp import MambaLRPEpsilon
+from src.icebox.metrics.mamba_lrp import MambaLRPEpsilon
 
 
 def plot_lrp_dashboard(raw_ephys, relevance, event_frame, filename="6_mamba_lrp_dashboard.png"):

@@ -12,7 +12,9 @@ codebase.
 * **The Solution:** The Orthogonal Subspace Router dynamically modulates the $\Delta t$ and $B$ parameters to mathematically freeze hidden channels when sensors drop offline.
 * **Why it Matters:** This establishes you as the engineer who solved the missing-data problem for modern state-space models. It requires no wet-lab data, making it fast to publish in top ML venues.
 
-### MASR Mamba on Toxic Shock test
+### [ICEBOXED] MASR Mamba on Toxic Shock test
+
+*Note: We have pivoted away from deterministic CUDA/Triton development to hierarchical, energy-based state space models.*
 
 **The Problem:** The MASR Mamba architecture instantly trips the Thermodynamic Diagnostic Engine (KSM metric) after the burn-in grace period (frame 501) on simple synthetic sine waves, while linear SSMs remain perfectly stable until the simulated precursor spike at frame 950. Mamba's data-dependent state transition matrices ($B$, $C$, $\Delta t$) naturally inject non-linear chaos into the continuous state trajectory during periodic signals, causing its baseline KSM to hover below the strict `0.95` tripwire.
 

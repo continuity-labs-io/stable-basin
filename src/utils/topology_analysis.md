@@ -21,7 +21,7 @@ Modules that provide core value and are depended upon by many others.
 | `src.data.ephys.pharma_shock_dataset` | 1 |
 | `src.harness.trainer` | 1 |
 | `src.metrics.diagnostic_engine` | 1 |
-| `src.metrics.mamba_lrp` | 1 |
+| `src.icebox.metrics.mamba_lrp` | 1 |
 | `src.metrics.metrics` | 1 |
 | `src.models` | 1 |
 | `src.models.attention` | 1 |
@@ -49,7 +49,7 @@ Modules that orchestrate or combine many different components (more bug-prone).
 | `src.harness.trainer` | 4 |
 | `src.models.encoders.gevi_encoder` | 4 |
 | `src.models.encoders.spatial_compressor` | 4 |
-| `src.models.ssm.masr_mamba` | 4 |
+| `src.icebox.models.ssm.masr_mamba` | 4 |
 | `src.data.sim2real.gevi_dataloader` | 3 |
 | `src.data.sim2real.multimodal_bio_dataloader` | 3 |
 | `src.data.sim2real.neocortical_assembloid_dataloader` | 3 |
@@ -84,4 +84,4 @@ Internal modules that are NEVER imported by anything else in the package. These 
 | `src.models.encoders.topo_encoder` |
 | `src.models.losses` |
 | `src.models.losses.meld_loss` |
-| `src.models.ssm.triton_fused_scan` |
+| `src.icebox.models.ssm.triton_fused_scan` |

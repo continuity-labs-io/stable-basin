@@ -4,7 +4,9 @@
 
 ---
 
-### 1. The CUDA/Triton Quest: "Exact Mamba-LRP Kernel"
+### 1. [ICEBOXED] The CUDA/Triton Quest: "Exact Mamba-LRP Kernel"
+
+*Note: We have pivoted away from deterministic CUDA/Triton development to hierarchical, energy-based state space models.*
 
 * **Target:** Low-level Systems Engineers, CUDA/Triton Hackers, AI Alignment Researchers.
 * **Where it lives in your code:** The docstring at the bottom of `src/demo/raw/6_mamba_lrp_demo.py`.
@@ -18,7 +20,9 @@
 * **The Problem:** The engine's temporal alignment physics are solved, but the dataloaders are currently generating synthetic Poisson distributions and random walks.
 * **The Pitch:** *"The physics engine is dreaming on synthetic data. We need Data Engineers to connect our PyTorch scaffolding to actual public biological cloud datalakes. Replace our synthetic generators with lazy-loaded, streaming API calls to AWS OME-Zarr (Optical Phase Imaging) and NWB (kilohertz voltage traces)."*
 
-### 3. The Mechanistic Interpretability Quest: "Native H-SSM Dictionary Learning"
+### 3. [ICEBOXED] The Mechanistic Interpretability Quest: "Native H-SSM Dictionary Learning"
+
+*Note: We have pivoted away from deterministic CUDA/Triton development to hierarchical, energy-based state space models.*
 
 * **Target:** AI Interpretability Researchers, Sparse Autoencoder (SAE) enthusiasts.
 * **Where it lives in your code:** The highly self-aware docstring at the top of `src/metrics/spd_interpreter.py`.

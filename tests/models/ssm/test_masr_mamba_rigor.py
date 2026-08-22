@@ -4,7 +4,7 @@ import torch.testing as testing
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import gradcheck
-from src.models.ssm.masr_mamba import mamba_masr_reference_scan, PyTorchMambaMASR, MaskAwareMamba
+from src.icebox.models.ssm.masr_mamba import mamba_masr_reference_scan, PyTorchMambaMASR, MaskAwareMamba
 def test_mamba_masr_analytical_verification():
     """
     Mathematical Invariant Test: Analytical Exactness (The Scales)

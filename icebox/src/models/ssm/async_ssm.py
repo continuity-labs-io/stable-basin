@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from src.models.ssm.triton_fused_scan import HAS_TRITON, MaskAwareFusedScan
+from src.icebox.models.ssm.triton_fused_scan import HAS_TRITON, MaskAwareFusedScan
 from .physics import create_a_matrix
 
 def pytorch_fused_scan(

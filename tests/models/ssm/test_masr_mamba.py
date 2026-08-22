@@ -1,6 +1,6 @@
 import torch
 import pytest
-from src.models.ssm.masr_mamba import PyTorchMambaMASR, mamba_masr_reference_scan
+from src.icebox.models.ssm.masr_mamba import PyTorchMambaMASR, mamba_masr_reference_scan
 
 def test_masr_mamba_output_shape():
     """Test that PyTorchMambaMASR returns the expected output shape."""

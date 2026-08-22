@@ -1,3 +1,8 @@
+"""
+[ICEBOXED] - Architectural Pivot
+
+These modules represent an attempt to force classical, deterministic architectures to handle continuous-time biological realities (e.g., Latent Stasis, Triton kernel optimizations, and deterministic LRP). Moving forward, Stable Basin relies on natively probabilistic, energy-based thermodynamic frameworks where missing data is naturally imputed and physics-based hardware minimization renders these hacks obsolete.
+"""
 import torch
 import torch.nn.functional as F
 import logging

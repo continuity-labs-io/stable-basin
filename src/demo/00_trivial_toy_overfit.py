@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import torch.optim as optim
-from src.models.ssm.masr_mamba import MaskAwareMamba
+from src.icebox.models.ssm.masr_mamba import MaskAwareMamba
 
 def main():
     torch.manual_seed(42)
