@@ -1,10 +1,10 @@
 # The Waddington Prior
 
-To rigorously visualize the mathematical definition of aging as the thermodynamic flattening of a biological Prior. I request a pure PyTorch and Matplotlib script in src/physics_engine/waddington_prior.py that simulates Fristonian Non-Equilibrium Steady State (NESS) dynamics via matrix multiplication.
+A rigorous visualization of the mathematical definition of aging as the thermodynamic flattening of a biological Prior. Implementation in src/demo/vessel/waddington_prior.py that simulates Fristonian Non-Equilibrium Steady State (NESS) dynamics via matrix multiplication.
 
-Requirements:
+## Requirements:
 
-The Mathematical Setup:
+### The Mathematical Setup:
 
 Define a 2D state vector x. Set the Mean mu = torch.tensor([0.0, 0.0]).
 
