@@ -47,22 +47,6 @@ Hardware Vaporware Risk: The physical Z1 chips are not yet commercially availabl
 3. Phased Implementation Sequence
 The implementation will follow a strict, four-phase sequence isolated within the new Torx namespace. Descriptive file names will be used in place of incremental numbering.
 
-Phase 1: Torx Workflow & DFG Basics
-
-Objective: Safely introduce the Torx dependency, implement the backend flag, and learn the workflow of Directed Factor Graphs.
-
-Action: Extend src/core/substrate.py and create the src/demo/torx/ namespace.
-
-Deliverable: A sandbox script (src/demo/torx/dfg_basics.py) that initializes a simple Torx circuit and runs it via the Torx simulators.
-
-Phase 2: DFG to Neural Network (Single Level)
-
-Objective: Prove we can embed neural network architectures within a DFG to learn complex transitions.
-
-Action: Build a Torx DFG where the transition between states is governed by a parameterized neural network factor.
-
-Deliverable: A script (src/demo/torx/dfg_neural_net.py) showing that we can train the parameters of this single-level DFG using Stochastic Differentiable Programming (via JAX/Equinox).
-
 Phase 3: Porting Observer Zero (Macro-State Extraction)
 
 Objective: Establish the macroscopic, slow-moving observer using causal graph topology rather than spatial PDE grids.
