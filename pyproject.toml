@@ -7,6 +7,7 @@ dependencies = [
     "jax",
     "jaxlib",
     "equinox",
+    "optax",
 ]
 
 [tool.ruff]

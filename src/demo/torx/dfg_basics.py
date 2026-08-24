@@ -8,6 +8,8 @@ It demonstrates two core Torx primitives:
 """
 
 import os
+os.environ["JAX_PLATFORMS"] = "cpu"
+
 import sys
 import logging
 import argparse

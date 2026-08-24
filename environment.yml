@@ -11,3 +11,5 @@ dependencies:
     - extro-torx
     - jax
     - jaxlib
+    - optax
+    - equinox
