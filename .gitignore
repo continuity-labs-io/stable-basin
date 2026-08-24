@@ -1,6 +1,7 @@
 
 .ai_state.md
 wandb/
+src/hardware/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

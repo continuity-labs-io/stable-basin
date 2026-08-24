@@ -7,3 +7,7 @@ dependencies:
   - matplotlib
   - numpy
   - pyyaml
+  - pip:
+    - extro-torx
+    - jax
+    - jaxlib

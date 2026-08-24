@@ -3,6 +3,7 @@ Provides a unified interface for memory management, synchronization, and
 hardware-specific mathematical operations across Apple Silicon, NVIDIA CUDA, and CPUs.
 """
 
+import os
 import abc
 import logging
 import torch
@@ -97,11 +98,42 @@ class CPUSubstrate(HardwareSubstrate):
         return 0.0
 
 
+class JAXSubstrate(HardwareSubstrate):
+    @property
+    def device(self):
+        return "jax"
+
+    @property
+    def is_mps(self) -> bool:
+        return False
+
+    @property
+    def is_cuda(self) -> bool:
+        return False
+
+    @property
+    def is_cpu(self) -> bool:
+        return False
+
+    def synchronize(self) -> None:
+        pass
+
+    def empty_cache(self) -> None:
+        pass
+
+    def current_memory_mb(self) -> float:
+        return 0.0
+
+
 class SubstrateFactory:
     _instance = None
 
     @classmethod
-    def get_substrate(cls, allow_mps: bool = True) -> HardwareSubstrate:
+    def get_substrate(cls, allow_mps: bool = True, backend: str = "pytorch") -> HardwareSubstrate:
+        if backend == "jax":
+            os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+            return JAXSubstrate()
+
         if cls._instance is not None:
             # If the user specifically disabled MPS for a Mamba-2 backward pass, we must honor it
             if not allow_mps and cls._instance.is_mps:
@@ -118,8 +150,8 @@ class SubstrateFactory:
         return cls._instance
 
 
-def get_optimal_device(verbose: bool = False, allow_mps: bool = True) -> torch.device:
-    device = SubstrateFactory.get_substrate(allow_mps).device
+def get_optimal_device(verbose: bool = False, allow_mps: bool = True, backend: str = "pytorch"):
+    device = SubstrateFactory.get_substrate(allow_mps, backend).device
     if verbose:
         logger.info(f"[*] Provisioned Hardware Substrate: {str(device).upper()}")
     return device

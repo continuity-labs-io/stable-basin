@@ -2,6 +2,12 @@
 name = "stable-basin"
 version = "0.1.0"
 description = "Stable Basin"
+dependencies = [
+    "extro-torx",
+    "jax",
+    "jaxlib",
+    "equinox",
+]
 
 [tool.ruff]
 line-length = 100
