@@ -61,7 +61,7 @@ This is where we wire the physics into self-evidencing predictive coding entitie
 
 ---
 
-### PHASE V: Empirical Validation (The Proving Ground)
+### PHASE IV: Empirical Validation (The Proving Ground)
 Standard ML metrics (MSE, CrossEntropy) cannot measure biological survival. We need robust hooks to measure the *thermodynamic health* of the neural network.
 
 #### 1. The Hook: `thermal_interpretability.py`
