@@ -1,0 +1,43 @@
+name: AI PR Auditor
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened] # Runs when PR is opened or new commits are pushed
+
+permissions:
+  pull-requests: write   # Allows the bot to post comments on the PR
+  contents: read         # Allows the bot to checkout the code
+
+jobs:
+  audit-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Google GenAI SDK
+        run: pip install google-genai
+
+      - name: Extract PR Diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Automatically securely provided by GitHub
+        # Uses GitHub's built-in CLI to grab ONLY the changed lines of code
+        run: gh pr diff ${{ github.event.pull_request.number }} > pr_diff.txt
+
+      - name: Run Gemini Auditor
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python tools/ci/pr_auditor.py pr_diff.txt review_output.md
+
+      - name: Post Review Comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Posts the markdown file directly to the PR discussion timeline
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body-file review_output.md
+
