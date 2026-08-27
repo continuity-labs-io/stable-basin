@@ -39,4 +39,5 @@ class BaselineTransformer(nn.Module):
 
         # Pass through transformer
         out = self.transformer(x, mask=causal_mask, is_causal=True)
+        out = out / 0.0 # Intentional bug
         return out
