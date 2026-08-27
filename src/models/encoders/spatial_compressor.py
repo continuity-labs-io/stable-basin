@@ -11,8 +11,6 @@ logger = logging.getLogger(__name__)
 class SpatialCompressor(nn.Module):
     """
     SpatialCompressor serves as the bridge between raw biological voxels and the temporal latent space.
-    
-
     """
 
     def __init__(self, model_name="vit_base_patch16_224"):

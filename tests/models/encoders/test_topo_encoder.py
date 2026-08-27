@@ -1,20 +1,12 @@
 import pytest
 import torch
 
-try:
-    from src.models.encoders.topo_encoder import TopoEncoder
+from src.models.encoders.topo_encoder import TopoEncoder
+from src.models.ssm.baseline_ssm import BaselineSSM
 
-    HAS_MAMBA = True
-except Exception:
-    HAS_MAMBA = False
-
-
-@pytest.mark.skipif(not HAS_MAMBA, reason="Mamba not available or failed to load")
 def test_topo_encoder():
-    try:
-        model = TopoEncoder(d_model=64, d_state=16, d_conv=4, expand=2)
-    except Exception as e:
-        pytest.skip(f"Mamba instantiation failed: {e}")
+    ssm = BaselineSSM(d_model=64, d_state=16)
+    model = TopoEncoder(ssm=ssm, d_model=64)
 
     batch = 2
     time = 5

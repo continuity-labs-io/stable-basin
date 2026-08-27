@@ -24,6 +24,7 @@ import numpy as np
 from src.utils.device import get_optimal_device
 from src.data.ephys.uhd_lfp_dataset import ContinuousLFPDataset
 from src.models.encoders.topo_encoder import TopoEncoder
+from src.models.ssm.baseline_ssm import BaselineSSM
 from src.models.losses.meld_loss import TopoContrastiveLoss
 from src.metrics.metrics import ThermodynamicMetrics
 
@@ -41,7 +42,8 @@ def main():
     dataset = ContinuousLFPDataset(time_steps=100, grid_size=64)
     dataset_iter = iter(dataset)
 
-    decoder = TopoEncoder(d_model=768, d_state=16, d_conv=4, expand=2).to(device)
+    ssm = BaselineSSM(d_model=768, d_state=16).to(device)
+    decoder = TopoEncoder(ssm=ssm, d_model=768).to(device)
     criterion = TopoContrastiveLoss().to(device)
     optimizer = optim.AdamW(decoder.parameters(), lr=1e-3)
 

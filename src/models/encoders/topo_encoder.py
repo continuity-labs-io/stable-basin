@@ -1,19 +1,16 @@
 import torch
 import torch.nn as nn
-from mamba_ssm import Mamba
 from src.config import settings
 
 
 class TopoEncoder(nn.Module):
     """
-    Ingests continuous E-field flow and uses Mamba-2 to extract the
+    Ingests continuous E-field flow and uses SSM to extract the
     macroscopic geometric shape (Dynamic Attractor Basin) into a fixed latent vector.
-    
-
     """
 
     def __init__(
-        self, d_model=settings.MAMBA_D_MODEL, d_state=settings.MAMBA_D_STATE, d_conv=4, expand=2
+        self, ssm: nn.Module, d_model=settings.MAMBA_D_MODEL
     ):
         super().__init__()
 
@@ -28,13 +25,8 @@ class TopoEncoder(nn.Module):
             nn.Flatten(),  # -> [d_model]
         )
 
-        # Mamba block to process sequence over time
-        self.mamba = Mamba(
-            d_model=d_model,
-            d_state=d_state,
-            d_conv=d_conv,
-            expand=expand,
-        )
+        # SSM block to process sequence over time
+        self.ssm = ssm
 
         # MLP projection head with LayerNorm
         self.norm = nn.LayerNorm(d_model)
@@ -63,8 +55,8 @@ class TopoEncoder(nn.Module):
         # Unfold back to sequence format
         sequence = spatial_features.view(B, T, -1)  # Shape: [B, Time, d_model]
 
-        # Process through Mamba to capture continuous thermodynamic loops
-        hidden_states = self.mamba(sequence)  # Shape: [B, Time, d_model]
+        # Process through SSM to capture continuous thermodynamic loops
+        hidden_states = self.ssm(sequence)  # Shape: [B, Time, d_model]
 
         # Extract the hidden state of the final time step
         final_state = hidden_states[:, -1, :]  # Shape: [B, d_model]
