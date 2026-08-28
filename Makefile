@@ -1,28 +1,28 @@
 MODELS ?= zero_padded_ssm forward_fill_ssm mask_concat_ssm causal_transformer masr_ssm masr_mamba gru_d ode_rnn
 
-.PHONY: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fusion-loss-ablation sensor-fusion-imputation sensor-fusion-all
+.PHONY: baseline extrapolation loss-ablation imputation all-experiments
 
-sensor-fusion-loss-ablation:
+loss-ablation:
 	python -m src.harness.sensor_fusion_sweep \
-		--config configs/sensor_fusion.yaml \
+		--config configs/baseline_experiments.yaml \
 		--task loss_ablation
 
-sensor-fusion-baseline:
+baseline:
 	python -m src.harness.sensor_fusion_sweep \
-		--config configs/sensor_fusion.yaml \
+		--config configs/baseline_experiments.yaml \
 		--task baseline
 
-sensor-fusion-extrapolation:
+extrapolation:
 	python -m src.harness.sensor_fusion_sweep \
-		--config configs/sensor_fusion.yaml \
+		--config configs/baseline_experiments.yaml \
 		--task extrapolation
 
-sensor-fusion-density-sweep:
+density-sweep:
 	python -m src.harness.sensor_fusion_sweep \
-		--config configs/sensor_fusion.yaml \
+		--config configs/baseline_experiments.yaml \
 		--task density_sweep
 
-sensor-fusion-all: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fusion-density-sweep sensor-fusion-loss-ablation
+all-experiments: baseline extrapolation density-sweep loss-ablation
 
 .PHONY: clinical-diagnostic
 

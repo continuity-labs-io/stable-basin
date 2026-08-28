@@ -7,7 +7,7 @@
 ### The RL / Game Dev Quest: "The Rejuvenation Gymnasium"
 
 * **Target:** Reinforcement Learning (RL) Engineers, AI Agent Builders.
-* **Where it lives in your code:** The intersection of `rejuvenation_controller.py` (which uses a hardcoded threshold `if ksm_score < 0.85`) and your terminal game `11_ratchet_simulator.py`.
+* **Where it lives in the code:** The intersection of `rejuvenation_controller.py` (which uses a hardcoded threshold `if ksm_score < 0.85`) and the terminal game `11_ratchet_simulator.py`.
 * **The Problem:** Aging and therapy dosing is a sequential decision-making problem, but currently, it is driven by basic heuristics and text prompts.
 * **The Pitch:** *"Help us turn biological age reversal into an AI benchmark. We need an RL engineer to wrap our continuous physics engine and Ratchet Simulator into a standard Farama `Gymnasium` (OpenAI Gym) environment. Define the states (KSM/CSD) and actions (IV Flow/Therapy Power) so the global AI community can train PPO or SAC agents to autonomously discover optimal longevity protocols."*
 

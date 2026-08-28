@@ -19,8 +19,8 @@ class PharmacologicalShockDataset(Dataset):
     dropped spikes, this dataset proves the architecture can detect the exact millisecond the pharmacological 
     agent collapses the network's Kinetic Stability Metric (KSM) from 1.0 down to 0.0.
     
-    Note: "Drug_2953" represents Diazepam, a potent benzodiazepine / GABA-A receptor positive 
-    allosteric modulator that globally suppresses neural network excitability ("turns the brain off").
+    Note: Here the shock is due to Diazepam, a potent benzodiazepine / GABA-A receptor positive 
+    allosteric modulator that globally suppresses neural network excitability.
     """
     def __init__(self, condition: str = "control", base_path: str = None, seq_len: int = 1024):
         if base_path is None:

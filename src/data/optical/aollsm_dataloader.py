@@ -13,7 +13,7 @@ class MeldTemporalDataset(Dataset):
     def __init__(self, data_dir, sequence_length=10, transform=None):
         """
         Loads sequential TIFF stacks into a 4D spatiotemporal tensor (T, Z, Y, X).
-        For multi-channel (C), you would initialize two datasets and stack them.
+        For multi-channel (C), initialize two datasets and stack them.
         """
         self.data_dir = data_dir
         self.sequence_length = sequence_length

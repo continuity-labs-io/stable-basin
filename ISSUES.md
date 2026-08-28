@@ -1,9 +1,6 @@
-# Stable Basin Benchmark Issues & Technical Debt
+# Stable Basin Issues
 
-This document tracks known issues, technical debt, and open TODOs within the
-codebase.
-
-## Publications
+## Publications to Develop
 
 ### H-SSM - The Biological Physics Engine
 **"Hierarchical State-Space Models for Macroscopic Biological Entrainment"**
@@ -50,9 +47,11 @@ actual training and multi-sensor fusion:
   `HierarchicalSSM`'s input block tensor, effectively implementing the
   multi-rate multi-sensor polling architecture described above.
 
-## `MeldLoss` Ablation Tests
+## TODOs
+
+### `MeldLoss` Ablation Tests
 - **Issue**: The new MeldLoss functionality is untested and un-ablated on a
   large scale.
-- **Task**: Run the loss ablation tests via `make sensor-fusion-loss-ablation`
+- **Task**: Run the loss ablation tests via `make loss-ablation`
   to get a sense of what loss function to use for biological homeostasis
   modeling.

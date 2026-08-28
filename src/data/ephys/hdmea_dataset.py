@@ -13,7 +13,7 @@ class HDMEADataset(Dataset):
     
     The MVM Proof (Hardware Scale): 
     The ultimate engineering benchmark. By piping this massive spatial grid into the state-space engine, 
-    you generate the visual proof that the architecture maintains a linear, O(1) VRAM footprint without 
+    generate the visual proof that the architecture maintains a linear, O(1) VRAM footprint without 
     triggering Out-Of-Memory crashes, defeating standard Transformer models side-by-side.
     """
     def __init__(self, data_path: str = "data/ephys/hdmea_neuropulse.brw", seq_len: int = 1024):
