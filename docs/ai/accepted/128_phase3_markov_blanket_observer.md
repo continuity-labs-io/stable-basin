@@ -1,8 +1,10 @@
-ROLE: You are an elite Scientific Machine Learning Engineer specializing in JAX, Equinox, and Torx.
+## ROLE
+You are an elite Scientific Machine Learning Engineer specializing in JAX, Equinox, and Torx.
 
-TASK: We are building `src/echo/architecture/observer.py`. Implement a robust, production-ready Equinox module called `MarkovBlanketObserver` that fuses physical boundaries, energy-based learning, and stochastic unrolling into a single, localized self-evidencing entity.
+## TASK
+We are building `src/echo/architecture/observer.py`. Implement a robust, production-ready Equinox module called `MarkovBlanketObserver` that fuses physical boundaries, energy-based learning, and stochastic unrolling into a single, localized self-evidencing entity.
 
-MATHEMATICAL CONSTRAINTS:
+## MATHEMATICAL CONSTRAINTS
 1. The Observer must instantiate and own the entire physical stack for a single entity: `MarkovHull`, `PrecisionWeightedEBM`, `SolenoidalFlow`, `DissipativeFriction`, `Thermostat`, and `TorxThermalizer`.
 2. The core mechanism is applying the Hull's topological mask to the physics to enforce conditional independence. You must create a custom internal Torx factor called `MaskedThermoFlowFactor` (inheriting from `torx.factor.AbstractReferenceFactor`) inside this file to override the standard flow.
 3. Specifically, inside this custom factor's `.sample()` method: 
@@ -16,7 +18,7 @@ MATHEMATICAL CONSTRAINTS:
    - The diffusion term becomes: `jnp.sqrt(2 * temperature * dt) * (S @ dW)`.
    - Execute the Euler-Maruyama step with these masked components.
 
-TECHNICAL REQUIREMENTS:
+## TECHNICAL REQUIREMENTS
 - Do NOT use PyTorch. Inherit from `equinox.Module`.
 - The `__init__` method must accept:
   - `d_internal`, `d_sensory`, `d_active`, `d_external` (ints).
@@ -35,7 +37,7 @@ TECHNICAL REQUIREMENTS:
 - The `__call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float)` method must simply delegate to `self.thermalizer(key, x_init, dt)` and return the unrolled trajectory.
 - Provide a helper method `extract_internal_state(self, x: jax.Array) -> dict` that delegates to `self.hull.partition(x)`.
 
-TESTING:
+## TESTING
 Create `tests/echo/architecture/test_observer.py`. Write a rigorous `pytest` suite that:
 1. Instantiates a `MarkovBlanketObserver` with `d_internal=2, d_sensory=1, d_active=1, d_external=4` (total `d_state=8`), `n_steps=5`.
 2. Execution Test: Passes a random initial state `x_init` and `dt=0.01`. Asserts the resulting trajectory has the expected shape and contains no NaNs.

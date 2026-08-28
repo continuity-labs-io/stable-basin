@@ -8,10 +8,13 @@ class ContinuousLFPDataset(IterableDataset):
     of a 2D UHD-CMOS microelectrode array.
     """
 
-    def __init__(self, time_steps: int = 500, grid_size: int = 64):
+    def __init__(self, time_steps: int = 500, grid_size: int = 64, encoder=None, return_hidden: bool = True, device=None):
         super().__init__()
         self.time_steps = time_steps
         self.grid_size = grid_size
+        self.encoder = encoder
+        self.return_hidden = return_hidden
+        self.device = device if device else torch.device("cpu")
 
     def __iter__(self):
         while True:
@@ -62,6 +65,18 @@ class ContinuousLFPDataset(IterableDataset):
             # Stack gradients to form a 2-channel continuous tensor
             # Shape: [time_steps, 2, grid_size, grid_size]
             E = torch.cat([E_x, E_y], dim=1)
+
+            # Apply spatial encoder on-the-fly to extract geometric priors
+            if self.encoder is not None:
+                # Expand to batch dimension for encoder: [1, Time, 2, grid, grid]
+                E_batched = E.unsqueeze(0).to(self.device)
+                with torch.no_grad():
+                    if self.return_hidden:
+                        _, E_encoded = self.encoder(E_batched, return_hidden=True)
+                    else:
+                        E_encoded = self.encoder(E_batched, return_hidden=False)
+                # Remove batch dimension
+                E = E_encoded.squeeze(0).cpu()
 
             # Generate mock visual stimulus embedding (768-D vector)
             visual_stimulus_embedding = torch.randn(768)

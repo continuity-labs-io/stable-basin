@@ -23,20 +23,12 @@ The `HierarchicalSSM` is currently a frozen mathematical toy simulator demonstra
 2.  **Discretize for Parallel Scans**: The current explicit Euler integration (`for t in range(steps):`) is unacceptably slow for GPUs. Implement a discretization step (e.g., Zero-Order Hold or Bilinear Transform) so the continuous ODE can be unrolled via an associative parallel scan (like the Mamba architecture).
 3.  **Implement Multi-Rate Multi-Sensor Polling**: Upgrade the hardcoded single scalar input `u` to accept a multimodal block tensor. Modulate `dt` or assign different blocks of the `A` matrix to different polling rates (e.g., Layer 1 catching 20kHz electrical spikes, Layer 2 catching 1Hz RNA reads) to prove out native multi-frequency sensor fusion.
 
-## Hook Up `MultimodalBioDataset` to `HierarchicalSSM`
+### Hook Up `MultimodalBioDataset` to `HierarchicalSSM`
 
 - **Issue**: Now that we have a functional multimodal dataloader (`MultimodalBioDataset`) yielding phase, voltage, and RNA tensors, we need to test the `HierarchicalSSM` on it.
 - **Task**: Connect the `MultimodalBioDataset` outputs to the `HierarchicalSSM`'s input block tensor, effectively implementing the multi-rate multi-sensor polling architecture described above.
 
-## Integrate Isolated Modules into Main Training Loop
-
-Several core modules were developed in isolation and currently contain technical debt regarding their integration into the main training harness (`src.harness.clinical_diagnostic_runner`). 
-
-### 2. `TopoEncoder` Integration
-- **Issue**: `src/models/encoders/topo_encoder.py` is currently isolated.
-- **Task**: Hook this up to process continuous electrophysiological standing waves (e.g., from `SpikeProphecyDataset` or `BioelectricLoader`) to provide spatial priors to the main Thermodynamic State Space Model.
-
-### 3. `MeldLoss` Integration
+## `MeldLoss` Integration
 - **Issue**: `src/models/losses/meld_loss.py` is currently isolated.
 - **Task**: Apply this composite loss function in the main training loop to enforce thermodynamic constraints and time-reversal penalties on the model's predictions.
 

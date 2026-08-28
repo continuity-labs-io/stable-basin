@@ -1,6 +1,8 @@
-ROLE: You are an elite Scientific Machine Learning Engineer specializing in JAX and Equinox.
+## ROLE
+You are an elite Scientific Machine Learning Engineer specializing in JAX and Equinox.
 
-TASK: We are building `src/echo/clinic/interventions.py`. Implement the mathematical infrastructure required to execute the Active Inference clinical workflow: Annealing Counterfactual Twins and calculating Hierarchical Discordance.
+## TASK
+We are building `src/echo/clinic/interventions.py`. Implement the mathematical infrastructure required to execute the Active Inference clinical workflow: Annealing Counterfactual Twins and calculating Hierarchical Discordance.
 
 MATHEMATICAL CONSTRAINTS & REQUIREMENTS:
 - Do NOT use PyTorch. The code must be pure JAX and Equinox.
@@ -27,7 +29,7 @@ MATHEMATICAL CONSTRAINTS & REQUIREMENTS:
    - The "Discordance Score" is the ratio: `macro_norm / (micro_norm + 1e-8)`. A healthy system passes the prediction error up (ratio > 0.1). A system with Silent Drift absorbs it blindly at the micro level (ratio near 0.0).
    - Return a dictionary: `{"micro_surprisal": micro_norm, "macro_surprisal": macro_norm, "discordance": discordance_score}`.
 
-TESTING:
+## TESTING
 Create `tests/echo/clinic/test_interventions.py`. Write a `pytest` suite that:
 1. Mocks a degraded `PredictiveCodingGraph`.
 2. Tests `DigitalTwinAnnealer`: Asserts that the returned Twin B has larger weight norms for friction and precision than Twin A, 

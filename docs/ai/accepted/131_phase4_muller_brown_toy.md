@@ -1,8 +1,10 @@
-ROLE: You are an elite Scientific Machine Learning Engineer specializing in Computational Physics and JAX/PyTorch Data Engineering.
+## ROLE
+You are an elite Scientific Machine Learning Engineer specializing in Computational Physics and JAX/PyTorch Data Engineering.
 
-TASK: We are building `src/echo/data/toy/muller_brown.py`. Implement a robust JAX physics simulator for the Müller-Brown potential and wrap it in a PyTorch-compatible `Dataset` called `MullerBrownDataset`. This will generate continuous-time trajectories of a particle moving through the potential field using overdamped Langevin dynamics.
+## TASK
+We are building `src/echo/data/toy/muller_brown.py`. Implement a robust JAX physics simulator for the Müller-Brown potential and wrap it in a PyTorch-compatible `Dataset` called `MullerBrownDataset`. This will generate continuous-time trajectories of a particle moving through the potential field using overdamped Langevin dynamics.
 
-MATHEMATICAL CONSTRAINTS:
+## MATHEMATICAL CONSTRAINTS
 1. The Müller-Brown potential V(x, y) is defined as a sum of four exponentials:
    V(x, y) = sum_{i=1}^4 A_i * exp( a_i*(x - x0_i)^2 + b_i*(x - x0_i)*(y - y0_i) + c_i*(y - y0_i)^2 )
    Use the exact standard coefficients:
@@ -17,7 +19,7 @@ MATHEMATICAL CONSTRAINTS:
    dx = -∇V(x, y) * dt + sqrt(2 * kT * dt) * dW
    (where ∇V is the analytical gradient of the potential, kT is the thermal energy/temperature, dt is the time step, and dW is standard Gaussian noise).
 
-TECHNICAL REQUIREMENTS:
+## TECHNICAL REQUIREMENTS
 - The physics simulation MUST be written in pure JAX for speed (`jax.numpy`, `jax.grad`, `jax.lax.scan`).
 - Define a pure JAX function `muller_brown_potential(state: jax.Array) -> jax.Array` that takes a shape `(2,)` array and returns a scalar.
 - Define a JIT-compiled JAX function `generate_trajectory(key, state_init, n_steps, dt, kT)` that unrolls the Langevin dynamics using `jax.lax.scan` and `jax.grad(muller_brown_potential)`. To prevent explosions from steep gradients, apply gradient clipping (`jnp.clip(grad, -100.0, 100.0)`).
@@ -30,7 +32,7 @@ TECHNICAL REQUIREMENTS:
   - `"mask"`: Shape `(seq_len, 2)`. A tensor of ones (1.0).
   - `"y_true"`: Shape `(seq_len, 2)`. Identical to `x_raw` (target for forecasting).
 
-TESTING:
+## TESTING
 Create `tests/echo/data/test_muller_brown.py`. Write a rigorous `pytest` suite that:
 1. Shape & Interoperability Test: Instantiates `MullerBrownDataset` with `size=10, seq_len=100`. Asserts `__len__` is 10. Asserts `dataset[0]["x_raw"]` is a PyTorch tensor of shape `(100, 2)` containing no NaNs.
 2. The Minimum Test: Evaluates `jax.grad(muller_brown_potential)` at `[-0.558, 1.441]` (the approximate global minimum). Asserts that the gradient magnitude is near zero (`< 2.0`), proving the math correctly identifies the basin floor.

@@ -1,8 +1,10 @@
-ROLE: You are an elite Scientific Machine Learning Engineer specializing in JAX, Equinox, and Torx.
+## ROLE
+You are an elite Scientific Machine Learning Engineer specializing in JAX, Equinox, and Torx.
 
-TASK: We are building `src/echo/architecture/hierarchy.py`. Implement a robust, production-ready Equinox module called `PredictiveCodingGraph` that couples two `MarkovBlanketObserver`s (a Micro level and a Macro level) into a nested hierarchical predictive coding network.
+## TASK
+We are building `src/echo/architecture/hierarchy.py`. Implement a robust, production-ready Equinox module called `PredictiveCodingGraph` that couples two `MarkovBlanketObserver`s (a Micro level and a Macro level) into a nested hierarchical predictive coding network.
 
-MATHEMATICAL CONSTRAINTS:
+## MATHEMATICAL CONSTRAINTS
 1. We bypass manual message passing by defining a Joint Free Energy (F) for the coupled system.
 2. The Micro state has its base energy: `E_micro, _ = micro_ebm(x_micro)`.
 3. The Macro state has its base energy and precision: `E_macro, Pi_macro = macro_ebm(x_macro)`.
@@ -11,7 +13,7 @@ MATHEMATICAL CONSTRAINTS:
    `F(x_micro, x_macro) = E_micro + E_macro + 0.5 * (x_micro - belief)^T @ Pi_macro @ (x_micro - belief)`
 6. By defining this joint scalar function and using `jax.grad(..., argnums=(0, 1))`, XLA automatically generates both the Top-Down Precision Force (steepening the micro basin) and the Bottom-Up Surprisal Force (pushing prediction errors up to the macro state).
 
-TECHNICAL REQUIREMENTS:
+## TECHNICAL REQUIREMENTS
 - Do NOT use PyTorch. Inherit from `equinox.Module`.
 - First, implement a custom Torx factor called `HierarchicalThermoFlowFactor` (inheriting from `torx.factor.AbstractReferenceFactor`).
   - `__init__` must accept the unrolled components (Hulls, EBMs, SolenoidalFlows, DissipativeFrictions, Thermostats) for both Micro and Macro, plus the `W_down` linear layer, and `d_micro`, `d_macro` (ints).
@@ -32,7 +34,7 @@ TECHNICAL REQUIREMENTS:
   - Extract the components from the two observers, instantiate `HierarchicalThermoFlowFactor`, and wrap it in a `TorxThermalizer` (where `d_state = d_micro + d_macro`).
   - The `__call__(self, key, x_micro_init, x_macro_init, dt)` method concatenates the initial states, passes them to the thermalizer, and returns the unrolled joint trajectory.
 
-TESTING:
+## TESTING
 Create `tests/echo/architecture/test_hierarchy.py`. Write a rigorous `pytest` suite that:
 1. Instantiates a Micro `MarkovBlanketObserver` (d_state=4) and a Macro `MarkovBlanketObserver` (d_state=6).
 2. Instantiates the `PredictiveCodingGraph` with `n_steps=3`.

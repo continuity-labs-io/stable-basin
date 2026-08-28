@@ -1,15 +1,17 @@
-ROLE: You are an elite Scientific Machine Learning Engineer specializing in JAX, Equinox, and the Torx probabilistic programming framework.
+## ROLE
+You are an elite Scientific Machine Learning Engineer specializing in JAX, Equinox, and the Torx probabilistic programming framework.
 
-TASK: We are building `src/echo/primitives/thermalizer.py`. Implement a robust, production-ready class called `ThermoFlowFactor` that inherits from `torx.factor.AbstractReferenceFactor`. This factor represents a single, stochastic continuous-time update step of our biological simulation.
+## TASK
+We are building `src/echo/primitives/thermalizer.py`. Implement a robust, production-ready class called `ThermoFlowFactor` that inherits from `torx.factor.AbstractReferenceFactor`. This factor represents a single, stochastic continuous-time update step of our biological simulation.
 
-MATHEMATICAL CONSTRAINTS:
+## MATHEMATICAL CONSTRAINTS
 In its `.sample()` method, this factor must evaluate the following Stochastic Differential Equation (SDE) using the Euler-Maruyama method:
 1. Compute the local slope of the energy landscape: `grad_E = jax.grad(E_theta)(x)`
 2. Compute the deterministic drift: `drift = -(Q - Γ) @ grad_E`
 3. Execute the physical integration (Thermostat): `x_next = x + (drift * dt) + diffusion`
 *(Note: We will utilize the `Thermostat` module built previously to handle the exact drift and diffusion computation).*
 
-TECHNICAL REQUIREMENTS:
+## TECHNICAL REQUIREMENTS
 - Do NOT use PyTorch. The class must inherit from `torx.factor.AbstractReferenceFactor`.
 - The `__init__` method must accept and store instances of the components built previously: 
   - `ebm`: An instance of `PrecisionWeightedEBM`.
@@ -29,7 +31,7 @@ TECHNICAL REQUIREMENTS:
   - Return `(x_next, None)` if `return_aux` is True, otherwise return `x_next`.
 - The `init_params(self, key)` method can just return `None` (or an empty dict), as our state is tracked entirely by the Equinox modules stored on `self`.
 
-TESTING:
+## TESTING
 Create `tests/echo/primitives/test_thermalizer.py`. Write a rigorous `pytest` suite that:
 1. Instantiates mock or real instances of `SolenoidalFlow`, `DissipativeFriction`, `Thermostat`, and `PrecisionWeightedEBM` (with `d_state=4`).
 2. Instantiates the `ThermoFlowFactor`.

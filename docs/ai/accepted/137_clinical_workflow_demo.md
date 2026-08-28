@@ -1,12 +1,14 @@
-ROLE: You are an elite Scientific Machine Learning Engineer specializing in JAX and computational biology.
+## ROLE
+You are an elite Scientific Machine Learning Engineer specializing in JAX and computational biology.
 
-TASK: We are building `src/echo/benchmarks/clinical_workflow_demo.py`. This is a standalone execution script that demonstrates the 5-Step Active Inference clinical workflow on a simulated aging patient ("Bob").
+## TASK
+We are building `src/echo/benchmarks/clinical_workflow_demo.py`. This is a standalone execution script that demonstrates the 5-Step Active Inference clinical workflow on a simulated aging patient ("Bob").
 
-TECHNICAL REQUIREMENTS:
+## TECHNICAL REQUIREMENTS
 - The script must be executable from the command line (`if __name__ == "__main__":`).
 - Import the components from `src.echo.clinic.interventions`, `src.echo.architecture`, and `src.echo.metrics.thermal_interpretability`.
 
-EXECUTE THE 5-STEP WORKFLOW:
+## EXECUTE THE 5-STEP WORKFLOW
 1. **Listen (Initialize Degraded Bob):** 
    - Instantiate a `PredictiveCodingGraph` representing Bob's currently degraded digital twin (Twin A). 
    Initialize it with artificially low weights for Friction and Precision to simulate aging.
@@ -34,14 +36,14 @@ EXECUTE THE 5-STEP WORKFLOW:
    - The required restorative actuation vector is exactly the difference: `Q_actuation = drift_B - drift_A`.
    - Print the L2 norm of `Q_actuation`. Log: "This is the exact exogenous energy the Bio-Blade hardware must inject to force the physical tissue back into its youthful limit cycle."
 
-OUTPUT:
+## OUTPUT
 - The script should print a highly readable, dramatic terminal readout clearly separating the 5 steps. 
 - Use the `logging` library to create visually distinct section headers (e.g., `=== Step 3: The Bio-Blade Ping ===`).
 - Generate a simple Matplotlib dashboard `output/echo/clinical_workflow.png` showing 2 subplots:
   a) A bar chart comparing Micro vs Macro Surprisal from the Ping phase.
   b) A bar chart comparing the Hessian Trace (Steepness) of Degraded Bob vs. Ideal Bob.
 
-TESTING:
+## TESTING
 Create `tests/echo/benchmarks/test_clinical_workflow_demo.py` that simply imports the script's `main()` function, mocks `matplotlib.pyplot.savefig` to prevent file I/O, and asserts that the `main()` function executes from start to finish without raising any JAX errors.
 
 Write production-grade, clean Python. Do not hallucinate external database dependencies; rely purely on the physical matrices of the model.

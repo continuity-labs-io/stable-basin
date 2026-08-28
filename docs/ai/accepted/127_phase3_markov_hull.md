@@ -1,8 +1,10 @@
-ROLE: You are an elite Scientific Machine Learning Engineer specializing in JAX and Equinox.
+## ROLE
+You are an elite Scientific Machine Learning Engineer specializing in JAX and Equinox.
 
-TASK: We are building `src/echo/architecture/markov_hull.py`. Implement a robust, production-ready Equinox module called `MarkovHull` that mathematically enforces a Markov Blanket partition on a biological state tensor.
+## TASK
+We are building `src/echo/architecture/markov_hull.py`. Implement a robust, production-ready Equinox module called `MarkovHull` that mathematically enforces a Markov Blanket partition on a biological state tensor.
 
-MATHEMATICAL CONSTRAINTS:
+## MATHEMATICAL CONSTRAINTS
 1. The Hull receives a flat, 1D JAX array `x` representing the total universe.
 2. It partitions `x` into four distinct sub-vectors sequentially:
    - `internal` (μ): The core biological state.
@@ -12,7 +14,7 @@ MATHEMATICAL CONSTRAINTS:
 3. The fundamental law of the Hull: The `internal` state MUST NOT interact directly with the `external` state. 
 4. To enforce this, the Hull must generate a `(d_state, d_state)` topological adjacency mask. This binary matrix should be 1.0 everywhere, EXCEPT for the block connecting `internal` to `external`, and the block connecting `external` to `internal`, which must be exactly 0.0. 
 
-TECHNICAL REQUIREMENTS:
+## TECHNICAL REQUIREMENTS
 - Do NOT use PyTorch. Inherit from `equinox.Module`.
 - The `__init__` method must accept four integers: `d_internal`, `d_sensory`, `d_active`, and `d_external`. Store these using `equinox.field(static=True)`.
 - Compute and store `d_state` as the sum of all components as a static field.
@@ -24,7 +26,7 @@ TECHNICAL REQUIREMENTS:
   - All other elements (including the blanket interactions and self-interactions) MUST be 1.0.
 - Add robust type hinting using `jaxtyping` and `jax.Array`.
 
-TESTING:
+## TESTING
 Create `tests/echo/architecture/test_markov_hull.py`. Write a rigorous `pytest` suite that:
 1. Instantiates a `MarkovHull` with `d_internal=2`, `d_sensory=2`, `d_active=2`, `d_external=4` (total 10 dimensions).
 2. Reversibility Test: Generates a random 10D vector `x`. Asserts that `reconstruct(partition(x))` perfectly matches the original array `x` (`jnp.allclose`).

@@ -1,13 +1,15 @@
-ROLE: You are an elite Scientific Machine Learning Engineer specializing in JAX, Equinox, and the Torx probabilistic programming framework.
+## ROLE
+You are an elite Scientific Machine Learning Engineer specializing in JAX, Equinox, and the Torx probabilistic programming framework.
 
-TASK: We are building `src/echo/primitives/thermalizer.py` (append to the existing file). Implement a robust, production-ready class called `TorxThermalizer` that acts as the continuous-time compiler for our biological simulation.
+## TASK
+We are building `src/echo/primitives/thermalizer.py` (append to the existing file). Implement a robust, production-ready class called `TorxThermalizer` that acts as the continuous-time compiler for our biological simulation.
 
-MATHEMATICAL CONSTRAINTS:
+## MATHEMATICAL CONSTRAINTS
 1. The `TorxThermalizer` must take our single-step `ThermoFlowFactor` and unroll it sequentially over `n_steps` to simulate continuous time.
 2. Because this simulates an autonomous biological entity, the state `x` at time `t` must feed directly into the state `x` at time `t+1`.
 3. The time step `dt` must remain constant across all steps.
 
-TECHNICAL REQUIREMENTS:
+## TECHNICAL REQUIREMENTS
 - Do NOT use PyTorch. Inherit from `equinox.Module`.
 - The `__init__` method must accept:
   - `flow_factor`: An instantiated `ThermoFlowFactor`.
@@ -31,7 +33,7 @@ TECHNICAL REQUIREMENTS:
 - Decorate `__call__` with `@equinox.filter_jit` to ensure the entire unrolled simulation is compiled into a single XLA artifact.
 - Add robust type hinting using `jaxtyping` and `jax.Array`. Default to `jnp.float32`.
 
-TESTING:
+## TESTING
 Append to `tests/echo/primitives/test_thermalizer.py`. Write a rigorous `pytest` suite that:
 1. Instantiates the full stack: `SolenoidalFlow`, `DissipativeFriction`, `Thermostat`, `PrecisionWeightedEBM`, and `ThermoFlowFactor` (with `d_state=4`).
 2. Instantiates `TorxThermalizer` wrapping the factor with `n_steps=10`.
