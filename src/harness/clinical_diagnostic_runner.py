@@ -76,11 +76,31 @@ def evaluate_model(trial_config):
     use_synthetic = config.get("use_synthetic", False)
     
     if not use_synthetic:
-        logger.info(f"Loading PharmacologicalShockDataset (seq_len={seq_len}) on worker")
-        dataset = PharmacologicalShockDataset(condition=condition, seq_len=seq_len)
-        telemetry = dataset[0].unsqueeze(0).to(device)  # shape: [1, seq_len, 1024]
-        mask = torch.ones(1, seq_len, 1, device=device)
-        logger.info(f"Successfully loaded Pharmacological Shock Data! Telemetry shape: {telemetry.shape}")
+        dataset_type = config["data"].get("type", "pharmacological")
+        if dataset_type == "aollsm":
+            from src.data.optical.aollsm_dataloader import AOLLSMDataset
+            from src.models.encoders.spatial_compressor import SpatialCompressor
+            
+            data_dir = config["data"].get("data_dir", "data/optical/raw_tiffs")
+            if not os.path.isabs(data_dir):
+                data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../", data_dir))
+            logger.info(f"Loading AOLLSMDataset from {data_dir} (seq_len={seq_len})")
+            
+            compressor = SpatialCompressor().to(device)
+            compressor.eval()
+            
+            # The dataset will process frames on-the-fly and return [seq_len, 768]
+            dataset = AOLLSMDataset(data_dir=data_dir, num_frames=seq_len, compressor=compressor, device=device)
+            telemetry = dataset[0].unsqueeze(0).to(device)  # shape: [1, seq_len, 768]
+            mask = torch.ones(1, seq_len, 1, device=device)
+            input_dim = 768
+            logger.info(f"Successfully loaded and compressed AOLLSM Data! Telemetry shape: {telemetry.shape}")
+        else:
+            logger.info(f"Loading PharmacologicalShockDataset (seq_len={seq_len}) on worker")
+            dataset = PharmacologicalShockDataset(condition=condition, seq_len=seq_len)
+            telemetry = dataset[0].unsqueeze(0).to(device)  # shape: [1, seq_len, 1024]
+            mask = torch.ones(1, seq_len, 1, device=device)
+            logger.info(f"Successfully loaded Pharmacological Shock Data! Telemetry shape: {telemetry.shape}")
     else:
         logger.info("Generating synthetic telemetry for testing with crash at seq_len // 2.")
         t = torch.linspace(0, 10 * np.pi, seq_len, device=device).unsqueeze(1)

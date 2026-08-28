@@ -5,6 +5,8 @@ models:
   - "causal_transformer"
   - "masr_ssm"
 data:
+  type: "aollsm"
+  data_dir: "data/optical/raw_tiffs"
   condition: "50uM"
   seq_len: 2000
   input_dim: 1024

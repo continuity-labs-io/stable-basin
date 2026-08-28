@@ -8,7 +8,8 @@ TECHNICAL REQUIREMENTS:
 
 EXECUTE THE 5-STEP WORKFLOW:
 1. **Listen (Initialize Degraded Bob):** 
-   - Instantiate a `PredictiveCodingGraph` representing Bob's currently degraded digital twin (Twin A). Initialize it with artificially low weights for Friction and Precision to simulate aging.
+   - Instantiate a `PredictiveCodingGraph` representing Bob's currently degraded digital twin (Twin A). 
+   Initialize it with artificially low weights for Friction and Precision to simulate aging.
    - Define a resting state `x_micro` and `x_macro` using random noise.
 
 2. **Measure Geometry (The Hessian):**

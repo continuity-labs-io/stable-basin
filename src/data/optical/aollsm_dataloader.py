@@ -53,7 +53,7 @@ class MeldTemporalDataset(Dataset):
 
 
 class AOLLSMDataset(Dataset):
-    def __init__(self, data_dir, num_frames=199, crop_size=(128, 128, 128)):
+    def __init__(self, data_dir, num_frames=199, crop_size=(128, 128, 128), compressor=None, device=None):
         """
         PyTorch Dataset for AO-LLSM sequential TIFF volumes.
         Ingests a directory of sequential TIFF stacks and stacks ch1 & ch2.
@@ -62,10 +62,14 @@ class AOLLSMDataset(Dataset):
             data_dir (str): Directory containing the TIFF files or subdirectories.
             num_frames (int): Number of temporal frames to load (e.g. 199).
             crop_size (tuple): Target shape for central spatial crop (Depth, Height, Width).
+            compressor (nn.Module, optional): Model to compress raw frames (e.g. SpatialCompressor).
+            device (torch.device, optional): Device to run compression on.
         """
         self.data_dir = data_dir
         self.num_frames = num_frames
         self.crop_size = crop_size
+        self.compressor = compressor
+        self.device = device if device else torch.device("cpu")
 
         if not os.path.exists(data_dir):
             raise FileNotFoundError(f"Data directory {data_dir} does not exist.")
@@ -151,10 +155,18 @@ class AOLLSMDataset(Dataset):
             # Convert to PyTorch float32 tensor
             stacked_tensor = torch.from_numpy(stacked_channels).to(torch.float32)
 
+            # Apply compressor frame-by-frame to save memory if provided
+            if self.compressor is not None:
+                stacked_tensor = stacked_tensor.unsqueeze(0).unsqueeze(0).to(self.device)
+                with torch.no_grad():
+                    compressed = self.compressor(stacked_tensor)
+                stacked_tensor = compressed.squeeze(0).squeeze(0).cpu()
+
             temporal_sequence.append(stacked_tensor)
 
-        # 4. Stack all time steps to form (Time, Channels, Depth, Height, Width)
-        # Evaluates to (num_frames, 2, crop_size[0], crop_size[1], crop_size[2])
+        # 4. Stack all time steps to form (Time, ...)
+        # If not compressed: (num_frames, 2, crop_size[0], crop_size[1], crop_size[2])
+        # If compressed: (num_frames, 768)
         sequence_tensor = torch.stack(temporal_sequence, dim=0)
 
         return sequence_tensor
