@@ -24,6 +24,42 @@ def test_calculate_csd(metrics_engine):
     assert all(isinstance(score, float) for score in csd_scores)
 
 
+def test_calculate_csd_zero_variance(metrics_engine):
+    """
+    Test that calculate_csd gracefully handles channels with zero variance
+    (e.g., dead/quiescent biological channels) without returning NaN or 
+    artificially inflated noise scores.
+    """
+    time_steps = 20
+    embed_dim = 16
+    z_seq = torch.zeros(time_steps, embed_dim)
+    
+    # Active channel 0 has a sine wave
+    t = torch.linspace(0, 10, time_steps)
+    z_seq[:, 0] = torch.sin(t)
+    
+    # The other 15 channels are completely flat (0.0 variance)
+    csd_scores = metrics_engine.calculate_csd(z_seq, window_size=5)
+    
+    # Ensure it doesn't crash or return NaNs
+    assert len(csd_scores) == 20
+    assert not any(torch.isnan(torch.tensor(csd_scores)))
+    assert all(isinstance(score, float) for score in csd_scores)
+
+
+def test_calculate_csd_all_zero_variance(metrics_engine):
+    """
+    Test the extreme case where all channels are completely dead.
+    """
+    z_seq = torch.zeros(20, 16)
+    csd_scores = metrics_engine.calculate_csd(z_seq, window_size=5)
+    
+    assert len(csd_scores) == 20
+    assert not any(torch.isnan(torch.tensor(csd_scores)))
+    # For all zero channels, it should return 0.0 according to our logic
+    assert all(score == 0.0 for score in csd_scores)
+
+
 @pytest.mark.filterwarnings("ignore:Casting complex values to real discards the imaginary part")
 def test_calculate_ksm(metrics_engine):
     z_seq = create_dummy_signal(20, 16)

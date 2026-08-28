@@ -85,11 +85,20 @@ class ThermodynamicMetrics:
         for t in range(window_size, time_steps + 1):
             z_win = z_sequence[t - window_size : t, :]
 
+            channel_vars = torch.var(z_win, dim=0)
+            active_mask = channel_vars > 1e-8
+            
+            if not active_mask.any():
+                csd_scores.append(0.0)
+                continue
+                
+            z_win_active = z_win[:, active_mask]
+
             # Variance (The Wobble)
-            var_t = torch.var(z_win, dim=0).mean().item()
+            var_t = torch.var(z_win_active, dim=0).mean().item()
 
             # Lag-1 Autocorrelation (Critical Slowing Down)
-            ar1_t = F.cosine_similarity(z_win[:-1, :], z_win[1:, :], dim=1).mean().item()
+            ar1_t = F.cosine_similarity(z_win_active[:-1, :], z_win_active[1:, :], dim=1).mean().item()
 
             csd = (self.alpha * var_t) + (self.beta * ar1_t)
             csd_scores.append(csd)
