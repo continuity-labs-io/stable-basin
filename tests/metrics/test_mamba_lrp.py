@@ -25,7 +25,7 @@ def test_relevance_conservation_axiom():
     target_time_step = 15
 
     # Forward pass to calculate expected total output relevance
-    preds, _ = model(x, mask)
+    preds, _, _ = model(x, mask)
     expected_relevance = preds[:, target_time_step, :].sum().item()
 
     # Backward pass LRP
