@@ -1,4 +1,15 @@
 tasks:
+  loss_ablation:
+    epochs: 30
+    train_seq_len: 200
+    test_seq_len: 500
+    models: ["gru_d","masr_ssm", "masr_mamba"]
+    densities: [0.1]
+    seeds: [42, 43, 44]
+    loss_fns: ["mse", "meld"]
+    csv_name: "00_loss_ablation.csv"
+    png_name: "00_loss_ablation.png"
+
   baseline:
     epochs: 40
     train_seq_len: 500

@@ -86,6 +86,7 @@ class SensorFusionPredictor(nn.Module):
         self.readout = nn.Linear(d_model, out_dim)
 
     def forward(self, x_raw: torch.Tensor, mask: Optional[torch.Tensor] = None):
+        reconstructed_t = None
         if self.ssm_type == "forward_fill_ssm":
             # Apply Forward-Fill (Hold-Last-Value) to the sparse modality
             # (indices 20-29)
@@ -131,14 +132,15 @@ class SensorFusionPredictor(nn.Module):
             elif self.ssm_type == "masr_ssm":
                 h = self.ssm(latent_x, latent_gate)
             elif self.ssm_type == "masr_mamba":
-                h = self.ssm.get_hidden_states(latent_x, mask=latent_gate)
+                _, reconstructed_t, h = self.ssm(latent_x, mask=latent_gate, return_hidden=True)
+                reconstructed_t = self.readout(reconstructed_t)
             elif self.ssm_type == "causal_transformer":
                 h = self.ssm(latent_x)
 
         preds = self.readout(h)
-        return preds, h
+        return preds, h, reconstructed_t
 
     def get_hidden_states(self, x, mask=None):
         """Convenience method for cleanly extracting the thermodynamic manifold."""
-        _, hidden_states = self.forward(x, mask=mask)
+        _, hidden_states, _ = self.forward(x, mask=mask)
         return hidden_states

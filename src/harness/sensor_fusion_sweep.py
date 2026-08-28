@@ -18,6 +18,7 @@ import wandb
 from src.data.waddington_dataset import SyntheticWaddingtonDataset
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
 from src.utils.device import get_optimal_device
+from src.models.losses.meld_loss import MeldLoss
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ def evaluate_model(trial_config):
     model_type = trial_config["model_type"]
     density = trial_config["density"]
     seed = trial_config["seed"]
+    loss_type = trial_config.get("loss_type", "mse")
     
     epochs = config["epochs"]
     train_seq_len = config["train_seq_len"]
@@ -62,6 +64,7 @@ def evaluate_model(trial_config):
     )
     
     logger.info(f"--- Running {task_name} | Model: {model_type} | Density: {density} | Seed: {seed} ---")
+    logger.info(f"Initialized training with loss type: {loss_type}")
     
     # Seed globally for reproducibility
     torch.manual_seed(seed)
@@ -74,6 +77,7 @@ def evaluate_model(trial_config):
     model = SensorFusionPredictor(model_type).to(device)
     optimizer = optim.AdamW(model.parameters(), lr=0.005)
     criterion = nn.MSELoss()
+    meld_loss_fn = MeldLoss(alpha=1.0, beta=0.1, gamma=0.5, L=1.5)
     
     loss_history = []
     
@@ -86,8 +90,18 @@ def evaluate_model(trial_config):
             y_true = batch["y_true"].to(device)
             
             optimizer.zero_grad()
-            preds, _ = model(x_raw, mask)
-            loss = criterion(preds, y_true)
+            preds, _, reconstructed_t = model(x_raw, mask)
+            
+            if loss_type == "meld" and reconstructed_t is not None:
+                state_t = y_true[:, :-1, :]
+                target_t_plus_1 = y_true[:, 1:, :]
+                pred_t_plus_1 = preds[:, :-1, :]
+                recon_t = reconstructed_t[:, :-1, :]
+                delta_x = torch.ones(x_raw.size(0), 1, device=device)
+                loss, _ = meld_loss_fn(state_t, target_t_plus_1, pred_t_plus_1, recon_t, delta_x)
+            else:
+                loss = criterion(preds, y_true)
+                
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
@@ -118,7 +132,7 @@ def evaluate_model(trial_config):
             mask = batch["mask"].to(device)
             y_true = batch["y_true"].to(device)
             
-            preds, _ = model(x_raw, mask)
+            preds, _, reconstructed_t = model(x_raw, mask)
             
             if test_seq_len > train_seq_len:
                 mse = ((preds[:, train_seq_len:] - y_true[:, train_seq_len:]) ** 2).mean().item()
@@ -259,7 +273,8 @@ def main():
         "task_name": args.task,
         "model_type": tune.grid_search(task_config["models"]),
         "density": tune.grid_search(task_config["densities"]),
-        "seed": tune.grid_search(task_config["seeds"])
+        "seed": tune.grid_search(task_config["seeds"]),
+        "loss_type": tune.grid_search(task_config.get("loss_fns", ["mse"]))
     }
     
     tuner = tune.Tuner(

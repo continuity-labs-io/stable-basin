@@ -1,6 +1,11 @@
 MODELS ?= zero_padded_ssm forward_fill_ssm mask_concat_ssm causal_transformer masr_ssm masr_mamba gru_d ode_rnn
 
-.PHONY: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fusion-imputation sensor-fusion-all
+.PHONY: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fusion-loss-ablation sensor-fusion-imputation sensor-fusion-all
+
+sensor-fusion-loss-ablation:
+	python -m src.harness.sensor_fusion_sweep \
+		--config configs/sensor_fusion.yaml \
+		--task loss_ablation
 
 sensor-fusion-baseline:
 	python -m src.harness.sensor_fusion_sweep \
@@ -17,7 +22,7 @@ sensor-fusion-density-sweep:
 		--config configs/sensor_fusion.yaml \
 		--task density_sweep
 
-sensor-fusion-all: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fusion-density-sweep
+sensor-fusion-all: sensor-fusion-baseline sensor-fusion-extrapolation sensor-fusion-density-sweep sensor-fusion-loss-ablation
 
 .PHONY: clinical-diagnostic
 

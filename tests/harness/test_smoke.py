@@ -53,7 +53,7 @@ def test_smoke():
             ).to(device)
 
             # 2. Forward Pass
-            preds, hidden = model(x_raw, mask)
+            preds, hidden, reconstructed_t = model(x_raw, mask)
 
             assert preds.shape == (batch_size, seq_len, out_dim), f"Bad preds shape: {preds.shape}"
             assert hidden.shape == (batch_size, seq_len, d_model), f"Bad hidden shape: {hidden.shape}"
@@ -84,4 +84,5 @@ def test_smoke():
         logger.info("Smoke test passed.")
     else:
         logger.error("Smoke test failed.")
+        assert all_passed, "Smoke test failed for one or more models."
 
