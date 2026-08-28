@@ -23,6 +23,34 @@ def test_meld_loss():
     assert "reverse_loss" in metrics
 
 
+def test_meld_loss_autograd_nan_hazard():
+    """
+    Test that MeldLoss does not produce NaN gradients when the predicted state
+    perfectly matches the current state (delta_y = 0).
+    """
+    loss_fn = MeldLoss()
+    batch_size = 1
+    embed_dim = 16
+
+    state_t = torch.randn(batch_size, embed_dim)
+    # The network predicts exactly the same state (perfect stasis prediction)
+    pred_t_plus_1 = state_t.clone()
+    pred_t_plus_1.requires_grad = True
+
+    target_t_plus_1 = torch.randn(batch_size, embed_dim)
+    reconstructed_t = torch.randn(batch_size, embed_dim)
+    delta_x = torch.ones(batch_size, 1) * 0.1
+
+    l_total, _ = loss_fn(state_t, target_t_plus_1, pred_t_plus_1, reconstructed_t, delta_x)
+    
+    # Backward pass should not crash
+    l_total.backward()
+    
+    # Gradient should not be NaN
+    assert not torch.isnan(pred_t_plus_1.grad).any()
+
+
+
 def test_topo_contrastive_loss():
     loss_fn = TopoContrastiveLoss()
     batch_size = 2

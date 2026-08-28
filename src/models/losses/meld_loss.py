@@ -57,7 +57,7 @@ class MeldLoss(nn.Module):
         # This represents the Energy_expended for the state transition.
         batch_size = delta_y.size(0)
         delta_y_flat = delta_y.view(batch_size, -1)
-        energy_expended = torch.linalg.vector_norm(delta_y_flat, ord=2, dim=1, keepdim=True)  # shape (batch_size, 1)
+        energy_expended = torch.sqrt(torch.sum(delta_y_flat ** 2, dim=1, keepdim=True) + 1e-8)  # shape (batch_size, 1)
 
         # The glucose perfusion rate provides continuous energy flux: Energy_imported = L * delta_x
         # where L is the perfusion rate constant (steady-state flux).
