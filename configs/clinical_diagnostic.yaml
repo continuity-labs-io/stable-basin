@@ -5,9 +5,9 @@ models:
   - "causal_transformer"
   - "masr_ssm"
 data:
-  type: "aollsm"
-  data_dir: "data/optical/raw_tiffs"
-  condition: "50uM"
+  type: "pharmacological"
+  data_dir: "data/ephys/pharmacological_shock"
+  condition: "50uM" # Drug_2953 (Diazepam)
   seq_len: 2000
   input_dim: 1024
 training:

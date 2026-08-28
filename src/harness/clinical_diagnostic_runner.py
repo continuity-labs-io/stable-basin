@@ -95,12 +95,14 @@ def evaluate_model(trial_config):
             mask = torch.ones(1, seq_len, 1, device=device)
             input_dim = 768
             logger.info(f"Successfully loaded and compressed AOLLSM Data! Telemetry shape: {telemetry.shape}")
-        else:
+        elif data_type == "pharmacological":
             logger.info(f"Loading PharmacologicalShockDataset (seq_len={seq_len}) on worker")
             dataset = PharmacologicalShockDataset(condition=condition, seq_len=seq_len)
             telemetry = dataset[0].unsqueeze(0).to(device)  # shape: [1, seq_len, 1024]
             mask = torch.ones(1, seq_len, 1, device=device)
             logger.info(f"Successfully loaded Pharmacological Shock Data! Telemetry shape: {telemetry.shape}")
+        else:
+            raise ValueError(f"Unknown data type provided in config: {data_type}")
     else:
         logger.info("Generating synthetic telemetry for testing with crash at seq_len // 2.")
         t = torch.linspace(0, 10 * np.pi, seq_len, device=device).unsqueeze(1)
