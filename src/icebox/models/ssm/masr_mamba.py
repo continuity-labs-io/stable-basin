@@ -39,8 +39,12 @@ def mamba_masr_reference_scan(
     batch_size, seq_len, d_model = x.shape
     _, d_state = A.shape
     
+    # Use at least float32 for accumulation to prevent mixed precision drift,
+    # but preserve float64 for gradcheck testing
+    acc_dtype = torch.promote_types(x.dtype, torch.float32)
+    
     # Initialize hidden state h_0
-    h = torch.zeros(batch_size, d_model, d_state, device=x.device, dtype=x.dtype)
+    h = torch.zeros(batch_size, d_model, d_state, device=x.device, dtype=acc_dtype)
     y = torch.zeros_like(x)
     
     for t in range(seq_len):
@@ -70,12 +74,12 @@ def mamba_masr_reference_scan(
         B_bar = torch.expm1(dt_masked_t_exp * A) / A_safe * B_t.unsqueeze(1) # (batch_size, d_model, d_state)
         
         # Update hidden state h_t = Ā * h_{t-1} + B̄ * x_t
-        # Perfectly freezing the hidden state (h_t = h_{t-1}) when mask is 0
-        h = A_bar * h + B_bar * x_t.unsqueeze(-1) # (batch_size, d_model, d_state)
+        # perfectly freezing the hidden state (h_t = h_{t-1}) when mask is 0
+        h = A_bar.to(acc_dtype) * h + B_bar.to(acc_dtype) * x_t.unsqueeze(-1).to(acc_dtype) # (batch_size, d_model, d_state)
         
         # Compute output y_t = C_t * h_t + D * x_t
-        y_t = (C_t.unsqueeze(1) * h).sum(dim=-1) + D * x_t # (batch_size, d_model)
-        y[:, t, :] = y_t
+        y_t = (C_t.unsqueeze(1).to(acc_dtype) * h).sum(dim=-1) + D.to(acc_dtype) * x_t.to(acc_dtype) # (batch_size, d_model)
+        y[:, t, :] = y_t.to(x.dtype)
         
     return y
 
