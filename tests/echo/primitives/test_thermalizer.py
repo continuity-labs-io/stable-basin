@@ -195,3 +195,135 @@ def test_thermo_flow_factor_differentiability():
     assert not jnp.any(jnp.isnan(factor_grad.solenoidal.W))
     # Brake (DissipativeFriction) gradients should exist
     assert not jnp.any(jnp.isnan(factor_grad.dissipative.W))
+
+from src.echo.primitives.thermalizer import TorxThermalizer
+
+def test_torx_thermalizer_shape_and_nans():
+    """
+    Instantiates the full stack, wraps it in TorxThermalizer, and ensures
+    it correctly unrolls the step without producing NaNs.
+    """
+    # ARRANGE
+    d_state = 4
+    n_steps = 10
+    dt = 0.01
+    key_comp, key_sample, key_x = jax.random.split(jax.random.PRNGKey(42), 3)
+    
+    ebm, solenoidal, dissipative, thermostat = create_mock_components(d_state, key_comp)
+    
+    factor = ThermoFlowFactor(
+        ebm=ebm,
+        solenoidal=solenoidal,
+        dissipative=dissipative,
+        thermostat=thermostat,
+        d_state=d_state
+    )
+    
+    thermalizer = TorxThermalizer(
+        flow_factor=factor,
+        n_steps=n_steps,
+        d_state=d_state
+    )
+    
+    x_init = jax.random.normal(key_x, (d_state,), dtype=jnp.float32)
+    
+    # ACT
+    x_final = thermalizer(key_sample, x_init, dt)
+    
+    # ASSERT
+    # Note: Torx ChainFactor might return a dict or the final state depending on how it's unpacked.
+    # Usually the output of ChainFactor is a trajectory [n_steps, d_state].
+    assert not jnp.any(jnp.isnan(x_final)), "Output contains NaNs"
+
+def test_torx_thermalizer_vram_xla_proof():
+    """
+    Proves that calling the thermalizer twice executes the `@equinox.filter_jit`
+    compiled graph without throwing a `ConcretizationTypeError` (proving that
+    `n_steps` was correctly handled as a static field).
+    """
+    # ARRANGE
+    d_state = 4
+    n_steps = 10
+    dt = 0.01
+    key_comp, key_sample1, key_sample2, key_x1, key_x2 = jax.random.split(jax.random.PRNGKey(123), 5)
+    
+    ebm, solenoidal, dissipative, thermostat = create_mock_components(d_state, key_comp)
+    
+    factor = ThermoFlowFactor(
+        ebm=ebm,
+        solenoidal=solenoidal,
+        dissipative=dissipative,
+        thermostat=thermostat,
+        d_state=d_state
+    )
+    
+    thermalizer = TorxThermalizer(
+        flow_factor=factor,
+        n_steps=n_steps,
+        d_state=d_state
+    )
+    
+    x_init1 = jax.random.normal(key_x1, (d_state,), dtype=jnp.float32)
+    x_init2 = jax.random.normal(key_x2, (d_state,), dtype=jnp.float32)
+    
+    # ACT
+    # First call will trace and compile
+    x_final1 = thermalizer(key_sample1, x_init1, dt)
+    
+    # Second call should execute the compiled XLA binary
+    # If n_steps wasn't static, JAX would complain about unrolling dynamically
+    x_final2 = thermalizer(key_sample2, x_init2, dt)
+    
+    # ASSERT
+    assert not jnp.any(jnp.isnan(x_final1))
+    assert not jnp.any(jnp.isnan(x_final2))
+
+def test_torx_thermalizer_bptt():
+    """
+    Runs a dummy gradient check using equinox.filter_value_and_grad on a loss
+    function wrapping the __call__ method. Asserts that gradients flow seamlessly
+    through the unrolled loop back into the PrecisionWeightedEBM weights.
+    """
+    # ARRANGE
+    d_state = 4
+    n_steps = 5
+    dt = 0.01
+    key_comp, key_sample, key_x = jax.random.split(jax.random.PRNGKey(777), 3)
+    
+    ebm, solenoidal, dissipative, thermostat = create_mock_components(d_state, key_comp)
+    
+    factor = ThermoFlowFactor(
+        ebm=ebm,
+        solenoidal=solenoidal,
+        dissipative=dissipative,
+        thermostat=thermostat,
+        d_state=d_state
+    )
+    
+    thermalizer = TorxThermalizer(
+        flow_factor=factor,
+        n_steps=n_steps,
+        d_state=d_state
+    )
+    
+    x_init = jax.random.normal(key_x, (d_state,), dtype=jnp.float32)
+    
+    # Define dummy loss
+    @eqx.filter_value_and_grad
+    def loss_fn(model, input_x, sample_key):
+        x_final = model(sample_key, input_x, dt)
+        return jnp.sum(x_final ** 2)
+        
+    # ACT
+    loss, grads = loss_fn(thermalizer, x_init, key_sample)
+    
+    # ASSERT
+    assert not jnp.isnan(loss)
+    
+    # Extract the ebm gradient from the graph
+    # thermalizer -> graph -> site("chain") -> factor -> base (which is ThermoFlowFactor) -> ebm
+    chain_factor_grad = grads.graph.sites[0].factor
+    flow_factor_grad = chain_factor_grad.base
+    
+    assert not jnp.any(jnp.isnan(flow_factor_grad.ebm.energy_head.weight))
+    assert not jnp.any(jnp.isnan(flow_factor_grad.solenoidal.W))

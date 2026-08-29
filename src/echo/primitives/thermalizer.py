@@ -114,3 +114,50 @@ class ThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         if return_aux:
             return x_next, None
         return x_next
+
+class TorxThermalizer(eqx.Module):
+    """
+    Continuous-time compiler for the biological simulation,
+    unrolling the ThermoFlowFactor sequentially over n_steps.
+    """
+    n_steps: int = eqx.field(static=True)
+    graph: torx.DFG
+
+    def __init__(self, flow_factor: ThermoFlowFactor, n_steps: int, d_state: int):
+        self.n_steps = n_steps
+        
+        # Create ChainFactor unrolling over n_steps
+        chain_factor = torx.ChainFactor(
+            base=flow_factor,
+            n_steps=n_steps,
+            feedback_porting_fn="x",
+            weight_tied=True
+        )
+        
+        # Wrap the ChainFactor in a Torx DFG
+        self.graph = torx.DFG(
+            sites=(
+                torx.Site(
+                    name="chain",
+                    factor=chain_factor,
+                    parents=("x_init", "dt_constant"),
+                    porting_fn=("x", "dt"),
+                    param_key=None,
+                    info_key=None,
+                    site_info=None
+                ),
+            ),
+            input_ports={
+                "x_init": jax.ShapeDtypeStruct((d_state,), jnp.float32),
+                "dt_constant": jax.ShapeDtypeStruct((), jnp.float32)
+            },
+            output_name="chain"
+        )
+        
+    @eqx.filter_jit
+    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float) -> jax.Array:
+        """
+        Executes the unrolled simulation.
+        """
+        inputs = {"x_init": x_init, "dt_constant": jnp.array(dt, dtype=jnp.float32)}
+        return self.graph.sample(key, inputs=inputs, params={})
