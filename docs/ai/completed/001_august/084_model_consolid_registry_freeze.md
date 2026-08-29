@@ -1,15 +1,21 @@
 We are executing Phase 1: Model Consolidation & Registry Freeze.
 
-We need to formalize the Universal Wrapper (SensorFusionPredictor) so it is the absolute source of truth, and write a smoke_test.py to mathematically prove that every architecture in our registry adheres to the exact same API and can train without crashing.
+We need to formalize the Universal Wrapper (SensorFusionPredictor) so it is the
+absolute source of truth, and write a smoke_test.py to mathematically prove that
+every architecture in our registry adheres to the exact same API and can train
+without crashing.
 
 Please execute the following steps:
 
-1. Update src/harness/sensor_fusion_predictor.py
-   We want to enforce a strict contract. Modify the forward method so it always returns (preds, hidden_states). Remove the return_hidden argument entirely.
+1. Update src/harness/sensor_fusion_predictor.py We want to enforce a strict
+   contract. Modify the forward method so it always returns (preds,
+   hidden_states). Remove the return_hidden argument entirely.
 
-Update the forward signature to: def forward(self, x_raw: torch.Tensor, mask: Optional[torch.Tensor] = None):
+Update the forward signature to: def forward(self, x_raw: torch.Tensor, mask:
+Optional[torch.Tensor] = None):
 
-Update the return statement at the end of forward to: return preds, hidden_states
+Update the return statement at the end of forward to: return preds,
+hidden_states
 
 In get_hidden_states, update it to:
 
@@ -20,8 +26,11 @@ def get_hidden_states(self, x, mask=None):
     return hidden_states
 ```
 
-2. Create the Smoke Test (src/harness/smoke_test.py)
-   Create a new script that acts as our CI/CD safety net. It will iterate through every model in our frozen registry, initialize it via SensorFusionPredictor, pass a synthetic multi-modal tensor with sparsity masks through it, and verify that the forward and backward passes execute cleanly without shape errors or NaNs.
+2. Create the Smoke Test (src/harness/smoke_test.py) Create a new script that
+   acts as our CI/CD safety net. It will iterate through every model in our
+   frozen registry, initialize it via SensorFusionPredictor, pass a synthetic
+   multi-modal tensor with sparsity masks through it, and verify that the
+   forward and backward passes execute cleanly without shape errors or NaNs.
 
 ```Python
 import torch
@@ -113,5 +122,5 @@ if __name__ == "__main__":
     run_smoke_test()
 ```
 
-3. Run the Smoke Test
-   Execute python -m src.harness.smoke_test to verify the registry is solid.
+3. Run the Smoke Test Execute python -m src.harness.smoke_test to verify the
+   registry is solid.

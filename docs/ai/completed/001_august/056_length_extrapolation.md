@@ -1,9 +1,11 @@
 # Role Instruction
+
 You are an expert PyTorch ML Engineer. We need to demonstrate the "Length
 Extrapolation" failure mode of standard Transformers compared to continuous-time
-State-Space Models. 
+State-Space Models.
 
 # Task 1: Update the Dataset Simulator
+
 In `src/data/waddington_dataset.py`, modify the `__getitem__` logic so the
 discrete phase jumps scale proportionally to `self.seq_len`. (This ensures the
 phase transitions happen out-of-distribution during our 2000-step test). Replace
@@ -16,6 +18,7 @@ jump2 = torch.randint(int(self.seq_len * 0.6), int(self.seq_len * 0.8), (1,)).it
 ```
 
 # Task 2: Create the Extrapolation Script
+
 Create `src/experiments/02_extrapolation_benchmark.py`. Copy the entire contents
 of `src/experiments/01_train_synthetic_benchmark.py` into this new file. Keep
 the training loop exactly as it is (training on length 500 for 30 epochs). We

@@ -1,10 +1,10 @@
 # Precision and Mathematical Standards
 
 This document establishes the source of truth for how we handle tensors,
-precisions, and complex mathematics in the Stable Basin Benchmark codebase. Adhering to
-these standards ensures we prevent underflow/overflow crashes, maintain
-cross-platform deterministic behavior, and avoid runtime panics when processing
-noisy biological data.
+precisions, and complex mathematics in the Stable Basin Benchmark codebase.
+Adhering to these standards ensures we prevent underflow/overflow crashes,
+maintain cross-platform deterministic behavior, and avoid runtime panics when
+processing noisy biological data.
 
 ## 1. Tensor Data Types (Dtypes)
 

@@ -3,19 +3,21 @@
 ## Publications to Develop
 
 ### H-SSM - The Biological Physics Engine
+
 **"Hierarchical State-Space Models for Macroscopic Biological Entrainment"**
-* **The Vibe:** Computational Neuroscience / Systems Biology.
-* **The Problem:** Single-layer recurrent models act as passive filters; they
+
+- **The Vibe:** Computational Neuroscience / Systems Biology.
+- **The Problem:** Single-layer recurrent models act as passive filters; they
   process noise but cannot spontaneously generate higher-order biological
   structures (like traveling waves or synchronized rhythms).
-* **The Solution:** Your `hierarchical_ssm.py` module. You prove that by
-coupling a fast/local layer with a delayed, top-down macro layer, you trigger a
-thermodynamic phase transition into a stable Attractor Limit Cycle. Research
-breadcrumb: Oscillatory dynamics as the coordination layer of the organism:
-waves, Markov blankets, and the virtual space of cognition. (Daniel, 2026).
-Check out cross-frequency coupling as a possible method of hierarchical control
-in the brain.
-* **Why it Matters:** This is the deep physics paper. It appeals to theoretical
+- **The Solution:** Your `hierarchical_ssm.py` module. You prove that by
+  coupling a fast/local layer with a delayed, top-down macro layer, you trigger
+  a thermodynamic phase transition into a stable Attractor Limit Cycle. Research
+  breadcrumb: Oscillatory dynamics as the coordination layer of the organism:
+  waves, Markov blankets, and the virtual space of cognition. (Daniel, 2026).
+  Check out cross-frequency coupling as a possible method of hierarchical
+  control in the brain.
+- **Why it Matters:** This is the deep physics paper. It appeals to theoretical
   neuroscience, laying the mathematical groundwork for mapping a biological
   "thought" into a digital latent space.
 
@@ -50,8 +52,8 @@ actual training and multi-sensor fusion:
 ## TODOs
 
 ### `MeldLoss` Ablation Tests
+
 - **Issue**: The new MeldLoss functionality is untested and un-ablated on a
   large scale.
-- **Task**: Run the loss ablation tests via `make loss-ablation`
-  to get a sense of what loss function to use for biological homeostasis
-  modeling.
+- **Task**: Run the loss ablation tests via `make loss-ablation` to get a sense
+  of what loss function to use for biological homeostasis modeling.

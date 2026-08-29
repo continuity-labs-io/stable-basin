@@ -1,8 +1,14 @@
 # Role Instruction
-You are an expert PyTorch ML Engineer preparing empirical baselines for a ML submission. We need to implement two standard engineering baselines for missing data (Forward-Fill and Mask-Concatenation) and execute a 5-way out-of-distribution extrapolation benchmark.
+
+You are an expert PyTorch ML Engineer preparing empirical baselines for a ML
+submission. We need to implement two standard engineering baselines for missing
+data (Forward-Fill and Mask-Concatenation) and execute a 5-way
+out-of-distribution extrapolation benchmark.
 
 # Task 1: Update the Predictor Module
+
 Overwrite `src/models/simulators/waddington_predictor.py`.
+
 ```python
 import torch
 import torch.nn as nn
@@ -17,7 +23,7 @@ class WaddingtonPredictor(nn.Module):
     ):
         super().__init__()
         self.ssm_type = ssm_type
-        
+
         # For mask_concat, we concatenate the 2D mask to the 30D raw data
         if ssm_type == "mask_concat":
             self.fusion = BiologicalCartridgeFusion(d_cartridge + n_modalities, n_modalities, d_model)
@@ -46,16 +52,16 @@ class WaddingtonPredictor(nn.Module):
                 current_x = x_raw[:, t, 20:]
                 last_known = torch.where(m_t == 1.0, current_x, last_known)
                 x_ff[:, t, 20:] = last_known
-            
+
             latent_x, latent_gate = self.fusion(x_ff, mask)
             h = self.ssm(latent_x)
-            
+
         elif self.ssm_type == "mask_concat":
             # Concatenate mask directly to the features
             x_concat = torch.cat([x_raw, mask], dim=-1)
             latent_x, latent_gate = self.fusion(x_concat, mask)
             h = self.ssm(latent_x)
-            
+
         else:
             latent_x, latent_gate = self.fusion(x_raw, mask)
             if self.ssm_type == "baseline":
@@ -135,7 +141,7 @@ def main():
             avg_loss = running_losses[name] / len(dataloader)
             loss_history[name].append(avg_loss)
             log_str += f"{name}: {avg_loss:.3f} | "
-        
+
         if epoch % 5 == 0 or epoch == 1:
             print(log_str)
 
@@ -154,7 +160,7 @@ def main():
     with torch.no_grad():
         for name, model in models.items():
             preds_dict[name] = model(test_x_raw, test_mask)[0].cpu().numpy()
-            
+
             # Calculate OOD MSE (T > 500)
             ood_mse = ((preds_dict[name][500:] - test_y_true[500:])**2).mean()
             print(f"OOD-MSE [{name}]: {ood_mse:.4f}")
@@ -164,24 +170,24 @@ def main():
 
     # Top Subplot: Training Loss
     colors = {
-        "baseline": "r--", 
-        "forward_fill": "m-.", 
-        "mask_concat": "y-", 
-        "transformer": "g:", 
+        "baseline": "r--",
+        "forward_fill": "m-.",
+        "mask_concat": "y-",
+        "transformer": "g:",
         "mask_aware": "b-"
     }
-    
+
     labels = {
-        "baseline": "Zero-Padded SSM", 
-        "forward_fill": "Forward-Fill SSM", 
-        "mask_concat": "Mask-Concat SSM", 
-        "transformer": "Causal Transformer", 
+        "baseline": "Zero-Padded SSM",
+        "forward_fill": "Forward-Fill SSM",
+        "mask_concat": "Mask-Concat SSM",
+        "transformer": "Causal Transformer",
         "mask_aware": "MASR (Ours)"
     }
-    
+
     for name in model_names:
         ax1.plot(loss_history[name], colors[name], linewidth=2, label=labels[name])
-    
+
     ax1.set_title("MSE Loss Convergence (Training on seq_len=500)")
     ax1.set_ylabel("MSE")
     ax1.set_xlabel("Epoch")
@@ -196,7 +202,7 @@ def main():
 
     ax2.axvline(x=500, color="grey", linestyle="--", linewidth=2)
     ax2.text(510, ax2.get_ylim()[1] * 0.9, "Training Horizon\n(Length Extrapolation)", color="grey", fontsize=10)
-    
+
     ax2.set_title("Waddington Phase Tracking: Out-Of-Distribution Stress Test (seq_len=2000)")
     ax2.set_xlabel("Time Step")
     ax2.set_ylabel("Phase State")
@@ -206,7 +212,7 @@ def main():
     os.makedirs("output/data", exist_ok=True)
     plt.savefig("output/data/04_arxiv_money_chart.png", dpi=300)
     print("Saved plot to output/data/04_arxiv_money_chart.png")
-    
+
     results = {"True Phase": test_y_true.flatten()}
     for k, v in preds_dict.items():
         results[k] = v.flatten()

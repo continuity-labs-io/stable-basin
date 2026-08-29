@@ -19,5 +19,5 @@ Follow these steps for the implementation:
    matrices: K_c = H @ K @ H and L_c = H @ L @ H.
 4. Compute the Hilbert-Schmidt Independence Criterion (HSIC) as
    `torch.trace(K_c @ L_c)`.
-5. Return the normalized CKA score: HSIC(K_c, L_c) / torch.sqrt(HSIC(K_c,
-   K_c) \* HSIC(L_c, L_c)).
+5. Return the normalized CKA score: HSIC(K_c, L_c) / torch.sqrt(HSIC(K_c, K_c)
+   \* HSIC(L_c, L_c)).

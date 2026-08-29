@@ -1,9 +1,15 @@
 # Role Instruction
-You are an expert PyTorch ML Engineer. We are fixing two critical bugs in the benchmark: a "Symmetry Lock" destroying the Subspace Router, and a data-leakage bug in the dataset generator.
+
+You are an expert PyTorch ML Engineer. We are fixing two critical bugs in the
+benchmark: a "Symmetry Lock" destroying the Subspace Router, and a data-leakage
+bug in the dataset generator.
 
 # Task 1: Fix the Data Leakage (Deterministic W_1)
-Overwrite `src/data/waddington_dataset.py`.
-Update the `__init__` method of `SyntheticWaddingtonDataset` to ensure `self.W_1` is deterministic so the test set speaks the same biological language as the training set:
+
+Overwrite `src/data/waddington_dataset.py`. Update the `__init__` method of
+`SyntheticWaddingtonDataset` to ensure `self.W_1` is deterministic so the test
+set speaks the same biological language as the training set:
+
 ```python
     def __init__(self, size=100, seq_len=500):
         self.size = size
@@ -15,9 +21,10 @@ Update the `__init__` method of `SyntheticWaddingtonDataset` to ensure `self.W_1
         torch.set_rng_state(rng_state)
 ```
 
-Task 2: True Orthogonal Subspace Routing
-Overwrite src/models/encoders/fusion.py.
-Replace the entire BiologicalCartridgeFusion class with this code to explicitly partition the 64-D latent space and mathematically guarantee stasis:
+Task 2: True Orthogonal Subspace Routing Overwrite
+src/models/encoders/fusion.py. Replace the entire BiologicalCartridgeFusion
+class with this code to explicitly partition the 64-D latent space and
+mathematically guarantee stasis:
 
 ```python
 import torch
@@ -32,17 +39,17 @@ class BiologicalCartridgeFusion(nn.Module):
         # TRUE ORTHOGONAL SUBSPACE ROUTING PRIOR
         half = d_model // 2
         with torch.no_grad():
-            # 1. Absolute Stasis Default: sigmoid(-10) = 4.5e-5. 
+            # 1. Absolute Stasis Default: sigmoid(-10) = 4.5e-5.
             # Guarantees memory survives 1000+ step voids.
             self.W_gate.bias.fill_(-10.0)
             self.W_gate.weight.fill_(0.0)
-            
+
             # 2. Orthogonal Routing
             # Modality 0 (Voltage) strictly controls latent dimensions 0 to 31
-            self.W_gate.weight[:half, 0] = 20.0 
-            
+            self.W_gate.weight[:half, 0] = 20.0
+
             # Modality 1 (Epigenetics) strictly controls latent dimensions 32 to 63
-            self.W_gate.weight[half:, 1] = 20.0 
+            self.W_gate.weight[half:, 1] = 20.0
 
     def forward(self, x_raw: torch.Tensor, mask: torch.Tensor):
         latent_x = self.W_cart(x_raw)
@@ -50,9 +57,8 @@ class BiologicalCartridgeFusion(nn.Module):
         return latent_x, latent_gate
 ```
 
-Task 3: Increase Training Epochs
-In src/experiments/01_train_synthetic_benchmark.py:
+Task 3: Increase Training Epochs In
+src/experiments/01_train_synthetic_benchmark.py:
 
-Change epochs = 30 to epochs = 50 to allow the optimizer to fully leverage the newly protected subspace.
-
-
+Change epochs = 30 to epochs = 50 to allow the optimizer to fully leverage the
+newly protected subspace.

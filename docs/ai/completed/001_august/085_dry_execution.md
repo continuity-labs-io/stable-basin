@@ -1,14 +1,17 @@
 We are executing Phase 2: Harness Unification & Configuration (DRY Execution).
 
-Our goal is to extract the duplicated PyTorch training logic into a unified StableBasinTrainer, and drive our execution runner using a declarative YAML configuration file instead of argparse.
+Our goal is to extract the duplicated PyTorch training logic into a unified
+StableBasinTrainer, and drive our execution runner using a declarative YAML
+configuration file instead of argparse.
 
 Please execute the following steps carefully:
 
-1. Install PyYAML
-Add pyyaml to requirements.txt (and environment.yml if present).
+1. Install PyYAML Add pyyaml to requirements.txt (and environment.yml if
+   present).
 
-2. Create the Unified Trainer (src/harness/trainer.py)
-Create this file to handle all optimization logic so our runner scripts don't have to reinvent the wheel. It must support both our loss patterns.
+2. Create the Unified Trainer (src/harness/trainer.py) Create this file to
+   handle all optimization logic so our runner scripts don't have to reinvent
+   the wheel. It must support both our loss patterns.
 
 ```python
 import time
@@ -33,16 +36,16 @@ class StableBasinTrainer:
         self.model.train()
         total_loss = 0.0
         start_time = time.time()
-        
+
         for b_idx, batch in enumerate(dataloader):
             x_raw = batch["x_raw"].to(self.device)
             mask = batch["mask"].to(self.device)
-            
+
             self.optimizer.zero_grad()
-            
+
             # The universal contract from Phase 1
             preds, _ = self.model(x_raw, mask)
-            
+
             if self.loss_type == "direct_mse":
                 y_true = batch["y_true"].to(self.device)
                 loss = F.mse_loss(preds, y_true)
@@ -55,21 +58,21 @@ class StableBasinTrainer:
                 raise ValueError(f"Unknown loss_type: {self.loss_type}")
 
             loss.backward()
-            
+
             if self.clip_grad_norm > 0.0:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
-                
+
             self.optimizer.step()
             total_loss += loss.item()
-            
+
         avg_loss = total_loss / len(dataloader)
         epoch_time = time.time() - start_time
         logger.info(f"Epoch {epoch} | Loss: {avg_loss:.6f} | Time: {epoch_time:.2f}s")
-        
+
         if use_wandb:
             import wandb
             wandb.log({"train_loss": avg_loss, "epoch": epoch, "epoch_time": epoch_time})
-            
+
         return avg_loss
 
     def fit(self, dataloader, epochs, use_wandb=False):
@@ -80,8 +83,10 @@ class StableBasinTrainer:
         return loss_history
 ```
 
-3. Create the YAML Configuration (configs/clinical_diagnostic.yaml)
-Create a configs directory at the root of the project, and add clinical_diagnostic.yaml:
+3. Create the YAML Configuration (configs/clinical_diagnostic.yaml) Create a
+   configs directory at the root of the project, and add
+   clinical_diagnostic.yaml:
+
 ```yaml
 experiment_name: "Clinical Diagnostic (Pharmacological Shock)"
 models:
@@ -104,21 +109,32 @@ evaluation:
   csv_prefix: "06_clinical_diagnostic_metrics"
 ```
 
-4. Refactor src/harness/clinical_diagnostic_runner.py
-Update the script to use the new architecture:
+4. Refactor src/harness/clinical_diagnostic_runner.py Update the script to use
+   the new architecture:
 
-Replace all argparse flags except --config. Load the YAML using import yaml and config = yaml.safe_load(open(args.config)).
+Replace all argparse flags except --config. Load the YAML using import yaml and
+config = yaml.safe_load(open(args.config)).
 
-After loading the dataset (the telemetry tensor), encapsulate the model instantiation, training, dynamic crash detection, and diagnostic generation into a helper function: def run_diagnostic_for_model(model_type, config, telemetry, mask, device):.
+After loading the dataset (the telemetry tensor), encapsulate the model
+instantiation, training, dynamic crash detection, and diagnostic generation into
+a helper function: def run_diagnostic_for_model(model_type, config, telemetry,
+mask, device):.
 
-Inside this function, use the new StableBasinTrainer for the burn-in training. To make it compatible without writing a formal PyTorch Dataset, simply pack your training data into a dummy list: dataloader = [{"x_raw": x_train, "mask": mask_train}] and call trainer.fit(dataloader, epochs).
+Inside this function, use the new StableBasinTrainer for the burn-in training.
+To make it compatible without writing a formal PyTorch Dataset, simply pack your
+training data into a dummy list: dataloader = [{"x_raw": x_train, "mask":
+mask_train}] and call trainer.fit(dataloader, epochs).
 
-In main(), iterate over config["models"] to run run_diagnostic_for_model() sequentially. Suffix the output filenames dynamically using the prefixes from the config (e.g., f"{config['evaluation']['png_prefix']}_{model_type}.png").
+In main(), iterate over config["models"] to run run_diagnostic_for_model()
+sequentially. Suffix the output filenames dynamically using the prefixes from
+the config (e.g., f"{config['evaluation']['png_prefix']}_{model_type}.png").
 
-5. Clean Up the Makefile
-Update the clinical-diagnostic target in the Makefile to run:
-python -m src.harness.clinical_diagnostic_runner --config configs/clinical_diagnostic.yaml
-(You can delete the old clinical-diagnostic-all target, as the YAML configuration inherently handles iterating over all models now).
+5. Clean Up the Makefile Update the clinical-diagnostic target in the Makefile
+   to run: python -m src.harness.clinical_diagnostic_runner --config
+   configs/clinical_diagnostic.yaml (You can delete the old
+   clinical-diagnostic-all target, as the YAML configuration inherently handles
+   iterating over all models now).
 
-6. Verification
-Run make clinical-diagnostic to ensure the refactored script executes cleanly end-to-end and still produces the expected JSON, CSV, and PNG artifacts for all 4 models.
+6. Verification Run make clinical-diagnostic to ensure the refactored script
+   executes cleanly end-to-end and still produces the expected JSON, CSV, and
+   PNG artifacts for all 4 models.

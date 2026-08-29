@@ -2,9 +2,9 @@
 
 ## Objective
 
-Create a new Python module named `src/metrics/diagnostic_engine.py` that translates
-raw continuous neural tracking data and MambaLRP attribution tensors into the
-structured Thermodynamic Diagnostic JSON payload.
+Create a new Python module named `src/metrics/diagnostic_engine.py` that
+translates raw continuous neural tracking data and MambaLRP attribution tensors
+into the structured Thermodynamic Diagnostic JSON payload.
 
 ## Context
 
@@ -21,11 +21,11 @@ diagnostic diagnostic report.
 
    - `__init__(self, model, feature_names=None)`: Stores the trained model and
      an optional list of 114 feature names. If `feature_names` is None,
-     auto-generate them matching the Trifecta layout: `PC001` to
-     `PC100`, followed by 12 RNA anchors (`RNA_NFE2L2`, `RNA_TP53`,
-     `RNA_CDKN2A`, `RNA_TREM2`, `RNA_APOE`, `RNA_IL6`, `RNA_GFAP`, `RNA_MAPT`,
-     `RNA_NANOG`, `RNA_CASP3`, `RNA_CAS13`, `RNA_GAPDH`), and 2 voltage tracks
-     (`VoltRed`, `VoltGrn`).
+     auto-generate them matching the Trifecta layout: `PC001` to `PC100`,
+     followed by 12 RNA anchors (`RNA_NFE2L2`, `RNA_TP53`, `RNA_CDKN2A`,
+     `RNA_TREM2`, `RNA_APOE`, `RNA_IL6`, `RNA_GFAP`, `RNA_MAPT`, `RNA_NANOG`,
+     `RNA_CASP3`, `RNA_CAS13`, `RNA_GAPDH`), and 2 voltage tracks (`VoltRed`,
+     `VoltGrn`).
 
 2. **Method
    `generate_diagnostic(self, x_sequence, crash_time_step, confidence_score=0.98)`**:
@@ -71,6 +71,6 @@ diagnostic diagnostic report.
 4. **Execution Test Block**:
    - Include a `if __name__ == "__main__":` block that initializes a mock
      `SpikeForecaster` or `NeocorticalEngine` (or similar dummy model), passes a
-     dummy 114-D sequence with an injected crash, runs `generate_diagnostic()`, and
-     prints the pretty-printed JSON string to the terminal to verify zero-error
-     execution.
+     dummy 114-D sequence with an injected crash, runs `generate_diagnostic()`,
+     and prints the pretty-printed JSON string to the terminal to verify
+     zero-error execution.

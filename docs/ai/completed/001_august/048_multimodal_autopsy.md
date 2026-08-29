@@ -1,11 +1,11 @@
 Context: We are finalizing the "Director's Cut" of the Project MELD repository.
-This task builds "Master Demo 3: The Multimodal Diagnostic", representing our core
-pharmaceutical and drug-discovery pitch (e.g., for Daphne Koller, Altos Labs,
-BrainStorm Therapeutics). It proves that when our continuous-time state-space
-model detects a thermodynamic crash, we can deploy exact Layer-wise Relevance
-Propagation (LRP-epsilon) to trace the causality backward in time, isolating the
-specific biological mechanism (the drug target) that triggered the failure, and
-outputting an automated, human-readable JSON diagnostic.
+This task builds "Master Demo 3: The Multimodal Diagnostic", representing our
+core pharmaceutical and drug-discovery pitch (e.g., for Daphne Koller, Altos
+Labs, BrainStorm Therapeutics). It proves that when our continuous-time
+state-space model detects a thermodynamic crash, we can deploy exact Layer-wise
+Relevance Propagation (LRP-epsilon) to trace the causality backward in time,
+isolating the specific biological mechanism (the drug target) that triggered the
+failure, and outputting an automated, human-readable JSON diagnostic.
 
 Task: Create a new script `src/demo/03_multimodal_diagnostic.py` by synthesizing
 the 114-D simulation logic, the `MambaLRPEpsilon` module, and the
@@ -21,7 +21,8 @@ Requirements:
      this instead of NeocorticalEngine because MambaLRPEpsilon explicitly
      targets its `output_proj` and `get_hidden_states` attributes_).
    - Import `MambaLRPEpsilon` from `src.metrics.mamba_lrp`.
-   - Import `ThermodynamicDiagnosticEngine` from `src.metrics.diagnostic_engine`.
+   - Import `ThermodynamicDiagnosticEngine` from
+     `src.metrics.diagnostic_engine`.
    - Import `get_optimal_device` from `src.utils.device`.
    - Setup basic console logging (INFO level).
 
@@ -64,14 +65,14 @@ Requirements:
      `relevance_tensor = lrp.attribute(test_seq, target_time_step=EVENT_FRAME)`.
    - _Override Note:_ Explicitly monkey-patch `engine.compute_attribution` to
      use the `MambaLRPEpsilon.attribute` method so the
-     `ThermodynamicDiagnosticEngine` calls the mathematically exact LRP instead of
-     its naive Input\*Gradient fallback:
+     `ThermodynamicDiagnosticEngine` calls the mathematically exact LRP instead
+     of its naive Input\*Gradient fallback:
      `engine.compute_attribution = lambda x, t: lrp.attribute(x, t)`
    - Instantiate `ThermodynamicDiagnosticEngine(engine)`.
    - Call `generate_diagnostic(test_seq, EVENT_FRAME)`.
-   - Print the resulting `diagnostic_report` beautifully formatted as a JSON string
-     to the console. It MUST successfully identify the spike at T=110 on the
-     `Psi` genes as the primary causal trace.
+   - Print the resulting `diagnostic_report` beautifully formatted as a JSON
+     string to the console. It MUST successfully identify the spike at T=110 on
+     the `Psi` genes as the primary causal trace.
 
 6. **The Publication-Ready Dashboard:**
    - Create

@@ -1,8 +1,10 @@
 ## ROLE
+
 You are an elite Scientific Machine Learning Engineer specializing in JAX and
 Equinox.
 
 ## TASK
+
 We are building `src/echo/physics/thermostat.py`. Implement a robust,
 production-ready Equinox module called `Thermostat` that enforces the
 Fluctuation-Dissipation Theorem. This module integrates the deterministic
@@ -10,6 +12,7 @@ physics (Q and Γ) with stochastic environmental noise over a continuous time
 step (dt) using the Euler-Maruyama method.
 
 ## MATHEMATICAL CONSTRAINTS
+
 1. The Fluctuation-Dissipation Theorem states that environmental noise is
    proportional to internal friction and temperature. For this implementation,
    we define a scalar `temperature` (T). The noise covariance matrix over a time
@@ -25,6 +28,7 @@ step (dt) using the Euler-Maruyama method.
    diffusion.
 
 ## TECHNICAL REQUIREMENTS
+
 - Do NOT use PyTorch. Inherit from `equinox.Module`.
 - The `__init__` method should accept `temperature: float = 1.0` and store it as
   a static field using `equinox.field(static=True)`.
@@ -46,8 +50,10 @@ step (dt) using the Euler-Maruyama method.
   `jnp.float32`.
 
 ## TESTING
+
 Create `tests/echo/physics/test_thermostat.py`. Write a rigorous `pytest` suite
 that:
+
 1. Instantiates the `Thermostat` with a temperature of 1.0.
 2. Creates dummy inputs for `x`, `grad_E`, `Q` (ensure it is skew-symmetric, Q =
    W - W.T), and `L` (ensure it is lower triangular, L = jnp.tril(W)), all of
@@ -57,7 +63,7 @@ that:
 4. Zero-Temperature Test: Instantiate the `Thermostat` with `temperature = 0.0`.
    Run the update and assert that `x_next` exactly equals the deterministic
    Euler step `x + (-(Q - (L @ L.T)) @ grad_E) * dt`.
-5. Asserts that the module can be successfully JIT-compiled (`jax.jit`). 
+5. Asserts that the module can be successfully JIT-compiled (`jax.jit`).
 6. Asserts that the module can be batched (`jax.vmap`) across a batch of `x`,
    `grad_E`, and `keys`, while keeping `Q`, `L`, and `dt` shared across the
    batch (using `in_axes`).

@@ -1,24 +1,31 @@
-We are executing the final step: Phase 4: CI/CD, Sanity Checks, & Detox (The Safety Net).
+We are executing the final step: Phase 4: CI/CD, Sanity Checks, & Detox (The
+Safety Net).
 
-Our goal is to clean out the exploratory "vibe code", lock down our environment using a robust Dockerfile (to prevent mamba-ssm CUDA compilation nightmares for future users), and create a preflight command in the Makefile.
+Our goal is to clean out the exploratory "vibe code", lock down our environment
+using a robust Dockerfile (to prevent mamba-ssm CUDA compilation nightmares for
+future users), and create a preflight command in the Makefile.
 
 Please execute the following steps:
 
-1. The Great Purge (Archiving Vibe Code)
-The src/demo/raw/ directory and several scripts in src/demo/ contain legacy scripts used to find the math. They are cluttering the codebase.
+1. The Great Purge (Archiving Vibe Code) The src/demo/raw/ directory and several
+   scripts in src/demo/ contain legacy scripts used to find the math. They are
+   cluttering the codebase.
 
 Create a new directory at the root of the project called archive/.
 
 Move the entire src/demo/raw/ folder into archive/raw_demos/.
 
-Move the exploratory 01_ through 05_ scripts from src/demo/ into archive/demos/. (Leave 10_human_rejuvenation_sim.py and 11_ratchet_simulator.py where they are, as they are active simulators).
+Move the exploratory 01_ through 05_ scripts from src/demo/ into archive/demos/.
+(Leave 10_human_rejuvenation_sim.py and 11_ratchet_simulator.py where they are,
+as they are active simulators).
 
 Delete any empty directories left behind.
 
-2. Lock the Dependencies (requirements.txt)
-Ensure the requirements.txt at the root of the project has exactly these standard dependencies (no versions specified except where critical, allowing pip to resolve):
+2. Lock the Dependencies (requirements.txt) Ensure the requirements.txt at the
+   root of the project has exactly these standard dependencies (no versions
+   specified except where critical, allowing pip to resolve):
 
-```Plaintext
+````Plaintext
 torch>=2.1.0
 numpy
 pandas
@@ -72,10 +79,11 @@ COPY . .
 
 # Default command
 CMD ["bash"]
-```
+````
 
-4. The CI/CD Preflight (Makefile)
-We need a single command to run our smoke_test.py (which we built in Phase 1) before pushing to GitHub or launching a cloud cluster.
+4. The CI/CD Preflight (Makefile) We need a single command to run our
+   smoke_test.py (which we built in Phase 1) before pushing to GitHub or
+   launching a cloud cluster.
 
 Add the following targets to the Makefile:
 
@@ -92,8 +100,8 @@ docker-build:
 	docker build -t stable-basin:latest .
 ```
 
-5. Update the README.md
-Replace the "Quickstart: Running the Routes" section in README.md with the new pipeline instructions:
+5. Update the README.md Replace the "Quickstart: Running the Routes" section in
+   README.md with the new pipeline instructions:
 
 ```Markdown
 ### Quickstart: Push-Button Cloud Execution
@@ -110,5 +118,5 @@ This command spins up parallel workers to evaluate the architectures simultaneou
 *All inference latencies, KSM traces, and MambaLRP Causal Diagnostic JSONs will automatically sync to your W&B cloud dashboard.*
 ```
 
-6. Verification
-Run make preflight to confirm the smoke test still passes after the file system cleanup.
+6. Verification Run make preflight to confirm the smoke test still passes after
+   the file system cleanup.

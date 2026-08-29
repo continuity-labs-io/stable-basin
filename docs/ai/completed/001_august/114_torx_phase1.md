@@ -1,26 +1,42 @@
-Please execute Phase 1 of our Torx evaluation (Torx Workflow & DFG Basics) by performing the following steps:
+Please execute Phase 1 of our Torx evaluation (Torx Workflow & DFG Basics) by
+performing the following steps:
 
 1. **Update Dependencies:**
-   - In `pyproject.toml`, add `"extro-torx"`, `"jax"`, `"jaxlib"`, and `"equinox"` to the main `dependencies` array.
-   - In `environment.yml`, under the `pip:` section, add `- extro-torx`. Ensure `jax` and `jaxlib` are included.
+   - In `pyproject.toml`, add `"extro-torx"`, `"jax"`, `"jaxlib"`, and
+     `"equinox"` to the main `dependencies` array.
+   - In `environment.yml`, under the `pip:` section, add `- extro-torx`. Ensure
+     `jax` and `jaxlib` are included.
 
 2. **Update Hardware Substrate (`src/core/substrate.py`):**
    - Import `os` at the top of the file.
    - Add a `JAXSubstrate(HardwareSubstrate)` class.
-     - Its `device` property should return the string `"jax"` (since JAX handles its own device placement transparently via XLA).
-     - Its `is_mps`, `is_cuda`, and `is_cpu` properties can return `False` for now.
-     - Implement `synchronize()`, `empty_cache()`, and `current_memory_mb()` with a simple `pass` or returning `0.0`.
-   - Modify `SubstrateFactory.get_substrate(cls, allow_mps: bool = True, backend: str = "pytorch")`:
+     - Its `device` property should return the string `"jax"` (since JAX handles
+       its own device placement transparently via XLA).
+     - Its `is_mps`, `is_cuda`, and `is_cpu` properties can return `False` for
+       now.
+     - Implement `synchronize()`, `empty_cache()`, and `current_memory_mb()`
+       with a simple `pass` or returning `0.0`.
+   - Modify
+     `SubstrateFactory.get_substrate(cls, allow_mps: bool = True, backend: str = "pytorch")`:
      - Add the `backend` argument.
-     - If `backend == "jax"`, execute `os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"` (to prevent JAX from hogging all VRAM and crashing PyTorch), then instantiate and return `JAXSubstrate()`. Do not save it to `cls._instance` to preserve the PyTorch singleton.
+     - If `backend == "jax"`, execute
+       `os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"` (to prevent JAX
+       from hogging all VRAM and crashing PyTorch), then instantiate and return
+       `JAXSubstrate()`. Do not save it to `cls._instance` to preserve the
+       PyTorch singleton.
 
 3. **Update Device Utility (`src/utils/device.py`):**
-   - Modify `get_optimal_device(verbose: bool = False, allow_mps: bool = True, backend: str = "pytorch")` to accept the `backend` parameter.
-   - Update the function body to use `SubstrateFactory.get_substrate(allow_mps=allow_mps, backend=backend)`. If the backend is `"jax"`, log the initialization and return `"jax"`.
+   - Modify
+     `get_optimal_device(verbose: bool = False, allow_mps: bool = True, backend: str = "pytorch")`
+     to accept the `backend` parameter.
+   - Update the function body to use
+     `SubstrateFactory.get_substrate(allow_mps=allow_mps, backend=backend)`. If
+     the backend is `"jax"`, log the initialization and return `"jax"`.
 
 4. **Create Torx Sandbox (`src/demo/torx/dfg_basics.py`):**
    - Create the directory `src/demo/torx/` with an empty `__init__.py`.
-   - Create `src/demo/torx/dfg_basics.py` with the following code to demonstrate basic Torx DFG and ChainFactor functionality:
+   - Create `src/demo/torx/dfg_basics.py` with the following code to demonstrate
+     basic Torx DFG and ChainFactor functionality:
 
 ```python
 """
@@ -109,10 +125,10 @@ def main():
 
     # Execute the DFG
     initial_signal = {"in_signal": jnp.array([1.5], dtype=jnp.float32)}
-    
+
     # The DFG automatically traverses topological order and passes data
     final_output = graph.sample(key, inputs=initial_signal, params={})
-    
+
     logger.info(f"    -> Initial Signal: {initial_signal['in_signal'].item():.2f}")
     logger.info(f"    -> DFG Final Output: {final_output.item():.2f} (Expected: 8.00)")
 
@@ -139,12 +155,12 @@ def main():
     )
 
     initial_state = {"h": jnp.array([10.0], dtype=jnp.float32)}
-    
+
     # Execute the recurrent chain
     final_state = ssm_chain.sample(key, initial_state, params=None)
     logger.info(f"    -> Initial Homeostatic State: {initial_state['h'].item():.2f}")
     logger.info(f"    -> Final State after 5 steps: {final_state.item():.2f}")
-    
+
     logger.info("\n[SUCCESS] Torx/JAX substrate and DFG primitives verified.")
     logger.info("="*60 + "\n")
 
@@ -154,8 +170,17 @@ if __name__ == "__main__":
 
 ### What This Gives Us
 
-Once the agent finishes and you run `python src/demo/torx/dfg_basics.py`, you will have definitively proven two things:
+Once the agent finishes and you run `python src/demo/torx/dfg_basics.py`, you
+will have definitively proven two things:
 
-1.  **Non-Destructive Coexistence:** By injecting `XLA_PYTHON_CLIENT_PREALLOCATE=false`, we prevent JAX from aggressively claiming 100% of your VRAM. This allows Torx and PyTorch to safely inhabit the exact same environment moving forward.
+1.  **Non-Destructive Coexistence:** By injecting
+    `XLA_PYTHON_CLIENT_PREALLOCATE=false`, we prevent JAX from aggressively
+    claiming 100% of your VRAM. This allows Torx and PyTorch to safely inhabit
+    the exact same environment moving forward.
 
-2.  **Topological Fluidity:** You'll see how completely different this is from explicit PyTorch arrays. In Torx, you define the *causal ports* (`porting_fn`) and the `DFG` engine dynamically handles all the matrix routing and parameter tracking. Crucially, we prove that `ChainFactor` utilizes `jax.lax.scan` perfectly—this is the exact same underlying mechanism `Mamba` uses to achieve its blistering fast sequence unrolling.
+2.  **Topological Fluidity:** You'll see how completely different this is from
+    explicit PyTorch arrays. In Torx, you define the _causal ports_
+    (`porting_fn`) and the `DFG` engine dynamically handles all the matrix
+    routing and parameter tracking. Crucially, we prove that `ChainFactor`
+    utilizes `jax.lax.scan` perfectly—this is the exact same underlying
+    mechanism `Mamba` uses to achieve its blistering fast sequence unrolling.
