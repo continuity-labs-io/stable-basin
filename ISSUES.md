@@ -57,3 +57,8 @@ actual training and multi-sensor fusion:
   large scale.
 - **Task**: Run the loss ablation tests via `make loss-ablation` to get a sense
   of what loss function to use for biological homeostasis modeling.
+
+### Waddington Collapse Benchmark Execution
+
+- **Issue**: The `waddington_collapse.py` benchmark script currently evaluates an untrained `PredictiveCodingGraph` on the first 1,000 frames (`dataset[0]`) of the `PharmacologicalShockDataset`. Since the HD-MEA recording samples at a high frequency, 1,000 frames represents a fraction of a second before the drug takes effect. An untrained network also lacks a formed attractor basin, meaning its curvature metrics are effectively random.
+- **Task**: We need to write a training loop to burn-in the `PredictiveCodingGraph` on healthy baseline sequences and then run the benchmark explicitly on the sequence where the pharmacological shock begins in the dataset.
