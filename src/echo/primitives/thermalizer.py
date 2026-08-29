@@ -117,8 +117,15 @@ class ThermoFlowFactor(torx.factor.AbstractReferenceFactor):
 
 class TorxThermalizer(eqx.Module):
     """
-    Continuous-time compiler for the biological simulation,
-    unrolling the ThermoFlowFactor sequentially over n_steps.
+    A temporal unroller (or numerical integration loop) for the simulation.
+    
+    While "Thermalizer" is a term from physics (referring to a system reaching 
+    thermal equilibrium over time), in standard computational terms, this class acts 
+    as a Recurrent Neural Network (RNN) unroller or a numerical ODE solver loop.
+    
+    It takes a single-step physical transition function (the factor) and applies it 
+    iteratively over a fixed number of continuous timesteps (`n_steps`), chaining 
+    the outputs together to produce a full time-series trajectory.
     """
     n_steps: int = eqx.field(static=True)
     graph: torx.DFG
