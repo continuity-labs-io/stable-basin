@@ -47,41 +47,12 @@ def run_waddington_collapse_benchmark(data_tensor: torch.Tensor, output_plot: st
     # Attach HessianCurvatureTracker to the Macro EBM
     tracker = HessianCurvatureTracker(macro.ebm)
     
-    # 3. Execution Loop
-    @eqx.filter_jit
-    def unroll_with_data(g: PredictiveCodingGraph, seq: jax.Array, x_init: jax.Array, dt: float, rng: jax.random.PRNGKey):
-        """
-        Unrolls the continuous trajectory by feeding data into the Micro Observer's sensory nodes.
-        """
-        def step_fn(state, carry):
-            data_frame, step_key = carry
-            
-            factor = g.thermalizer.graph.sites[0].factor.base
-            d_int = factor.micro_hull.d_internal
-            
-            micro_state = state[:g.d_micro]
-            macro_state = state[g.d_micro:]
-            
-            # Inject sensory data dynamically at each time step
-            micro_state = jax.lax.dynamic_update_slice(micro_state, data_frame, (d_int,))
-            state_in = jnp.concatenate([micro_state, macro_state])
-            
-            inputs = {"x": state_in, "dt": dt}
-            next_state = factor.sample(step_key, inputs, None)
-            
-            return next_state, next_state
-            
-        keys = jax.random.split(rng, seq.shape[0])
-        _, traj = jax.lax.scan(step_fn, x_init, (seq, keys))
-        return traj
-        
     # Initialize random states
     x_micro_init = jax.random.normal(k4, (micro.hull.d_state,))
     x_macro_init = jax.random.normal(k4, (macro.hull.d_state,))
-    state_init = jnp.concatenate([x_micro_init, x_macro_init])
     
     dt = 0.01
-    trajectory = unroll_with_data(graph, data_seq, state_init, dt, k4)
+    trajectory = graph.forced_unroll(k4, x_micro_init, x_macro_init, dt, data_seq)
     
     # Extract Macro-State trajectory
     macro_traj = trajectory[:, graph.d_micro:]

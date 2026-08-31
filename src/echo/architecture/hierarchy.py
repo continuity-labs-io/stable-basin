@@ -9,7 +9,7 @@ from src.echo.primitives.ebm import PrecisionWeightedEBM
 from src.echo.physics.solenoidal import SolenoidalFlow
 from src.echo.physics.dissipative import DissipativeFriction
 from src.echo.physics.thermostat import Thermostat
-from src.echo.primitives.thermalizer import TorxThermalizer
+from src.echo.primitives.thermalizer import TorxThermalizer, ForcedTorxThermalizer
 from src.echo.architecture.observer import MarkovBlanketObserver
 
 
@@ -173,6 +173,7 @@ class PredictiveCodingGraph(eqx.Module):
     """
     W_down: eqx.nn.Linear
     thermalizer: TorxThermalizer
+    forced_thermalizer: ForcedTorxThermalizer
     d_micro: int = eqx.field(static=True)
     d_macro: int = eqx.field(static=True)
     
@@ -204,6 +205,11 @@ class PredictiveCodingGraph(eqx.Module):
             n_steps=n_steps,
             d_state=d_state
         )
+        self.forced_thermalizer = ForcedTorxThermalizer(
+            flow_factor=factor,
+            d_state=d_state,
+            injection_start_idx=micro_observer.hull.d_internal
+        )
         
     def __call__(self, key: jax.random.PRNGKey, x_micro_init: jax.Array, x_macro_init: jax.Array, dt: float) -> jax.Array:
         """
@@ -211,3 +217,10 @@ class PredictiveCodingGraph(eqx.Module):
         """
         x_init = jnp.concatenate([x_micro_init, x_macro_init])
         return self.thermalizer(key, x_init, dt)
+
+    def forced_unroll(self, key: jax.random.PRNGKey, x_micro_init: jax.Array, x_macro_init: jax.Array, dt: float, seq: jax.Array) -> jax.Array:
+        """
+        Executes the unrolled joint simulation over an external sequence.
+        """
+        x_init = jnp.concatenate([x_micro_init, x_macro_init])
+        return self.forced_thermalizer(key, x_init, dt, seq)

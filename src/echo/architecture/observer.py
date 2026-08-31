@@ -9,7 +9,7 @@ from src.echo.primitives.ebm import PrecisionWeightedEBM
 from src.echo.physics.solenoidal import SolenoidalFlow
 from src.echo.physics.dissipative import DissipativeFriction
 from src.echo.physics.thermostat import Thermostat
-from src.echo.primitives.thermalizer import TorxThermalizer
+from src.echo.primitives.thermalizer import TorxThermalizer, ForcedTorxThermalizer
 
 class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
     """
@@ -106,6 +106,7 @@ class MarkovBlanketObserver(eqx.Module):
     dissipative: DissipativeFriction
     thermostat: Thermostat
     thermalizer: TorxThermalizer
+    forced_thermalizer: ForcedTorxThermalizer
 
     def __init__(
         self,
@@ -149,12 +150,23 @@ class MarkovBlanketObserver(eqx.Module):
             n_steps=n_steps, 
             d_state=d_state
         )
+        self.forced_thermalizer = ForcedTorxThermalizer(
+            flow_factor=masked_factor,
+            d_state=d_state,
+            injection_start_idx=self.hull.d_internal
+        )
 
     def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float) -> jax.Array:
         """
         Executes the unrolled simulation over n_steps.
         """
         return self.thermalizer(key, x_init, dt)
+
+    def forced_unroll(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array) -> jax.Array:
+        """
+        Executes the unrolled simulation over an external sequence.
+        """
+        return self.forced_thermalizer(key, x_init, dt, seq)
 
     def extract_internal_state(self, x: jax.Array) -> dict:
         """

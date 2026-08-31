@@ -168,3 +168,32 @@ class TorxThermalizer(eqx.Module):
         """
         inputs = {"x_init": x_init, "dt_constant": jnp.array(dt, dtype=jnp.float32)}
         return self.graph.sample(key, inputs=inputs, params={})
+
+class ForcedTorxThermalizer(eqx.Module):
+    """
+    A temporal unroller for forced (open) systems driven by an external time-series sequence.
+    """
+    flow_factor: torx.factor.AbstractReferenceFactor
+    d_state: int = eqx.field(static=True)
+    injection_start_idx: int = eqx.field(static=True)
+
+    def __init__(self, flow_factor: torx.factor.AbstractReferenceFactor, d_state: int, injection_start_idx: int):
+        self.flow_factor = flow_factor
+        self.d_state = d_state
+        self.injection_start_idx = injection_start_idx
+
+    @eqx.filter_jit
+    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array) -> jax.Array:
+        def step_fn(state, carry):
+            data_frame, step_key = carry
+            
+            state = jax.lax.dynamic_update_slice(state, data_frame, (self.injection_start_idx,))
+            inputs = {"x": state, "dt": jnp.array(dt, dtype=jnp.float32)}
+            
+            next_state = self.flow_factor.sample(step_key, inputs=inputs, params={})
+            
+            return next_state, next_state
+
+        keys = jax.random.split(key, seq.shape[0])
+        _, traj = jax.lax.scan(step_fn, x_init, (seq, keys))
+        return traj
