@@ -2,7 +2,7 @@ Design Document: Stable Basin 2.0 (Torx Evaluation & Hierarchical Enslavement)
 
 1. Overview and Philosophy
 
-The Holy Grail: To understand and model how a dynamical system with hierarchical
+Objective: To understand and model how a dynamical system with hierarchical
 components exhibits multiple levels of control. Specifically, modeling how slow,
 macroscopic "order parameters" (the Observer) thermodynamically enslave fast,
 microscopic variables (the Vessel / Cells), thereby generating a hierarchical,
@@ -95,7 +95,7 @@ to encode a stable, long-term memory state.
 Deliverable: A script (src/demo/torx/observer_zero.py) showing the Observer
 successfully extracting a stable macro-state from noisy inputs.
 
-Phase 4: Hierarchical Enslavement (The Holy Grail)
+Phase 4: Hierarchical Enslavement
 
 Objective: Close the cybernetic loop. Prove that the macro-state (Observer)
 enslaves the micro-state (Vessel) via thermodynamic energy minimization.
