@@ -58,21 +58,14 @@ clinical workflow on a simulated aging patient ("Alice").
 
 ## OUTPUT
 
-- The script should print a highly readable, dramatic terminal readout clearly
+- The script should print a highly readable, terminal readout clearly
   separating the 5 steps.
 - Use the `logging` library to create visually distinct section headers (e.g.,
   `=== Step 3: The Hardware Ping ===`).
-- Generate a simple Matplotlib dashboard `output/echo/clinical_workflow.png`
+- Generate a simple Matplotlib dashboard `output/echo/active_inference_clinical_workflow.png`
   showing 2 subplots: a) A bar chart comparing Micro vs Macro Surprisal from the
   Ping phase. b) A bar chart comparing the Hessian Trace (Steepness) of Degraded
   Alice vs. Ideal Alice.
-
-## TESTING
-
-Create `tests/echo/benchmarks/test_clinical_workflow_demo.py` that simply
-imports the script's `main()` function, mocks `matplotlib.pyplot.savefig` to
-prevent file I/O, and asserts that the `main()` function executes from start to
-finish without raising any JAX errors.
 
 Write production-grade, clean Python. Do not hallucinate external database
 dependencies; rely purely on the physical matrices of the model.
