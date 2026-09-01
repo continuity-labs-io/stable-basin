@@ -60,7 +60,8 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         dt = inputs["dt"]
 
         def energy_fn(state):
-            e, _ = self.ebm(state)
+            state_obs = self.hull.apply_sensory_degradation(state)
+            e, _ = self.ebm(state_obs)
             return e
             
         grad_E = jax.grad(energy_fn)(x)
@@ -119,9 +120,10 @@ class MarkovBlanketObserver(eqx.Module):
         n_steps: int,
         temperature: float,
         key: jax.random.PRNGKey,
+        D_s: jax.Array | None = None,
         epsilon: float = 1e-4
     ):
-        self.hull = MarkovHull(d_internal, d_sensory, d_active, d_external)
+        self.hull = MarkovHull(d_internal, d_sensory, d_active, d_external, D_s=D_s)
         d_state = self.hull.d_state
         
         k1, k2, k3 = jax.random.split(key, 3)

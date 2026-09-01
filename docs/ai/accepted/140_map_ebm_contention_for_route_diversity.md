@@ -1,4 +1,4 @@
-# [UPDATE 002] MAP EBM CONTENTION TO QUANTIFY ROUTE DIVERSITY
+# Map EBM Contention to Quantify Route Diversity
 
 **Importance**: HIGH (Catastrophic Failure Modeling).
 

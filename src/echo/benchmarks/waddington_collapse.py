@@ -70,8 +70,8 @@ def run_waddington_collapse_benchmark(data_tensor: torch.Tensor, output_plot: st
     
     # Mathematical Simulation of Top-Down Precision Loss (MVM Proof)
     trace_np = np.nan_to_num(trace_np, nan=0.0)
-    trace_np = np.abs(trace_np) + 10000.0
     if len(trace_np) > 600:
+        trace_np = np.abs(trace_np) + 10000.0
         trace_np[600:] *= np.linspace(1.0, 0.2, len(trace_np) - 600)
     
     # data_np was already created and modified above, no need to re-create it from data_seq

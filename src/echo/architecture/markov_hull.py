@@ -11,19 +11,29 @@ class MarkovHull(eqx.Module):
     and external (η) components.
     Enforces the fundamental law: internal state must not interact directly with 
     the external state.
+    
+    Attributes:
+        d_internal: Dimensionality of the internal state (μ).
+        d_sensory: Dimensionality of the sensory state (s).
+        d_active: Dimensionality of the active state (a).
+        d_external: Dimensionality of the external state (η).
+        d_state: Total dimensionality of the universe state (μ + s + a + η).
+        D_s: Optional Sensory Degradation Matrix to model sensory blindness.
     """
     d_internal: int = eqx.field(static=True)
     d_sensory: int = eqx.field(static=True)
     d_active: int = eqx.field(static=True)
     d_external: int = eqx.field(static=True)
     d_state: int = eqx.field(static=True)
+    D_s: jax.Array | None = eqx.field(default=None)
 
     def __init__(
         self,
         d_internal: int,
         d_sensory: int,
         d_active: int,
-        d_external: int
+        d_external: int,
+        D_s: jax.Array | None = None
     ):
         """
         Initializes the MarkovHull with component dimensions.
@@ -33,6 +43,7 @@ class MarkovHull(eqx.Module):
         self.d_active = d_active
         self.d_external = d_external
         self.d_state = d_internal + d_sensory + d_active + d_external
+        self.D_s = D_s
 
     def partition(self, x: Float[Array, "d_state"]) -> Dict[str, Float[Array, "..."]]:
         """
@@ -71,6 +82,18 @@ class MarkovHull(eqx.Module):
             partitions["active"],
             partitions["external"]
         ])
+
+    def apply_sensory_degradation(self, x: jax.Array) -> jax.Array:
+        """
+        Degrades the sensory partition of the state if a sensory degradation matrix (D_s) is provided.
+        """
+        if self.D_s is None:
+            return x
+            
+        partitions = self.partition(x)
+        s_obs = self.D_s @ partitions["sensory"]
+        partitions["sensory"] = s_obs
+        return self.reconstruct(partitions)
 
     def get_topology_mask(self) -> Float[Array, "d_state d_state"]:
         """

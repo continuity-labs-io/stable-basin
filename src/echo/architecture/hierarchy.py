@@ -98,11 +98,14 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
 
         # b) Define joint energy closure
         def joint_energy_fn(x_u, x_m):
-            E_micro, _ = self.micro_ebm(x_u)
-            E_macro, Pi_macro = self.macro_ebm(x_m)
+            x_u_obs = self.micro_hull.apply_sensory_degradation(x_u)
+            x_m_obs = self.macro_hull.apply_sensory_degradation(x_m)
             
-            belief = self.W_down(x_m)
-            diff = x_u - belief
+            E_micro, _ = self.micro_ebm(x_u_obs)
+            E_macro, Pi_macro = self.macro_ebm(x_m_obs)
+            
+            belief = self.W_down(x_m_obs)
+            diff = x_u_obs - belief
             
             # Project diff into macro space to align with Pi_macro's shape
             diff_proj = self.W_down.weight.T @ diff
