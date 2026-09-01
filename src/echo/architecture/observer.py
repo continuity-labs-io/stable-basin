@@ -48,7 +48,8 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         
         self.input_ports = {
             "x": jax.ShapeDtypeStruct((d_state,), jnp.float32),
-            "dt": jax.ShapeDtypeStruct((), jnp.float32)
+            "dt": jax.ShapeDtypeStruct((), jnp.float32),
+            "omega_ext": jax.ShapeDtypeStruct((d_state,), jnp.float32)
         }
         self.output_spec = jax.ShapeDtypeStruct((d_state,), jnp.float32)
 
@@ -58,6 +59,7 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
     def sample(self, key, inputs, params, info=None, site_info=None, return_aux=False):
         x = inputs["x"]
         dt = inputs["dt"]
+        omega_ext = inputs.get("omega_ext", jnp.zeros(self.d_state, dtype=jnp.float32))
 
         def energy_fn(state):
             state_obs = self.hull.apply_sensory_degradation(state)
@@ -88,7 +90,8 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             Q=Q_masked,
             L=S,
             dt=dt,
-            key=key
+            key=key,
+            omega_ext=omega_ext
         )
         
         if return_aux:
@@ -164,11 +167,11 @@ class MarkovBlanketObserver(eqx.Module):
         """
         return self.thermalizer(key, x_init, dt)
 
-    def forced_unroll(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array) -> jax.Array:
+    def forced_unroll(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None) -> jax.Array:
         """
         Executes the unrolled simulation over an external sequence.
         """
-        return self.forced_thermalizer(key, x_init, dt, seq)
+        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq)
 
     def extract_internal_state(self, x: jax.Array) -> dict:
         """

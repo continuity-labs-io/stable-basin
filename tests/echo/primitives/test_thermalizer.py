@@ -108,26 +108,28 @@ def test_thermo_flow_factor_torx_dfg():
     # Create inputs dictionary for DFG
     x = jax.random.normal(key_x, (d_state,), dtype=jnp.float32)
     
+    dt_tensor = jnp.array(dt)
+    
     graph = DFG(
         sites=(
             Site(
                 name="thermo_flow",
                 factor=factor,
-                parents=("x", "dt"),
-                porting_fn=("x", "dt"),
+                parents=("x", "dt", "omega_ext"),
+                porting_fn=("x", "dt", "omega_ext"),
                 param_key=None, info_key=None, site_info=None
             ),
         ),
         input_ports={
             "x": jax.ShapeDtypeStruct((d_state,), jnp.float32),
-            "dt": jax.ShapeDtypeStruct((), jnp.float32)
+            "dt": jax.ShapeDtypeStruct((), jnp.float32),
+            "omega_ext": jax.ShapeDtypeStruct((d_state,), jnp.float32)
         },
         output_name="thermo_flow"
     )
     
     # ACT
-    inputs = {"x": x, "dt": dt}
-    x_next = graph.sample(key_sample, inputs=inputs, params={})
+    x_next = graph.sample(key_sample, inputs={"x": x, "dt": dt_tensor, "omega_ext": jnp.zeros(d_state)}, params={})
     
     # ASSERT
     assert x_next.shape == (d_state,)
@@ -142,6 +144,7 @@ def test_thermo_flow_factor_differentiability():
     # ARRANGE
     d_state = 4
     dt = 0.1
+    dt_tensor = jnp.array(dt)
     key_comp, key_sample, key_x = jax.random.split(jax.random.PRNGKey(777), 3)
     
     ebm, solenoidal, dissipative, thermostat = create_mock_components(d_state, key_comp)
@@ -161,14 +164,15 @@ def test_thermo_flow_factor_differentiability():
             Site(
                 name="thermo_flow",
                 factor=factor,
-                parents=("x", "dt"),
-                porting_fn=("x", "dt"),
+                parents=("x", "dt", "omega_ext"),
+                porting_fn=("x", "dt", "omega_ext"),
                 param_key=None, info_key=None, site_info=None
             ),
         ),
         input_ports={
             "x": jax.ShapeDtypeStruct((d_state,), jnp.float32),
-            "dt": jax.ShapeDtypeStruct((), jnp.float32)
+            "dt": jax.ShapeDtypeStruct((), jnp.float32),
+            "omega_ext": jax.ShapeDtypeStruct((d_state,), jnp.float32)
         },
         output_name="thermo_flow"
     )
@@ -176,8 +180,7 @@ def test_thermo_flow_factor_differentiability():
     # Define dummy loss mapping DFG to scalar
     @eqx.filter_value_and_grad
     def loss_fn(model_graph, input_x, sample_key):
-        inputs = {"x": input_x, "dt": dt}
-        x_next = model_graph.sample(sample_key, inputs=inputs, params={})
+        x_next = model_graph.sample(sample_key, inputs={"x": input_x, "dt": dt_tensor, "omega_ext": jnp.zeros(d_state)}, params={})
         return jnp.sum(x_next ** 2)
         
     # ACT

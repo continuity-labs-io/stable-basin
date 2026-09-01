@@ -28,7 +28,8 @@ class Thermostat(eqx.Module):
         Q: Float[Array, "d_state d_state"],
         L: Float[Array, "d_state d_state"],
         dt: float,
-        key: PRNGKeyArray
+        key: PRNGKeyArray,
+        omega_ext: jax.Array | None = None
     ) -> Float[Array, "d_state"]:
         """
         Computes the next state using the Euler-Maruyama method.
@@ -40,6 +41,7 @@ class Thermostat(eqx.Module):
             L: Lower-triangular Cholesky factor from the DissipativeFriction module.
             dt: Scalar continuous time step.
             key: PRNG key for generating Wiener process noise.
+            omega_ext: Optional external thermodynamic force vector to apply as an explicit perturbation to the deterministic drift.
             
         Returns:
             The next state vector of shape (d_state,).
@@ -53,6 +55,9 @@ class Thermostat(eqx.Module):
         
         # 2. Deterministic drift: -(Q - Gamma) @ grad_E
         drift = -(Q - Gamma) @ grad_E
+        
+        if omega_ext is not None:
+            drift = drift + omega_ext
         
         # 3. Stochastic diffusion (noise): sqrt(2 * T * dt) * (L @ dW)
         dW = jax.random.normal(key, shape=x.shape, dtype=jnp.float32)
