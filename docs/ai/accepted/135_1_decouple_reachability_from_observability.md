@@ -1,4 +1,4 @@
-# [UPDATE 001] DECOUPLE REACHABILITY FROM OBSERVABILITY (SILENT DRIFT)
+# 135. Decouple Reachability from Observability (Silent Drift)
 
 **Importance**: CRITICAL (The Paradigm Shift).
 
