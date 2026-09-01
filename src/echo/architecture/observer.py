@@ -13,18 +13,18 @@ from src.echo.primitives.thermalizer import TorxThermalizer, ForcedTorxThermaliz
 
 class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
     """
-    Custom Torx factor that applies the Markov Blanket topological mask
-    to the underlying physical matrices to enforce conditional independence.
+    Custom Torx factor that applies the Markov Blanket topological mask to the
+    underlying physical matrices to enforce conditional independence.
     
-    A Note on Factor Graphs:
-    In traditional computer science graph theory, a "Factor Graph" is a bipartite 
-    graph with two types of nodes: "Variable Nodes" (representing state/data) and 
-    "Factor Nodes" (representing computations or constraints applied to that data).
+    A Note on Factor Graphs: In traditional computer science graph theory, a
+    "Factor Graph" is a bipartite graph with two types of nodes: "Variable
+    Nodes" (representing state/data) and "Factor Nodes" (representing
+    computations or constraints applied to that data).
     
-    By inheriting from `AbstractReferenceFactor`, this class defines a single 
-    computational "Factor Node". In our simulation, it takes in the current state 
-    variables (`x` and `dt`), computes the physical thermodynamic step, and outputs 
-    the resulting next state variable.
+    By inheriting from `AbstractReferenceFactor`, this class defines a single
+    computational "Factor Node". In our simulation, it takes in the current
+    state variables (`x` and `dt`), computes the physical thermodynamic step,
+    and outputs the resulting next state variable.
     """
     ebm: PrecisionWeightedEBM
     solenoidal: SolenoidalFlow
@@ -49,7 +49,8 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         self.input_ports = {
             "x": jax.ShapeDtypeStruct((d_state,), jnp.float32),
             "dt": jax.ShapeDtypeStruct((), jnp.float32),
-            "omega_ext": jax.ShapeDtypeStruct((d_state,), jnp.float32)
+            "omega_ext": jax.ShapeDtypeStruct((d_state,), jnp.float32),
+            "q_ext": jax.ShapeDtypeStruct((d_state,), jnp.float32)
         }
         self.output_spec = jax.ShapeDtypeStruct((d_state,), jnp.float32)
 
@@ -60,6 +61,7 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         x = inputs["x"]
         dt = inputs["dt"]
         omega_ext = inputs.get("omega_ext", jnp.zeros(self.d_state, dtype=jnp.float32))
+        q_ext = inputs.get("q_ext", jnp.zeros(self.d_state, dtype=jnp.float32))
 
         def energy_fn(state):
             state_obs = self.hull.apply_sensory_degradation(state)
@@ -78,7 +80,8 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         Q_masked = Q * M
         Gamma_masked = Gamma_orig * M
         
-        # Safely compute S via eigendecomposition to restore positive-definiteness
+        # Safely compute S via eigendecomposition to restore
+        # positive-definiteness
         evals, evecs = jnp.linalg.eigh(Gamma_masked + self.epsilon * jnp.eye(self.d_state))
         evals = jnp.maximum(evals, 0.0)
         S = evecs @ jnp.diag(jnp.sqrt(evals))
@@ -91,7 +94,8 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             L=S,
             dt=dt,
             key=key,
-            omega_ext=omega_ext
+            omega_ext=omega_ext,
+            q_ext=q_ext
         )
         
         if return_aux:
@@ -167,11 +171,11 @@ class MarkovBlanketObserver(eqx.Module):
         """
         return self.thermalizer(key, x_init, dt)
 
-    def forced_unroll(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None) -> jax.Array:
+    def forced_unroll(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_seq: jax.Array | None = None) -> jax.Array:
         """
         Executes the unrolled simulation over an external sequence.
         """
-        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq)
+        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq, q_seq=q_seq)
 
     def extract_internal_state(self, x: jax.Array) -> dict:
         """

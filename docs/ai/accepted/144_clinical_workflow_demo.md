@@ -7,7 +7,7 @@ computational biology.
 
 We are building `src/echo/benchmarks/clinical_workflow_demo.py`. This is a
 standalone execution script that demonstrates the 5-Step Active Inference
-clinical workflow on a simulated aging patient ("Bob").
+clinical workflow on a simulated aging patient ("Alice").
 
 ## TECHNICAL REQUIREMENTS
 
@@ -18,14 +18,14 @@ clinical workflow on a simulated aging patient ("Bob").
 
 ## EXECUTE THE 5-STEP WORKFLOW
 
-1. **Listen (Initialize Degraded Bob):**
-   - Instantiate a `PredictiveCodingGraph` representing Bob's currently degraded
+1. **Listen (Initialize Degraded Alice):**
+   - Instantiate a `PredictiveCodingGraph` representing Alice's currently degraded
      digital twin (Twin A). Initialize it with artificially low weights for
      Friction and Precision to simulate aging.
    - Define a resting state `x_micro` and `x_macro` using random noise.
 
 2. **Measure Geometry (The Hessian):**
-   - Instantiate the `HessianCurvatureTracker` and run it on Bob's Macro
+   - Instantiate the `HessianCurvatureTracker` and run it on Alice's Macro
      Observer using his resting state.
    - Log and print the mean Hessian Trace. (e.g., "STEP 2: Measuring Waddington
      Geometry... Trace = X. Attractor basin is flattened.").
@@ -39,13 +39,13 @@ clinical workflow on a simulated aging patient ("Bob").
 
 4. **Compute Counterfactual (The Reference Twin):**
    - Instantiate the `DigitalTwinAnnealer`.
-   - Call `anneal_twin()` on Bob's degraded graph to generate `Twin B` (Optimal
-     Bob).
+   - Call `anneal_twin()` on Alice's degraded graph to generate `Twin B` (Optimal
+     Alice).
    - Print confirmation that Friction (Γ) and Precision (Π) have been restored
      _in silico_ without needing a population database.
 
-5. **Actuate (The Bio-Blade Delta):**
-   - We must calculate the restorative frequency required to heal Bob.
+5. **Actuate (The Hardware Delta):**
+   - We must calculate the restorative frequency required to heal Alice.
    - Calculate the deterministic drift (the physical force vector
      `-(Q - Γ) @ grad_E`) for the un-annealed Twin A at the current state.
    - Calculate the deterministic drift for the annealed Twin B at the current
@@ -53,7 +53,7 @@ clinical workflow on a simulated aging patient ("Bob").
    - The required restorative actuation vector is exactly the difference:
      `Q_actuation = drift_B - drift_A`.
    - Print the L2 norm of `Q_actuation`. Log: "This is the exact exogenous
-     energy the Bio-Blade hardware must inject to force the physical tissue back
+     energy the hardware must inject to force the physical tissue back
      into its youthful limit cycle."
 
 ## OUTPUT
@@ -61,11 +61,11 @@ clinical workflow on a simulated aging patient ("Bob").
 - The script should print a highly readable, dramatic terminal readout clearly
   separating the 5 steps.
 - Use the `logging` library to create visually distinct section headers (e.g.,
-  `=== Step 3: The Bio-Blade Ping ===`).
+  `=== Step 3: The Hardware Ping ===`).
 - Generate a simple Matplotlib dashboard `output/echo/clinical_workflow.png`
   showing 2 subplots: a) A bar chart comparing Micro vs Macro Surprisal from the
   Ping phase. b) A bar chart comparing the Hessian Trace (Steepness) of Degraded
-  Bob vs. Ideal Bob.
+  Alice vs. Ideal Alice.
 
 ## TESTING
 

@@ -29,7 +29,8 @@ class Thermostat(eqx.Module):
         L: Float[Array, "d_state d_state"],
         dt: float,
         key: PRNGKeyArray,
-        omega_ext: jax.Array | None = None
+        omega_ext: jax.Array | None = None,
+        q_ext: jax.Array | None = None
     ) -> Float[Array, "d_state"]:
         """
         Computes the next state using the Euler-Maruyama method.
@@ -42,6 +43,7 @@ class Thermostat(eqx.Module):
             dt: Scalar continuous time step.
             key: PRNG key for generating Wiener process noise.
             omega_ext: Optional external thermodynamic force vector to apply as an explicit perturbation to the deterministic drift.
+            q_ext: Optional exogenous actuation signal to apply to the deterministic drift.
             
         Returns:
             The next state vector of shape (d_state,).
@@ -56,14 +58,13 @@ class Thermostat(eqx.Module):
         # 2. Deterministic drift: -(Q - Gamma) @ grad_E
         drift = -(Q - Gamma) @ grad_E
         
-        if omega_ext is not None:
-            drift = drift + omega_ext
+        drift_total = drift + (omega_ext if omega_ext is not None else 0.0) + (q_ext if q_ext is not None else 0.0)
         
         # 3. Stochastic diffusion (noise): sqrt(2 * T * dt) * (L @ dW)
         dW = jax.random.normal(key, shape=x.shape, dtype=jnp.float32)
         diffusion = jnp.sqrt(2.0 * T * dt_jnp) * (L @ dW)
         
         # 4. Final Euler-Maruyama update
-        x_next = x + (drift * dt_jnp) + diffusion
+        x_next = x + (drift_total * dt_jnp) + diffusion
         
         return x_next

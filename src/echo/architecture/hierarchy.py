@@ -82,7 +82,8 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         self.input_ports = {
             "x": jax.ShapeDtypeStruct((d_micro + d_macro,), jnp.float32),
             "dt": jax.ShapeDtypeStruct((), jnp.float32),
-            "omega_ext": jax.ShapeDtypeStruct((d_micro + d_macro,), jnp.float32)
+            "omega_ext": jax.ShapeDtypeStruct((d_micro + d_macro,), jnp.float32),
+            "q_ext": jax.ShapeDtypeStruct((d_micro + d_macro,), jnp.float32)
         }
         self.output_spec = jax.ShapeDtypeStruct((d_micro + d_macro,), jnp.float32)
 
@@ -93,6 +94,7 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         x = inputs["x"]
         dt = inputs["dt"]
         omega_ext = inputs.get("omega_ext", jnp.zeros(self.d_micro + self.d_macro, dtype=jnp.float32))
+        q_ext = inputs.get("q_ext", jnp.zeros(self.d_micro + self.d_macro, dtype=jnp.float32))
         
         # a) Split input and forces
         x_micro = x[:self.d_micro]
@@ -100,6 +102,9 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         
         omega_micro = omega_ext[:self.d_micro]
         omega_macro = omega_ext[self.d_micro:]
+        
+        q_micro = q_ext[:self.d_micro]
+        q_macro = q_ext[self.d_micro:]
 
         # b) Define joint energy closure
         def joint_energy_fn(x_u, x_m):
@@ -155,7 +160,8 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             L=S_micro,
             dt=dt,
             key=k_micro,
-            omega_ext=omega_micro
+            omega_ext=omega_micro,
+            q_ext=q_micro
         )
         
         x_macro_next = self.macro_thermostat(
@@ -165,7 +171,8 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             L=S_macro,
             dt=dt,
             key=k_macro,
-            omega_ext=omega_macro
+            omega_ext=omega_macro,
+            q_ext=q_macro
         )
         
         # g) Concatenate and return
@@ -228,9 +235,9 @@ class PredictiveCodingGraph(eqx.Module):
         x_init = jnp.concatenate([x_micro_init, x_macro_init])
         return self.thermalizer(key, x_init, dt)
 
-    def forced_unroll(self, key: jax.random.PRNGKey, x_micro_init: jax.Array, x_macro_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None) -> jax.Array:
+    def forced_unroll(self, key: jax.random.PRNGKey, x_micro_init: jax.Array, x_macro_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_seq: jax.Array | None = None) -> jax.Array:
         """
         Executes the unrolled joint simulation over an external sequence.
         """
         x_init = jnp.concatenate([x_micro_init, x_macro_init])
-        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq)
+        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq, q_seq=q_seq)

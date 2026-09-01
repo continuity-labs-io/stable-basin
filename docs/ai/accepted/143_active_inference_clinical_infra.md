@@ -64,9 +64,10 @@ Create `tests/echo/clinic/test_interventions.py`. Write a `pytest` suite that:
 2. Tests `DigitalTwinAnnealer`: Asserts that the returned Twin B has larger
    weight norms for friction and precision than Twin A, and that Twin A remains
    unmutated (verifying PyTree immutability).
-3. Tests `BioBladeInterrogator`: Injects a ping and verifies the discordance
+3. Tests `DigitalTwinInterrogator`: Injects a ping and verifies the discordance
    score is returned as a valid float. Mocks a "blind" macro gradient (all
    zeros) and asserts the discordance score drops to near zero.
+4. Include corner and degenerate case testing.
 
 Write production-grade code with clean docstrings and unit tests. Focus strictly
 on these two components.

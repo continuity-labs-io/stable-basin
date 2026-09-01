@@ -53,7 +53,8 @@ class ThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         self.input_ports = {
             "x": jax.ShapeDtypeStruct((d_state,), jnp.float32),
             "dt": jax.ShapeDtypeStruct((), jnp.float32),
-            "omega_ext": jax.ShapeDtypeStruct((d_state,), jnp.float32)
+            "omega_ext": jax.ShapeDtypeStruct((d_state,), jnp.float32),
+            "q_ext": jax.ShapeDtypeStruct((d_state,), jnp.float32)
         }
         self.output_spec = jax.ShapeDtypeStruct((d_state,), jnp.float32)
 
@@ -90,6 +91,7 @@ class ThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         x = inputs["x"]
         dt = inputs["dt"]
         omega_ext = inputs.get("omega_ext", jnp.zeros(self.d_state, dtype=jnp.float32))
+        q_ext = inputs.get("q_ext", jnp.zeros(self.d_state, dtype=jnp.float32))
 
         # 1. Compute the local slope of the energy landscape
         def energy_fn(state):
@@ -111,7 +113,8 @@ class ThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             L=L,
             dt=dt,
             key=key,
-            omega_ext=omega_ext
+            omega_ext=omega_ext,
+            q_ext=q_ext
         )
         
         if return_aux:
@@ -150,8 +153,8 @@ class TorxThermalizer(eqx.Module):
                 torx.Site(
                     name="chain",
                     factor=chain_factor,
-                    parents=("x_init", "dt_constant", "omega_ext_constant"),
-                    porting_fn=("x", "dt", "omega_ext"),
+                    parents=("x_init", "dt_constant", "omega_ext_constant", "q_ext_constant"),
+                    porting_fn=("x", "dt", "omega_ext", "q_ext"),
                     param_key=None,
                     info_key=None,
                     site_info=None
@@ -160,7 +163,8 @@ class TorxThermalizer(eqx.Module):
             input_ports={
                 "x_init": jax.ShapeDtypeStruct((d_state,), jnp.float32),
                 "dt_constant": jax.ShapeDtypeStruct((), jnp.float32),
-                "omega_ext_constant": jax.ShapeDtypeStruct((d_state,), jnp.float32)
+                "omega_ext_constant": jax.ShapeDtypeStruct((d_state,), jnp.float32),
+                "q_ext_constant": jax.ShapeDtypeStruct((d_state,), jnp.float32)
             },
             output_name="chain"
         )
@@ -173,7 +177,8 @@ class TorxThermalizer(eqx.Module):
         inputs = {
             "x_init": x_init,
             "dt_constant": jnp.array(dt, dtype=jnp.float32),
-            "omega_ext_constant": jnp.zeros_like(x_init)
+            "omega_ext_constant": jnp.zeros_like(x_init),
+            "q_ext_constant": jnp.zeros_like(x_init)
         }
         return self.graph.sample(key, inputs=inputs, params={})
 
@@ -191,47 +196,40 @@ class ForcedTorxThermalizer(eqx.Module):
         self.injection_start_idx = injection_start_idx
 
     @eqx.filter_jit
-    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None) -> jax.Array:
+    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_seq: jax.Array | None = None) -> jax.Array:
         """
         Executes the unrolled simulation with external forcing.
-
-        The compiler branches based on which external sequences are provided:
-        1. Both `seq` and `omega_seq` provided: Injects the hard-coded data sequence 
-           into the state slice and simultaneously applies external thermodynamic force vectors.
-        2. Only `seq` provided: Injects the hard-coded data sequence without applying 
-           any external thermodynamic forces.
-        3. Only `omega_seq` provided: Allows the system to evolve freely without coordinate 
-           overwriting, driven entirely by internal dynamics and external thermodynamic forces.
         """
-        if seq is not None and omega_seq is not None:
-            def step_fn(state, carry):
-                data_frame, omega_frame, step_key = carry
+        seq_len = None
+        for s in (seq, omega_seq, q_seq):
+            if s is not None:
+                seq_len = s.shape[0]
+                break
+                
+        if seq_len is None:
+            raise ValueError("Must provide either seq, omega_seq, or q_seq.")
+            
+        def step_fn(state, carry):
+            data_frame, omega_frame, q_frame, step_key = carry
+            
+            if seq is not None:
                 state = jax.lax.dynamic_update_slice(state, data_frame, (self.injection_start_idx,))
-                inputs = {"x": state, "dt": jnp.array(dt, dtype=jnp.float32), "omega_ext": omega_frame}
-                next_state = self.flow_factor.sample(step_key, inputs=inputs, params={})
-                return next_state, next_state
-            keys = jax.random.split(key, seq.shape[0])
-            _, traj = jax.lax.scan(step_fn, x_init, (seq, omega_seq, keys))
-            return traj
-        elif seq is not None and omega_seq is None:
-            def step_fn(state, carry):
-                data_frame, step_key = carry
-                state = jax.lax.dynamic_update_slice(state, data_frame, (self.injection_start_idx,))
-                inputs = {"x": state, "dt": jnp.array(dt, dtype=jnp.float32), "omega_ext": jnp.zeros_like(x_init)}
-                next_state = self.flow_factor.sample(step_key, inputs=inputs, params={})
-                return next_state, next_state
-            keys = jax.random.split(key, seq.shape[0])
-            _, traj = jax.lax.scan(step_fn, x_init, (seq, keys))
-            return traj
-        elif seq is None and omega_seq is not None:
-            def step_fn(state, carry):
-                omega_frame, step_key = carry
-                inputs = {"x": state, "dt": jnp.array(dt, dtype=jnp.float32), "omega_ext": omega_frame}
-                next_state = self.flow_factor.sample(step_key, inputs=inputs, params={})
-                return next_state, next_state
-            keys = jax.random.split(key, omega_seq.shape[0])
-            _, traj = jax.lax.scan(step_fn, x_init, (omega_seq, keys))
-            return traj
-        else:
-            # If both are None, we just do a regular unroll (though TorxThermalizer is better for this)
-            raise ValueError("Must provide either seq or omega_seq.")
+                
+            inputs = {
+                "x": state,
+                "dt": jnp.array(dt, dtype=jnp.float32),
+                "omega_ext": omega_frame if omega_seq is not None else jnp.zeros_like(x_init),
+                "q_ext": q_frame if q_seq is not None else jnp.zeros_like(x_init)
+            }
+            next_state = self.flow_factor.sample(step_key, inputs=inputs, params={})
+            return next_state, next_state
+
+        keys = jax.random.split(key, seq_len)
+        dummy_seq = jnp.zeros((seq_len, 1))
+        
+        scan_seq = seq if seq is not None else dummy_seq
+        scan_omega = omega_seq if omega_seq is not None else dummy_seq
+        scan_q = q_seq if q_seq is not None else dummy_seq
+        
+        _, traj = jax.lax.scan(step_fn, x_init, (scan_seq, scan_omega, scan_q, keys))
+        return traj
