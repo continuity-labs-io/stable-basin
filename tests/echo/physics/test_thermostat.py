@@ -59,7 +59,7 @@ def test_thermostat_zero_temperature():
     # ACT
     x_next = thermostat(x, grad_E, Q, L, dt, key_noise)
     
-    expected_drift = -(Q - (L @ L.T)) @ grad_E
+    expected_drift = -(Q + (L @ L.T)) @ grad_E
     x_next_expected = x + (expected_drift * dt)
     
     # ASSERT

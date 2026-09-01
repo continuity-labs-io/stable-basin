@@ -171,11 +171,11 @@ class MarkovBlanketObserver(eqx.Module):
         """
         return self.thermalizer(key, x_init, dt)
 
-    def forced_unroll(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_seq: jax.Array | None = None) -> jax.Array:
+    def forced_unroll(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
         """
         Executes the unrolled simulation over an external sequence.
         """
-        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq, q_seq=q_seq)
+        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq, q_gain=q_gain, q_mask=q_mask)
 
     def extract_internal_state(self, x: jax.Array) -> dict:
         """

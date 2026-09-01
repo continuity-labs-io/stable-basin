@@ -235,9 +235,9 @@ class PredictiveCodingGraph(eqx.Module):
         x_init = jnp.concatenate([x_micro_init, x_macro_init])
         return self.thermalizer(key, x_init, dt)
 
-    def forced_unroll(self, key: jax.random.PRNGKey, x_micro_init: jax.Array, x_macro_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_seq: jax.Array | None = None) -> jax.Array:
+    def forced_unroll(self, key: jax.random.PRNGKey, x_micro_init: jax.Array, x_macro_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
         """
         Executes the unrolled joint simulation over an external sequence.
         """
         x_init = jnp.concatenate([x_micro_init, x_macro_init])
-        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq, q_seq=q_seq)
+        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq, q_gain=q_gain, q_mask=q_mask)

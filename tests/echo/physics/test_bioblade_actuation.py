@@ -23,7 +23,7 @@ def test_bioblade_actuation_thermostat():
     x_next = thermostat(x, grad_E, Q, L, dt, key, q_ext=q_ext)
     
     Gamma = L @ L.T
-    drift = -(Q - Gamma) @ grad_E
+    drift = -(Q + Gamma) @ grad_E
     
     expected_x_next = x + (drift * dt) + (q_ext * dt)
     
@@ -51,10 +51,12 @@ def test_bioblade_actuation_observer():
     dt = 0.1
     x_init = jnp.zeros(d_state)
     
-    q_seq = jnp.ones((seq_len, d_state)) * 2.0
-    
+    omega_seq = jnp.zeros((seq_len, d_state))
+    q_mask = jnp.ones(d_state)
+    q_gain = 2.0
+
     # Assert it executes without JAX concretization or shape errors
-    traj = observer.forced_unroll(sim_key, x_init, dt, seq=None, omega_seq=None, q_seq=q_seq)
+    traj = observer.forced_unroll(sim_key, x_init, dt, seq=None, omega_seq=omega_seq, q_gain=q_gain, q_mask=q_mask)
     
     assert traj.shape == (seq_len, d_state)
     assert not jnp.any(jnp.isnan(traj))

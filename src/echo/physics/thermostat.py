@@ -55,8 +55,18 @@ class Thermostat(eqx.Module):
         # 1. Compute Gamma
         Gamma = L @ L.T
         
-        # 2. Deterministic drift: -(Q - Gamma) @ grad_E
-        drift = -(Q - Gamma) @ grad_E
+        # 2. Deterministic drift: -(Q + Gamma) @ grad_E
+        # This equation decomposes the physical flow on the energy landscape into two orthogonal components:
+        #
+        # A) -(Gamma) @ grad_E [Dissipative / Frictional Flow]: 
+        #    Gamma is a symmetric positive-definite matrix. This term performs gradient descent, acting as 
+        #    a mechanical brake that drags the system down into the minimum of the energy basin (homeostasis).
+        #
+        # B) -(Q) @ grad_E [Solenoidal / Rotational Flow]:
+        #    Q is an anti-symmetric matrix. This term pushes the state orthogonally to the energy gradient, 
+        #    creating divergence-free orbits along the equipotential contour lines without changing the total energy. 
+        #    This allows the system to maintain active, non-equilibrium steady states (NESS) rather than just freezing.
+        drift = -(Q + Gamma) @ grad_E
         
         drift_total = drift + (omega_ext if omega_ext is not None else 0.0) + (q_ext if q_ext is not None else 0.0)
         

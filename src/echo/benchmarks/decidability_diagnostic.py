@@ -13,7 +13,7 @@ class QuadraticEBM(eqx.Module):
     def __init__(self, d_state):
         self.d_state = d_state
     def __call__(self, x):
-        return -0.5 * jnp.sum(x**2), jnp.eye(self.d_state)
+        return 0.5 * jnp.sum(x**2), jnp.eye(self.d_state)
 
 def run_simulation():
     # Setup
@@ -80,21 +80,25 @@ def run_simulation():
     
     # Phase 1: Endogenous Failure
     # Environmental drift omega_seq
-    omega_seq = jnp.ones((seq_len, d_state)) * 0.06
+    omega_seq = jnp.ones((seq_len, d_state)) * 0.5
     
-    traj_a_p1 = patient_a.forced_unroll(k3, x_init, dt, seq=None, omega_seq=omega_seq, q_seq=None)
-    traj_b_p1 = patient_b.forced_unroll(k3, x_init, dt, seq=None, omega_seq=omega_seq, q_seq=None)
+    traj_a_p1 = patient_a.forced_unroll(k3, x_init, dt, seq=None, omega_seq=omega_seq)
+    traj_b_p1 = patient_b.forced_unroll(k3, x_init, dt, seq=None, omega_seq=omega_seq)
     
     x_drifted_a = traj_a_p1[-1]
     x_drifted_b = traj_b_p1[-1]
     
     # Phase 2: The Intervention
-    q_seq_a = jnp.broadcast_to(-5.0 * x_drifted_a, (seq_len, d_state))
-    q_seq_b = jnp.broadcast_to(-5.0 * x_drifted_b, (seq_len, d_state))
+    q_mask = jnp.zeros(d_state)
+    idx_s = d_internal
+    idx_a = idx_s + d_sensory
+    idx_e = idx_a + d_active
+    # Set to 1.0 for sensory and active
+    q_mask = q_mask.at[idx_s:idx_e].set(1.0)
     
     # Unroll BOTH observers again starting from x_drifted to fight the omega_seq
-    traj_a_p2 = patient_a.forced_unroll(k3, x_drifted_a, dt, seq=None, omega_seq=omega_seq, q_seq=q_seq_a)
-    traj_b_p2 = patient_b.forced_unroll(k3, x_drifted_b, dt, seq=None, omega_seq=omega_seq, q_seq=q_seq_b)
+    traj_a_p2 = patient_a.forced_unroll(k3, x_drifted_a, dt, seq=None, omega_seq=omega_seq, q_gain=10.0, q_mask=q_mask)
+    traj_b_p2 = patient_b.forced_unroll(k3, x_drifted_b, dt, seq=None, omega_seq=omega_seq, q_gain=10.0, q_mask=q_mask)
     
     final_a = traj_a_p2[-1]
     final_b = traj_b_p2[-1]
@@ -102,7 +106,7 @@ def run_simulation():
     dist_a = jnp.linalg.norm(final_a)
     dist_b = jnp.linalg.norm(final_b)
     
-    rescue_threshold = 2.0
+    rescue_threshold = 1.0
     
     print(f"Patient A Diagnosis (dist: {dist_a}):")
     if dist_a < rescue_threshold:

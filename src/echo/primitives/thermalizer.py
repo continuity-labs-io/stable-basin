@@ -196,30 +196,40 @@ class ForcedTorxThermalizer(eqx.Module):
         self.injection_start_idx = injection_start_idx
 
     @eqx.filter_jit
-    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_seq: jax.Array | None = None) -> jax.Array:
+    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
         """
-        Executes the unrolled simulation with external forcing.
+        Executes the unrolled simulation with external forcing and closed-loop control.
         """
         seq_len = None
-        for s in (seq, omega_seq, q_seq):
+        for s in (seq, omega_seq):
             if s is not None:
                 seq_len = s.shape[0]
                 break
                 
         if seq_len is None:
-            raise ValueError("Must provide either seq, omega_seq, or q_seq.")
+            raise ValueError("Must provide either seq or omega_seq.")
             
         def step_fn(state, carry):
-            data_frame, omega_frame, q_frame, step_key = carry
+            data_frame, omega_frame, step_key = carry
             
             if seq is not None:
                 state = jax.lax.dynamic_update_slice(state, data_frame, (self.injection_start_idx,))
                 
+            current_q_mask = q_mask if q_mask is not None else jnp.ones_like(state)
+            
+            # Closed-Loop Proportional Controller
+            # This calculates a dynamic restorative force that pulls the state towards the origin (homeostasis).
+            # It is a closed-loop system because the force (`q_ext`) adapts at each timestep based on the
+            # current `state`. The `current_q_mask` ensures that this external actuation is only applied
+            # to accessible physical components (e.g., the Markov Blanket: sensory and active states),
+            # relying on the network's internal physics to drag the unactuated internal states to safety.
+            q_ext = -q_gain * state * current_q_mask
+            
             inputs = {
                 "x": state,
                 "dt": jnp.array(dt, dtype=jnp.float32),
                 "omega_ext": omega_frame if omega_seq is not None else jnp.zeros_like(x_init),
-                "q_ext": q_frame if q_seq is not None else jnp.zeros_like(x_init)
+                "q_ext": q_ext
             }
             next_state = self.flow_factor.sample(step_key, inputs=inputs, params={})
             return next_state, next_state
@@ -229,7 +239,6 @@ class ForcedTorxThermalizer(eqx.Module):
         
         scan_seq = seq if seq is not None else dummy_seq
         scan_omega = omega_seq if omega_seq is not None else dummy_seq
-        scan_q = q_seq if q_seq is not None else dummy_seq
         
-        _, traj = jax.lax.scan(step_fn, x_init, (scan_seq, scan_omega, scan_q, keys))
+        _, traj = jax.lax.scan(step_fn, x_init, (scan_seq, scan_omega, keys))
         return traj
