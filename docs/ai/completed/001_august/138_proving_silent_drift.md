@@ -1,12 +1,14 @@
-ROLE: You are an elite Scientific Machine Learning Engineer.
+# ROLE: 
+You are an elite Scientific Machine Learning Engineer.
 
-TASK: Create `src/echo/benchmarks/silent_drift_benchmark.py`. This is a
+# TASK: 
+Create `src/echo/benchmarks/silent_drift_benchmark.py`. This is a
 standalone execution script that demonstrates the "Silent Drift" (Observability
 Failure) concept using our newly integrated `D_s` matrix. We will show that a
 tissue can age not because its physical capacity (Reachability) degrades, but
 because its internal model becomes rank-deficient (Observability).
 
-TECHNICAL REQUIREMENTS:
+# TECHNICAL REQUIREMENTS:
 - The script must be executable from the command line (`if __name__ ==
   "__main__":`).
 - Setup:
@@ -40,7 +42,7 @@ TECHNICAL REQUIREMENTS:
        a surprisal of exactly 0.0, proving it doesn't know it's drifting.
   - Print a clear terminal readout diagnosing the results.
 
-TESTING: 
+# TESTING:
 Create `tests/echo/benchmarks/test_silent_drift_benchmark.py` that
 simply imports the script's `main()` function, mocks `matplotlib.pyplot.savefig`
 to prevent file I/O, and asserts that the `main()` function executes from start

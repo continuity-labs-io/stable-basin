@@ -1,4 +1,6 @@
-# [UPDATE 003] DIAGNOSTIC LOGIC FOR BIO-BLADE ACTUATION
+# FIXME: Split up the Core Changes and Testing from the Scripts/Demos
+
+# DIAGNOSTIC LOGIC FOR BIO-BLADE ACTUATION
 
 **Importance**: THE CAPSTONE (Clinical Translation).
 

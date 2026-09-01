@@ -1,3 +1,5 @@
+# FIXME: Split up the Core Changes and Testing from the Scripts/Demos
+
 # Map EBM Contention to Quantify Route Diversity
 
 **Importance**: HIGH (Catastrophic Failure Modeling).
