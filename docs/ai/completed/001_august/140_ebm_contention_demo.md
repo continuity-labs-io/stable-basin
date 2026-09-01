@@ -22,6 +22,3 @@ TECHNICAL REQUIREMENTS:
     - Plot the Divergence for Phase A, Phase B, and Phase C on the same graph.
     - **The Proof:** Because the MLP backbone is non-linear and pathways are shared, Phase A and B should reach a relatively stable, finite plateau (the amplified friction successfully counteracts the single force). Phase C should explode non-linearly (the divergence goes way beyond the simple sum of A and B) because the system's shared pathways are overwhelmed (Contention).
   - Print a terminal readout comparing the Final Divergence and Final Hessian Trace for A, B, and C.
-
-TESTING:
-Create `tests/echo/benchmarks/test_concurrent_contention_benchmark.py` that imports `main()`, mocks `matplotlib.pyplot.savefig` to prevent file IO, and asserts execution without JAX errors.

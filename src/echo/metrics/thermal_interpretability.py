@@ -55,10 +55,17 @@ class HessianCurvatureTracker(eqx.Module):
         _, Pi = self.ebm(x)
         explicit_precision_trace = jnp.trace(Pi)
         
+        # 5. Compute Rank and Nullity (Degeneracy / Route Diversity)
+        threshold = 1e-4
+        hessian_rank = jnp.sum(jnp.abs(eigenvalues) > threshold)
+        hessian_nullity = eigenvalues.shape[0] - hessian_rank
+        
         return {
             "hessian_trace": hessian_trace,
             "explicit_precision_trace": explicit_precision_trace,
-            "eigenvalues": eigenvalues
+            "eigenvalues": eigenvalues,
+            "hessian_rank": hessian_rank,
+            "hessian_nullity": hessian_nullity
         }
         
     @eqx.filter_jit

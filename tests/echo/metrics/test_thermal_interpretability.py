@@ -21,10 +21,14 @@ def test_hessian_curvature_tracker_single():
     assert "hessian_trace" in metrics
     assert "explicit_precision_trace" in metrics
     assert "eigenvalues" in metrics
+    assert "hessian_rank" in metrics
+    assert "hessian_nullity" in metrics
     
     assert metrics["hessian_trace"].shape == ()
     assert metrics["explicit_precision_trace"].shape == ()
     assert metrics["eigenvalues"].shape == (4,)
+    assert metrics["hessian_rank"].shape == ()
+    assert metrics["hessian_nullity"].shape == ()
     
     assert not jnp.isnan(metrics["hessian_trace"])
     assert not jnp.isnan(metrics["explicit_precision_trace"])
@@ -45,6 +49,8 @@ def test_hessian_curvature_tracker_batch():
     assert metrics["hessian_trace"].shape == (100,)
     assert metrics["explicit_precision_trace"].shape == (100,)
     assert metrics["eigenvalues"].shape == (100, 4)
+    assert metrics["hessian_rank"].shape == (100,)
+    assert metrics["hessian_nullity"].shape == (100,)
     
     assert not jnp.any(jnp.isnan(metrics["hessian_trace"]))
     assert not jnp.any(jnp.isnan(metrics["explicit_precision_trace"]))
@@ -93,4 +99,38 @@ def test_hessian_curvature_acid_test():
     # The eigenvalues should all be exactly k
     assert jnp.allclose(metrics["eigenvalues"], k), \
         f"Eigenvalues {metrics['eigenvalues']} are not all exactly {k}"
+
+
+class FlatEBM(eqx.Module):
+    """
+    Dummy EBM that mimics PrecisionWeightedEBM signature but hardcodes 
+    a perfectly flat energy landscape.
+    """
+    d_state: int = eqx.field(static=True)
+    
+    def __init__(self, d_state):
+        self.d_state = d_state
+        
+    def __call__(self, x):
+        energy = 0.0
+        precision = jnp.eye(self.d_state)
+        return energy, precision
+
+def test_hessian_curvature_flat_nullity():
+    """
+    Asserts that a flat energy landscape evaluates to full nullity.
+    """
+    d_state = 4
+    ebm = FlatEBM(d_state=d_state)
+    tracker = HessianCurvatureTracker(ebm)
+    
+    x = jnp.array([1.0, -0.5, 2.0, 0.0])
+    metrics = tracker.calculate_curvature(x)
+    
+    # Trace should be exactly 0
+    assert jnp.allclose(metrics["hessian_trace"], 0.0)
+    
+    # Rank should be 0, Nullity should be d_state
+    assert metrics["hessian_rank"] == 0
+    assert metrics["hessian_nullity"] == d_state
 
