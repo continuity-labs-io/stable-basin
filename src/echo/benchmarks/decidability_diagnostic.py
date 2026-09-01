@@ -1,3 +1,31 @@
+"""
+Hahne (2026) Decidability Diagnostic Benchmark
+
+Reference: 
+Hahne, 2026. "Beyond Return to Baseline: Reachability, Observability, and the Measurement of Physiological Margin"
+
+This benchmark differentiates between two distinct failure modes in hierarchical Active Inference systems:
+1. Policy Observability Failure (Sensory Blindness): The system loses access to sensory prediction errors,
+   causing it to drift, but its internal structural integrity remains intact.
+2. Reachability Collapse (Hardware/Structural Failure): The system's internal mechanical bonds (friction)
+   are destroyed, permanently eliminating its physical attractor basins.
+
+Mechanism:
+- Phase 1 (Endogenous Failure): Both patients are subjected to a constant environmental drift (`omega_seq`)
+  that pushes them away from the homeostatic origin (the minimum of the Waddington basin).
+- Phase 2 (Intervention): A closed-loop proportional controller applies a restorative
+  physical force. Crucially, this external device can ONLY stimulate the accessible exterior nodes 
+  (the Markov Blanket: sensory and active states). It cannot reach into the internal hidden states.
+
+Dynamics & Diagnosis:
+- Patient A (Blindness) has broken sensory matrices (`D_s=0`) but an intact internal mechanical structure
+  (strong friction `Gamma`). When the controller pulls the blanket into homeostasis, Patient A's healthy
+  internal mechanical bonds physically drag the core internal states back to safety. Diagnosis: Rescuable.
+- Patient B (Structural Collapse) has destroyed internal friction matrices (`Gamma -> 0`). When the 
+  controller pulls the blanket into homeostasis, the internal states physically detach. Without friction
+  to bind them to the blanket, they continue to drift irreversibly. Diagnosis: Irreversible Collapse.
+"""
+
 import os
 import jax
 import jax.numpy as jnp
@@ -6,7 +34,8 @@ import matplotlib.pyplot as plt
 
 from src.echo.architecture.observer import MarkovBlanketObserver
 
-# Cite Hahne (2026) "Beyond Return to Baseline: Reachability, Observability, and the Measurement of Physiological Margin"
+# Cite Hahne (2026) "Beyond Return to Baseline: Reachability, Observability, and
+# the Measurement of Physiological Margin"
 
 class QuadraticEBM(eqx.Module):
     d_state: int
@@ -53,7 +82,8 @@ def run_simulation():
         key=k2
     )
     
-    # Inject QuadraticEBM and strong Brakes so that Patient A's healthy components strongly restore
+    # Inject QuadraticEBM and strong Brakes so that Patient A's healthy
+    # components strongly restore
     strong_brakes = jnp.eye(d_state) * 5.0
     
     def apply_patient_mods(tree, brake_val):
@@ -78,8 +108,7 @@ def run_simulation():
     dt = 0.01
     x_init = jnp.zeros(d_state)
     
-    # Phase 1: Endogenous Failure
-    # Environmental drift omega_seq
+    # Phase 1: Endogenous Failure Environmental drift omega_seq
     omega_seq = jnp.ones((seq_len, d_state)) * 0.5
     
     traj_a_p1 = patient_a.forced_unroll(k3, x_init, dt, seq=None, omega_seq=omega_seq)

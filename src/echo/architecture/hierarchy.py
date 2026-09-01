@@ -90,6 +90,45 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
     def init_params(self, key):
         return {}
 
+    def joint_energy_fn(self, x_u, x_m):
+        """
+        Computes the Joint Free Energy (F) of the hierarchical system.
+        This represents the total energy landscape that both the micro and macro 
+        states physically flow down. It is composed of the independent endogenous 
+        energies of each level, plus a predictive coding coupling penalty that 
+        binds them together.
+        
+        Args:
+            x_u: The full state vector of the micro-level observer.
+            x_m: The full state vector of the macro-level observer.
+            
+        Returns:
+            F: A scalar representing the total Joint Free Energy evaluated at (x_u, x_m).
+        """
+        x_u_obs = self.micro_hull.apply_sensory_degradation(x_u)
+        x_m_obs = self.macro_hull.apply_sensory_degradation(x_m)
+        
+        E_micro, _ = self.micro_ebm(x_u_obs)
+        E_macro, Pi_macro = self.macro_ebm(x_m_obs)
+        
+        belief = self.W_down(x_m_obs)
+        diff = x_u_obs - belief
+        
+        # Project the prediction error (diff) back up into the macro latent space
+        diff_proj = self.W_down.weight.T @ diff
+        
+        # Precision-Weighted Prediction Error (Mahalanobis Distance):
+        # Pi_macro is the precision (inverse variance) matrix of the macro prior.
+        # This computes a quadratic penalty: 1/2 * e^T * Pi * e.
+        # - High precision (large Pi) acts as a stiff spring, heavily penalizing 
+        #   deviations and forcing the micro state to snap to the macro belief.
+        # - Low precision (small Pi) acts as a loose spring, allowing the micro 
+        #   state to freely fluctuate without being dragged by the macro level.
+        penalty = 0.5 * diff_proj.T @ Pi_macro @ diff_proj
+        
+        F = E_micro + E_macro + penalty
+        return F
+
     def sample(self, key, inputs, params, info=None, site_info=None, return_aux=False):
         x = inputs["x"]
         dt = inputs["dt"]
@@ -105,28 +144,9 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         
         q_micro = q_ext[:self.d_micro]
         q_macro = q_ext[self.d_micro:]
-
-        # b) Define joint energy closure
-        def joint_energy_fn(x_u, x_m):
-            x_u_obs = self.micro_hull.apply_sensory_degradation(x_u)
-            x_m_obs = self.macro_hull.apply_sensory_degradation(x_m)
-            
-            E_micro, _ = self.micro_ebm(x_u_obs)
-            E_macro, Pi_macro = self.macro_ebm(x_m_obs)
-            
-            belief = self.W_down(x_m_obs)
-            diff = x_u_obs - belief
-            
-            # Project diff into macro space to align with Pi_macro's shape
-            diff_proj = self.W_down.weight.T @ diff
-            
-            penalty = 0.5 * diff_proj.T @ Pi_macro @ diff_proj
-            
-            F = E_micro + E_macro + penalty
-            return F
-            
+        
         # c) Compute gradients simultaneously
-        grad_micro, grad_macro = jax.grad(joint_energy_fn, argnums=(0, 1))(x_micro, x_macro)
+        grad_micro, grad_macro = jax.grad(self.joint_energy_fn, argnums=(0, 1))(x_micro, x_macro)
         
         # d) Apply respective Hull masks
         M_micro = self.micro_hull.get_topology_mask()
