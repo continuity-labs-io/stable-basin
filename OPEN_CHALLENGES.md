@@ -20,7 +20,10 @@ and potential co-authorship on resulting papers._
   Simulator into a standard Farama `Gymnasium` (OpenAI Gym) environment. Define
   the states (KSM/CSD) and actions (IV Flow/Therapy Power) so the global AI
   community can train PPO or SAC agents to autonomously discover optimal
-  longevity protocols."_
+  longevity protocols."
+- The Problem: We have the diagnostic, but calculating the exact sequence of $Q_{ext}$ pulses to safely walk a patient back to youth over a long period of time is a sequential decision-making problem.
+- The Action: We wrap the PredictiveCodingGraph inside a Farama gymnasium.Env. The "Environment" is the aging patient. The "Agent" is the Bio-Blade hardware. The reward function is the Trace of the Hessian.
+- The Proof: We unleash a standard RL agent (like PPO) into the environment. If it autonomously learns how to pulse the simulated tissue to keep it young, you have built the first AI-driven longevity controller.
 
 ### V2 State Vector: The "Quintet" Tensor
 
@@ -29,3 +32,7 @@ data, but lacks single-cell epigenetic and in-line electrochemical data. This
 task builds the dataloaders for single-cell epigenetic clocks (Gamma) and
 in-line electrochemical sensors (Mu). Ensure the state space models can
 gracefully handle the massive `NaN`gaps of hourly epigenetic reads.
+
+- The Action: We hook up the MultimodalBioDataset directly to the PredictiveCodingGraph.
+
+- The Proof: We prove that the engine can maintain a coherent biological limit cycle even when the Epigenetic sensors update once an hour, while the Bioelectric sensors update 20,000 times a second. We modify the TorxThermalizer to handle multi-rate polling.
