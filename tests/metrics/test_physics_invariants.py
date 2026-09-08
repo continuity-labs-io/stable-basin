@@ -1,7 +1,7 @@
 import pytest
 import torch
 import numpy as np
-from src.metrics.metrics import ThermodynamicMetrics
+from src.metrics import ThermodynamicMetrics
 
 def test_physics_invariant_sine_wave_ksm():
     """

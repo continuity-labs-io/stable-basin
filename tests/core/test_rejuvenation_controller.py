@@ -1,6 +1,6 @@
 import pytest
 from src.core.rejuvenation_controller import RejuvenationFlightController
-from src.metrics.metrics import ThermodynamicMetrics
+from src.metrics import ThermodynamicMetrics
 from src.icebox.models.ssm.masr_mamba import MaskAwareMamba
 
 def test_rejuvenation_controller_state_machine():

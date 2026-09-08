@@ -1,19 +1,19 @@
 import torch
 import torch.nn.functional as F
-import logging
 import numpy as np
+import logging
+from pydmd import OptDMD
 from src.config import settings
 
 logger = logging.getLogger("DiagnosticLogger")
 
-# =================================================================================
-# TODO: Unvalidated idea. Requires extensive testing. 
-# =================================================================================
 def calculate_dynamic_rank(S, n_rows, n_cols):
     """
     Autonomously selects the exact SVD rank cutoff for biological tissue.
     S: 1D numpy array of Singular Values (from Σ) sorted descending.
     n_rows, n_cols: Dimensions of the latent state sliding window (e.g., 256, 1000)
+
+    TODO: Unfinished. Requires extensive testing. 
     """
     # --- 1. THE GAVISH-DONOHO CEILING (The Noise Governor) ---
     # Calculates the mathematically optimal hard threshold for unknown white noise
@@ -58,8 +58,6 @@ def calculate_dynamic_rank(S, n_rows, n_cols):
     # If the manifold is smooth (e.g., Brain Organoid near criticality), 
     # default to the Gavish-Donoho ceiling to prevent underfitting the neural complexity.
     return int(r_max)
-# =================================================================================
-
 
 class ThermodynamicMetrics:
     def __init__(self, alpha=1000.0, beta=1.0):
@@ -127,9 +125,9 @@ class ThermodynamicMetrics:
         - Model Independence: Pseudo-arc length continuation requires an explicit, differentiable
         non-linear vector field to compute the Jacobian. Because the tissue trajectory is modeled
         inside the continuous latent space of the state-space engine, defining the exact non-linear
-         continuous field is complex.
-         Dynamic Mode Decomposition is entirely data-driven, extracting the kinetic modes directly from
-          the streaming embeddings without requiring the underlying equations.
+        continuous field is complex.
+        Dynamic Mode Decomposition is entirely data-driven, extracting the kinetic modes directly from
+        the streaming embeddings without requiring the underlying equations.
         - Architectural Simplicity: The current approach provides a fast, elegant solution that
         satisfies the requirement for a real-time predictive metric. It isolates the critical variance
         and successfully detects the Waddington bifurcation point while keeping the codebase lean.

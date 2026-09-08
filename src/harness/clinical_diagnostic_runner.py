@@ -16,7 +16,7 @@ import wandb
 from src.data.ephys.pharma_shock_dataset import PharmacologicalShockDataset
 from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
-from src.metrics.metrics import ThermodynamicMetrics
+from src.metrics import ThermodynamicMetrics
 from src.icebox.metrics.mamba_lrp import MambaLRPEpsilon
 from src.utils.device import get_optimal_device
 

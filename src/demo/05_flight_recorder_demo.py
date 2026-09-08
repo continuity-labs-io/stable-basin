@@ -13,7 +13,7 @@ import numpy as np
 import logging
 
 from src.icebox.models.ssm.masr_mamba import MaskAwareMamba
-from src.metrics.metrics import ThermodynamicMetrics
+from src.metrics import ThermodynamicMetrics
 from src.system.telemetry_logger import TelemetryLogger
 from src.utils.device import get_optimal_device
 

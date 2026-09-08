@@ -1,6 +1,6 @@
 import pytest
 import torch
-from src.metrics.metrics import ThermodynamicMetrics
+from src.metrics import ThermodynamicMetrics
 
 
 @pytest.fixture
