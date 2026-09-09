@@ -1,5 +1,7 @@
 import torch
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import logging
 import os
@@ -7,8 +9,8 @@ import time
 
 from src.data.sim2real.human_telemetry_dataloader import HumanTelemetryLoader
 from src.data.sim2real.epigenetic_entropy_dataloader import EpigeneticEntropyLoader
-from src.models.ssm.mask_aware_mamba import MaskAwareMamba
-from src.metrics.metrics import ThermodynamicMetrics
+from src.icebox.models.ssm.masr_mamba import MaskAwareMamba
+from src.metrics import ThermodynamicMetrics
 from src.core.rejuvenation_controller import RejuvenationFlightController
 
 # Suppress PyDMD debug spam

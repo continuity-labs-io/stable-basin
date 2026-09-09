@@ -177,8 +177,11 @@ class MaskAwareMamba(nn.Module):
             h = self.input_proj(x)
 
         if self.mask_aware and mask is not None:
-            # Pass the per-channel mask directly!
-            hidden_states = self.mamba(h, mask)
+            if mask.shape[-1] != h.shape[-1]:
+                mamba_mask = (mask.sum(dim=-1, keepdim=True) > 0).float().expand_as(h)
+            else:
+                mamba_mask = mask
+            hidden_states = self.mamba(h, mamba_mask)
         else:
             hidden_states = self.mamba(h, torch.ones_like(h))
 
