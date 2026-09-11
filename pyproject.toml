@@ -8,6 +8,7 @@ dependencies = [
     "jaxlib",
     "equinox",
     "optax",
+    "rerun-sdk",
 ]
 
 [tool.ruff]

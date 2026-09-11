@@ -13,3 +13,4 @@ dependencies:
     - jaxlib
     - optax
     - equinox
+    - rerun-sdk

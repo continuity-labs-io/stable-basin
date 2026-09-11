@@ -12,3 +12,4 @@ timm
 scikit-learn
 torchdiffeq
 plotext<6.0.0
+rerun-sdk
