@@ -162,10 +162,12 @@ def main():
     
     plt.tight_layout()
     os.makedirs("output", exist_ok=True)
-    plt.savefig("output/10_human_rejuvenation_sim.png", dpi=150, bbox_inches='tight')
+    import os
+    os.makedirs("output/demo", exist_ok=True)
+    plt.savefig("output/demo/10_human_rejuvenation_sim.png", dpi=150, bbox_inches='tight')
     plt.close()
     
-    logger.info("✅ Dashboard saved to: output/10_human_rejuvenation_sim.png")
+    logger.info("✅ Dashboard saved to: output/demo/10_human_rejuvenation_sim.png")
     print("="*60)
     print("Simulation Complete!")
 
