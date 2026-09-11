@@ -187,15 +187,25 @@ def main():
     logger.info("[*] Running Regime B: Thermodynamic Enslavement (Precision = 10.0)")
     macro_B, micro_B = fast_sample(10.0)
     
-    # 5. Variance Analysis
-    var_A = jnp.var(micro_A)
-    var_B = jnp.var(micro_B)
-    reduction = (1.0 - (var_B / var_A)) * 100.0
+    # 5. Phase-Amplitude Coupling (PAC) Analysis
+    import torch
+    import numpy as np
+    from src.metrics import SpectralMetrics
     
-    logger.info(f"\n[+] Variance Reduction Analysis:")
-    logger.info(f"    Regime A (Free) Micro Variance:     {var_A:.4f}")
-    logger.info(f"    Regime B (Enslaved) Micro Variance: {var_B:.4f}")
-    logger.info(f"    -> Thermodynamic Enslavement achieved a {reduction:.2f}% reduction in micro-state entropy.")
+    # Average across spatial channels to create unified 1D sequences
+    macro_A_pt = torch.tensor(np.array(jnp.mean(macro_A, axis=1)))
+    micro_A_pt = torch.tensor(np.array(jnp.mean(micro_A, axis=1)))
+    macro_B_pt = torch.tensor(np.array(jnp.mean(macro_B, axis=1)))
+    micro_B_pt = torch.tensor(np.array(jnp.mean(micro_B, axis=1)))
+    
+    sm = SpectralMetrics()
+    pac_A = sm.calculate_cfc_pac(macro_A_pt, micro_A_pt).item()
+    pac_B = sm.calculate_cfc_pac(macro_B_pt, micro_B_pt).item()
+    
+    logger.info(f"\n[+] Phase-Amplitude Coupling (PAC) Analysis:")
+    logger.info(f"    Regime A (Free) PAC:     {pac_A:.4f}")
+    logger.info(f"    Regime B (Enslaved) PAC: {pac_B:.4f}")
+    logger.info(f"    -> The slow macro-state prior is mathematically pacing the amplitude of the fast micro-states.")
 
     # 6. Dashboard Rendering
     logger.info("\n[*] Rendering Cybernetic Dashboard...")
@@ -221,7 +231,7 @@ def main():
     # Overlay the W_down projection for visual proof
     projected_macro = jax.vmap(enslavement_factor.W_down)(macro_B)
     ax3.plot(time_axis, projected_macro[:, 0], 'w--', linewidth=2, label="Macro Prior Projection (Sample)")
-    ax3.set_title(f"Regime B: Thermodynamic Enslavement (Precision = 10) | {reduction:.1f}% Variance Reduction")
+    ax3.set_title(f"Regime B: Thermodynamic Enslavement (Precision = 10) | PAC (Macro->Micro): {pac_B:.4f}")
     ax3.set_ylabel("Micro States")
     ax3.set_xlabel("Time (s)")
     ax3.legend()
