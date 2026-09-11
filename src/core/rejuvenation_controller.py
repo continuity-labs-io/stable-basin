@@ -1,5 +1,6 @@
 import torch
 import logging
+from src.metrics.spectral import SpectralMetrics
 
 # Configure logger
 logger = logging.getLogger("RejuvenationFlightController")
@@ -27,6 +28,7 @@ class RejuvenationFlightController:
         # Safety Thresholds
         self.CRITICAL_KSM_THRESHOLD = 0.85
         self.MAX_CSD_VARIANCE = 3.0
+        self.CRITICAL_PLV_THRESHOLD = 0.65
         
         # Actuation state
         self.current_state = "STATE_NOMINAL"
@@ -51,38 +53,43 @@ class RejuvenationFlightController:
         csd_scores = self.metrics.calculate_csd(z_seq)
         ksm_scores = self.metrics.calculate_ksm(z_seq)
         
+        # Calculate Spectral Metrics (PLV across adjacent spatial dimensions)
+        spectral = SpectralMetrics()
+        plv_array = spectral.calculate_plv(z_seq[:, :-1], z_seq[:, 1:])
+        plv_score = plv_array.mean().item()
+        
         latest_csd = csd_scores[-1]
         latest_ksm = ksm_scores[-1]
         
-        return latest_ksm, latest_csd
+        return latest_ksm, latest_csd, plv_score
 
-    def _actuate_iv_pump(self, action, ksm_score, csd_score):
+    def _actuate_iv_pump(self, action, ksm_score, csd_score, plv_score):
         """
         Hardware Webhook to physically control payload delivery.
         """
-        metrics_str = f"[Koopman Stability Metric (KSM): {ksm_score:.3f} | Critical Slowing Down (CSD): {csd_score:.3f}]"
+        metrics_str = f"[KSM: {ksm_score:.3f} | CSD: {csd_score:.3f} | PLV: {plv_score:.3f}]"
         
         if action == "EMERGENCY_ABORT":
-            logger.critical(f"[IV_PUMP] Emergency abort triggered. Terminating therapy. {metrics_str}")
+            logger.critical(f"Therapy terminated due to instability. {metrics_str}")
         elif action == "MAINTAIN_INFUSION":
-            logger.info(f"[IV_PUMP] Infusion running nominally. Stabilizing... {metrics_str}")
+            logger.info(f"Nominal parameters observed. Maintaining infusion. {metrics_str}")
         elif action == "WARNING":
-            logger.warning(f"[IV_PUMP] Instability detected. Holding flow rate... {metrics_str}")
+            logger.warning(f"Borderline metrics detected. Holding flow rate. {metrics_str}")
             
-    def evaluate_safety_margins(self, ksm_score, csd_score):
+    def evaluate_safety_margins(self, ksm_score, csd_score, plv_score):
         """
         PID / State Machine logic to determine hardware actuation.
         """
         result = {}
         
-        if ksm_score < self.CRITICAL_KSM_THRESHOLD or csd_score > self.MAX_CSD_VARIANCE:
+        if ksm_score < self.CRITICAL_KSM_THRESHOLD or csd_score > self.MAX_CSD_VARIANCE or plv_score < self.CRITICAL_PLV_THRESHOLD:
             self.critical_count += 1
             if self.critical_count >= self.hysteresis_frames:
                 self.current_state = "STATE_BIFURCATION_DANGER"
                 result = {
                     "action": "EMERGENCY_ABORT",
                     "status": "CRITICAL",
-                    "reason": "Saddle-node bifurcation imminent."
+                    "reason": "Instability or spectral decoherence detected."
                 }
             else:
                 result = {
@@ -105,7 +112,7 @@ class RejuvenationFlightController:
                 "reason": "Homeostasis intact."
             }
             
-        self._actuate_iv_pump(result["action"], ksm_score, csd_score)
+        self._actuate_iv_pump(result["action"], ksm_score, csd_score, plv_score)
         return result
 
 

@@ -58,7 +58,7 @@ def main():
         ksm = metrics.calculate_ksm(z_win, window_size=40)[-1]
         csd = metrics.calculate_csd(z_win, window_size=40)[-1]
         
-        res = controller.evaluate_safety_margins(ksm, csd)
+        res = controller.evaluate_safety_margins(ksm, csd, plv_score=1.0)
         if res["action"] == "EMERGENCY_ABORT":
             abort_sec = sec
             break
