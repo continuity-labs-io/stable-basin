@@ -67,3 +67,10 @@ class TelemetryLogger:
         """
         rr.log("infrastructure/vram_mb", rr.Scalars(vram_mb))
         rr.log("infrastructure/perfusion_rate", rr.Scalars(perfusion_rate))
+
+    def log_spectral_decoherence(self, plv_coherence: float, cfc_enslavement: float) -> None:
+        """
+        Logs frequency-domain spectral coherence markers.
+        """
+        rr.log("early_warning_radar/spectral/plv_coherence", rr.Scalars(plv_coherence))
+        rr.log("early_warning_radar/spectral/cfc_enslavement", rr.Scalars(cfc_enslavement))

@@ -13,7 +13,7 @@ import numpy as np
 import logging
 
 from src.icebox.models.ssm.masr_mamba import MaskAwareMamba
-from src.metrics import ThermodynamicMetrics
+from src.metrics import ThermodynamicMetrics, SpectralMetrics
 from src.system.telemetry_logger import TelemetryLogger
 from src.utils.device import get_optimal_device
 
@@ -30,6 +30,7 @@ def main():
     
     # 2. Initialize the metrics extractor and telemetry bridge
     metrics_engine = ThermodynamicMetrics()
+    spectral_metrics = SpectralMetrics()
     
     output_dir = "output/demo"
     os.makedirs(output_dir, exist_ok=True)
@@ -97,6 +98,13 @@ def main():
             lle_list = metrics_engine.calculate_lle(z_pert_seq, window_size=4, dt=dt)
             lle = lle_list[-1]
             
+            # Calculate spectral decoherence (PLV & PAC)
+            plv_array = spectral_metrics.calculate_plv(z_pert_seq[:, :-1], z_pert_seq[:, 1:])
+            plv_coherence = plv_array.mean().item()
+            
+            # Use dim 0 as "slow" macro and dim 1 as "fast" micro
+            cfc_enslavement = spectral_metrics.calculate_cfc_pac(z_pert_seq[:, 0], z_pert_seq[:, 1]).item()
+            
             # 3. Stream Telemetry via the Exhaust
             physical_time = t * dt
             exhaust.update_time(frame_idx=t, time_sec=physical_time)
@@ -107,6 +115,11 @@ def main():
                 Z_entropic_damage=Z,
                 epsilon_0_ksm=eps0,
                 lle_chaos=lle
+            )
+            
+            exhaust.log_spectral_decoherence(
+                plv_coherence=plv_coherence,
+                cfc_enslavement=cfc_enslavement
             )
             
             # Log 3D Attractor Basin Geometry (plot all points up to t)
