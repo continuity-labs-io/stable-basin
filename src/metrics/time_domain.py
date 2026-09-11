@@ -4,6 +4,7 @@ import numpy as np
 import logging
 from pydmd import OptDMD
 from src.config import settings
+from src.metrics.spectral import SpectralMetrics
 
 logger = logging.getLogger("DiagnosticLogger")
 
@@ -66,6 +67,7 @@ class ThermodynamicMetrics:
         """
         self.alpha = alpha
         self.beta = beta
+        self.spectral_metrics = SpectralMetrics()
 
     def calculate_csd(self, z_sequence, window_size=settings.CSD_WINDOW_SIZE):
         """
@@ -366,4 +368,30 @@ class ThermodynamicMetrics:
             "z0_volatility": z0_volatility,
             "epsilon_0_ksm": epsilon_0_ksm,
             "Z_epigenetic_entropy": Z_epigenetic_entropy
+        }
+
+    def calculate_unified_diagnostics(self, z_seq, raw_telemetry, macro_channel_idx, micro_channel_idx, sampling_rate):
+        """
+        Seamlessly bridges both time and frequency domains into a single diagnostic payload.
+        """
+        # Time-Domain Metrics
+        ksm_scores = self.calculate_ksm(z_seq)
+        csd_scores = self.calculate_csd(z_seq)
+        
+        # Frequency-Domain Metrics
+        freqs, psd = self.spectral_metrics.calculate_psd(raw_telemetry, sampling_rate)
+        
+        macro_seq = z_seq[:, macro_channel_idx] if z_seq.dim() > 1 else z_seq
+        micro_seq = z_seq[:, micro_channel_idx] if z_seq.dim() > 1 else z_seq
+        pac = self.spectral_metrics.calculate_cfc_pac(macro_seq, micro_seq)
+        
+        return {
+            "time_domain": {
+                "ksm": ksm_scores,
+                "csd": csd_scores
+            },
+            "frequency_domain": {
+                "psd": (freqs, psd),
+                "pac": pac
+            }
         }
