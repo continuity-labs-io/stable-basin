@@ -88,3 +88,8 @@ unnecessary and adds technical debt. Do not use `sys.path.insert` or
 - **Executable Prompts (`docs/ai/audited/`)**: Actionable prompts for the coding
   agent to execute will be placed in the `docs/ai/audited/` folder. Only execute
   coding tasks based on these prompts.
+
+### Documentation Guardrail
+
+- **Method/Function Documentation**: All public methods and functions must have their arguments (`Args:`) and return values (`Returns:`) explicitly documented in their docstrings.
+
