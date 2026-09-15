@@ -34,7 +34,7 @@ clinical-diagnostic:
 lint-pytorch:
 	@echo "Running TorchFix..."
 	@echo "TorchFix will catch deprecated PyTorch symbols, missing autograd contexts, and dangerous in-place operations that break backpropagation."
-	torchfix src/ tests/
+	-torchfix -j 1 src/ tests/
 
 preflight: lint-pytorch
 	pytest

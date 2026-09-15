@@ -10,7 +10,7 @@ dependencies = [
     "optax",
     "rerun-sdk",
     "google-genai",
-    "torchfix",
+    "torchfix==0.6.0",
 ]
 
 [tool.ruff]
