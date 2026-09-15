@@ -1,11 +1,14 @@
 import os
+import sys
+import json
 import asyncio
 import subprocess
 from google import genai
+from google.genai import types
 
-from personas import PHYSICIST_PROMPT, ARCHITECT_PROMPT
+from personas import PHYSICIST_PROMPT, ARCHITECT_PROMPT, STRATEGIC_LEAD_PROMPT
 
-class NextGenAuditor:
+class MultiAgentAuditor:
     def __init__(self):
         # genai.Client() automatically checks the GEMINI_API_KEY environment
         # variable, but we can explicitly pass it if needed.
@@ -138,6 +141,83 @@ class NextGenAuditor:
         print("="*40)
         print(architect_report)
 
+        print("\n" + "="*40)
+        print("DISPATCHING STRATEGIC LEAD...")
+        print("="*40)
+
+        audit_schema = types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "physics_review": types.Schema(type=types.Type.STRING),
+                "systems_review": types.Schema(type=types.Type.STRING),
+                "strategic_verdict": types.Schema(type=types.Type.STRING),
+                "roi_approved": types.Schema(type=types.Type.BOOLEAN),
+                "critical_bugs_found": types.Schema(type=types.Type.BOOLEAN),
+                "actionable_fixes": types.Schema(
+                    type=types.Type.ARRAY,
+                    items=types.Schema(type=types.Type.STRING)
+                ),
+            },
+            required=[
+                "physics_review",
+                "systems_review",
+                "strategic_verdict",
+                "roi_approved",
+                "critical_bugs_found",
+                "actionable_fixes"
+            ]
+        )
+
+        strategic_prompt_full = f"{STRATEGIC_LEAD_PROMPT}\n\n### PHYSICIST REPORT ###\n{physicist_report}\n\n### ARCHITECT REPORT ###\n{architect_report}\n\n### TEST LOGS ###\n{test_logs}\n\n### STAGED DIFF ###\n{diff}\n"
+
+        chat = self.client.aio.chats.create(
+            model=self.model_name,
+            config=types.GenerateContentConfig(
+                temperature=0.1,
+                response_mime_type="application/json",
+                response_schema=audit_schema,
+            )
+        )
+        response = await chat.send_message(strategic_prompt_full)
+        
+        try:
+            audit_result = json.loads(response.text)
+        except json.JSONDecodeError:
+            print("Failed to parse JSON from Strategic Lead.")
+            sys.exit(1)
+            
+        try:
+            commit_hash = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).decode("utf-8").strip()
+        except Exception:
+            commit_hash = "unknown"
+            
+        md_report = f"# Strategic Audit Report ({commit_hash})\n\n"
+        md_report += f"## Physics Review\n{audit_result.get('physics_review')}\n\n"
+        md_report += f"## Systems Review\n{audit_result.get('systems_review')}\n\n"
+        md_report += f"## Strategic Verdict\n{audit_result.get('strategic_verdict')}\n\n"
+        md_report += f"**ROI Approved:** {audit_result.get('roi_approved')}\n"
+        md_report += f"**Critical Bugs Found:** {audit_result.get('critical_bugs_found')}\n\n"
+        md_report += "## Actionable Fixes\n"
+        for fix in audit_result.get('actionable_fixes', []):
+            md_report += f"- {fix}\n"
+            
+        os.makedirs("logs/audits", exist_ok=True)
+        report_path = f"logs/audits/AUDIT_{commit_hash}.md"
+        with open(report_path, "w") as f:
+            f.write(md_report)
+            
+        print(f"Saved audit report to {report_path}")
+        
+        if audit_result.get("critical_bugs_found"):
+            print("\n\033[91mCRITICAL BUGS FOUND! COMMIT REJECTED.\033[0m")
+            print("Actionable Fixes:")
+            for fix in audit_result.get("actionable_fixes", []):
+                print(f" - {fix}")
+            sys.exit(1)
+        else:
+            print("\n\033[92mAUDIT PASSED. COMMIT APPROVED.\033[0m")
+            sys.exit(0)
+
 if __name__ == "__main__":
-    auditor = NextGenAuditor()
+    auditor = MultiAgentAuditor()
     asyncio.run(auditor.execute_audit())
