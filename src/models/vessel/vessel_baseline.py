@@ -115,10 +115,10 @@ class VesselBaseline(nn.Module):
         # u(t+Δt) = u(t) + Δt · [D_u ∇² u + u - u³ - v + σdW]
         # v(t+Δt) = v(t) + Δt · [D_v ∇² v + ε(u - γv)]
         
-        du = self.D_u * lap_u + self.u - (self.u ** 3) - self.v + noise
+        du = self.D_u * lap_u + self.u - (self.u ** 3) - self.v
         dv = self.D_v * lap_v + self.epsilon * (self.u - self.gamma * self.v)
         
-        self.u = self.u + self.dt * du
+        self.u = self.u + self.dt * du + math.sqrt(self.dt) * noise
         self.v = self.v + self.dt * dv
         
         # Enforce wall conditions rigidly (v is permanently high in the wall to dampen noise)

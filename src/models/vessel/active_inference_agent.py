@@ -130,12 +130,11 @@ class ActiveInferenceAgent(nn.Module):
             - self.v 
             - self.decay_rate * self.u 
             + replenishment 
-            + self.sigma * dW
         )
         
         dv = self.D_v * lap_v + self.epsilon * (self.u - self.gamma * self.v)
 
-        self.u = self.u + self.dt * du
+        self.u = self.u + self.dt * du + math.sqrt(self.dt) * self.sigma * dW
         self.v = self.v + self.dt * dv
 
         return self.u, self.v
