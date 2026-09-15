@@ -12,6 +12,34 @@ from torch import Tensor
 
 from src.models.ssm.physics import create_a_matrix
 
+def pscan(A, X):
+    """
+    Parallel associative scan (Kogge-Stone).
+    A: (batch, seq, d_model, d_state)
+    X: (batch, seq, d_model, d_state)
+    Computes H_t = A_t * H_{t-1} + X_t
+    """
+    B_sz, L, d_model, d_state = X.shape
+    L_pad = 2 ** math.ceil(math.log2(L))
+    pad_len = L_pad - L
+    if pad_len > 0:
+        A = F.pad(A, (0, 0, 0, 0, 0, pad_len), value=1.0)
+        X = F.pad(X, (0, 0, 0, 0, 0, pad_len), value=0.0)
+        
+    for i in range(int(math.log2(L_pad))):
+        shift = 2 ** i
+        
+        X_shifted = X[:, :-shift]
+        A_shifted = A[:, :-shift]
+        
+        X_update = X[:, shift:] + A[:, shift:] * X_shifted
+        A_update = A[:, shift:] * A_shifted
+        
+        X = torch.cat([X[:, :shift], X_update], dim=1)
+        A = torch.cat([A[:, :shift], A_update], dim=1)
+        
+    return X[:, :L]
+
 def mamba_masr_reference_scan(
     x: Float[Tensor, "batch seq d_model"],
     dt: Float[Tensor, "batch seq d_model"],
@@ -23,65 +51,30 @@ def mamba_masr_reference_scan(
 ) -> Float[Tensor, "batch seq d_model"]:
     """
     Pure PyTorch reference implementation of the Mask-Aware Subspace Routing (MASR) Mamba scan.
-    
-    Args:
-        x: (batch_size, seq_len, d_model) - Input sequence data
-        dt: (batch_size, seq_len, d_model) - Continuous dynamic time deltas (Δt)
-        mask: (batch_size, seq_len, d_model) - Boolean sparsity mask (1 = observed, 0 = missing)
-        A: (d_model, d_state) - Continuous A matrix
-        B: (batch_size, seq_len, d_state) - Continuous B matrix (data-dependent)
-        C: (batch_size, seq_len, d_state) - Continuous C matrix (data-dependent)
-        D: (d_model,) - D skip connection
-        
-    Returns:
-        y: (batch_size, seq_len, d_model) - Output sequence
     """
-    batch_size, seq_len, d_model = x.shape
-    _, d_state = A.shape
-    
-    # Use at least float32 for accumulation to prevent mixed precision drift,
-    # but preserve float64 for gradcheck testing
     acc_dtype = torch.promote_types(x.dtype, torch.float32)
     
-    # Initialize hidden state h_0
-    h = torch.zeros(batch_size, d_model, d_state, device=x.device, dtype=acc_dtype)
-    y = torch.zeros_like(x)
+    # Latent Stasis: multiply continuous Δt by the boolean mask
+    dt_masked = dt * mask # (batch, seq, d_model)
+    dt_masked_exp = dt_masked.unsqueeze(-1) # (batch, seq, d_model, 1)
     
-    for t in range(seq_len):
-        x_t = x[:, t, :] # (batch_size, d_model)
-        dt_t = dt[:, t, :] # (batch_size, d_model)
-        mask_t = mask[:, t, :] # (batch_size, d_model)
-        B_t = B[:, t, :] # (batch_size, d_state)
-        C_t = C[:, t, :] # (batch_size, d_state)
-        
-        # Latent Stasis: multiply continuous Δt by the boolean mask
-        # If mask is 0 (missing), Δt goes to 0
-        dt_masked_t = dt_t * mask_t # (batch_size, d_model)
-        
-        # Calculate discrete Ā and B̄
-        # Ā = exp(Δt * A)
-        # B̄ ≈ Δt * B (simplified Mamba ZOH approximation)
-        dt_masked_t_exp = dt_masked_t.unsqueeze(-1) # (batch_size, d_model, 1)
-        
-        # Prevent division by zero during ZOH discretization
-        A_safe = torch.where(A.abs() <= 1e-8, torch.full_like(A, -1e-8), A)
-        
-        A_bar = torch.exp(dt_masked_t_exp * A) # (batch_size, d_model, d_state)
-        
-        # Swapped exp(dt*A)-1.0 to PyTorch's mathematically identical but numerically 
-        # stable torch.expm1(dt*A) to fix catastrophic cancellation in float32 
-        # when dt*A is very small, which was injecting massive noise during ZOH discretization.
-        B_bar = torch.expm1(dt_masked_t_exp * A) / A_safe * B_t.unsqueeze(1) # (batch_size, d_model, d_state)
-        
-        # Update hidden state h_t = Ā * h_{t-1} + B̄ * x_t
-        # perfectly freezing the hidden state (h_t = h_{t-1}) when mask is 0
-        h = A_bar.to(acc_dtype) * h + B_bar.to(acc_dtype) * x_t.unsqueeze(-1).to(acc_dtype) # (batch_size, d_model, d_state)
-        
-        # Compute output y_t = C_t * h_t + D * x_t
-        y_t = (C_t.unsqueeze(1).to(acc_dtype) * h).sum(dim=-1) + D.to(acc_dtype) * x_t.to(acc_dtype) # (batch_size, d_model)
-        y[:, t, :] = y_t.to(x.dtype)
-        
-    return y
+    A_safe = torch.where(A.abs() <= 1e-8, torch.full_like(A, -1e-8), A)
+    
+    A_bar = torch.exp(dt_masked_exp * A) # (batch, seq, d_model, d_state)
+    
+    # B is (batch, seq, d_state), unsqueeze to (batch, seq, 1, d_state)
+    B_bar = torch.expm1(dt_masked_exp * A) / A_safe * B.unsqueeze(2) # (batch, seq, d_model, d_state)
+    
+    X_in = B_bar.to(acc_dtype) * x.unsqueeze(-1).to(acc_dtype)
+    A_bar = A_bar.to(acc_dtype)
+    
+    # Parallel associative scan replaces the O(N) loop
+    H = pscan(A_bar, X_in) # (batch, seq, d_model, d_state)
+    
+    # C is (batch, seq, d_state), unsqueeze to (batch, seq, 1, d_state)
+    y = (C.unsqueeze(2).to(acc_dtype) * H).sum(dim=-1) + D.to(acc_dtype) * x.to(acc_dtype)
+    
+    return y.to(x.dtype)
 
 class PyTorchMambaMASR(nn.Module):
     def __init__(self, d_model, d_state=16, a_init_type: str = "random"):

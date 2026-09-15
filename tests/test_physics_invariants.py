@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from src.echo.physics.solenoidal import SolenoidalFlow
-from src.icebox.metrics.mamba_lrp import MambaLRPEpsilon
+from src.metrics.mamba_lrp import MambaLRPEpsilon
 
 def test_solenoidal_flow_antisymmetry():
     d_state = 16
