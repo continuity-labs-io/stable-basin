@@ -32,3 +32,5 @@ Please write the simulation script `src/echo/benchmarks/07_insilico_reprogrammin
 * **Determinism:** Use strict random seeding (`jax.random.PRNGKey(42)`) for the Euler-Maruyama noise $dW$ to ensure the exact same spiral is generated on every CI run.
 * **Offline Plotting:** Ensure `matplotlib` does not block execution (`plt.show()`). Use `plt.savefig()` to save the output, creating the `outputs/benchmarks/` directory if it does not exist, and immediately close the figure.
 * **Logging:** Use the standard Python `logging` module. Emit peaceful, precise logs (e.g., `logger.info("Simulating in-silico rescue with precision_injection_gain=5.0.")`). No dramatic, capitalized, or emoji-laden prints.
+
+Note to the human. Add figures to this doc: https://docs.google.com/document/d/1OJrmHQQuP6G5S_p6qT11zmFLuVOweEAl8NCKIXTW8yI/edit?tab=t.0

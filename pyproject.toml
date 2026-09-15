@@ -9,6 +9,7 @@ dependencies = [
     "equinox",
     "optax",
     "rerun-sdk",
+    "google-genai",
 ]
 
 [tool.ruff]
