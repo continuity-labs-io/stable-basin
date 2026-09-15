@@ -73,18 +73,13 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         # Original matrices
         Q = self.solenoidal.Q
         L_orig = jnp.tril(self.dissipative.W)
-        Gamma_orig = L_orig @ L_orig.T
         
         # Masking
         M = self.hull.get_topology_mask()
         Q_masked = Q * M
-        Gamma_masked = Gamma_orig * M
         
-        # Safely compute S via eigendecomposition to restore
-        # positive-definiteness
-        evals, evecs = jnp.linalg.eigh(Gamma_masked + self.epsilon * jnp.eye(self.d_state))
-        evals = jnp.maximum(evals, 0.0)
-        S = evecs @ jnp.diag(jnp.sqrt(evals))
+        # Apply the topology mask directly to the lower-triangular Cholesky factor
+        S = L_orig * M
         
         # Execute Thermostat with masked matrices
         x_next = self.thermostat(
