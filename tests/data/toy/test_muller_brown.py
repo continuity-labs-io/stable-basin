@@ -3,7 +3,7 @@ import jax
 import jax.numpy as jnp
 import torch
 
-from src.echo.data.toy.muller_brown import MullerBrownDataset, muller_brown_potential, generate_trajectory
+from src.data.toy.muller_brown import MullerBrownDataset, muller_brown_potential, generate_trajectory
 
 def test_muller_brown_dataset_shape_and_nans():
     """
