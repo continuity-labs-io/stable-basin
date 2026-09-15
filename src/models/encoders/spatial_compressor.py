@@ -49,18 +49,21 @@ class SpatialCompressor(nn.Module):
         zeros = torch.zeros((B, T, 1, H, W), dtype=x_proj.dtype, device=x_proj.device)
         x_padded = torch.cat([x_proj, zeros], dim=2)
 
-        # 4. Reshape batch and time dimensions temporarily to process all spatial frames in parallel
-        x_flat = x_padded.view(B * T, 3, H, W)
-
-        # Interpolate to 224x224 since the vit_base_patch16_224 requires 224x224 geometry
-        if H != 224 or W != 224:
-            x_flat = F.interpolate(x_flat, size=(224, 224), mode="bilinear", align_corners=False)
-
-        # 5. Pass the frames through the frozen ViT-Base model
+        # 4. Process frames sequentially over the time dimension to maintain O(N) VRAM
+        features = []
         with torch.no_grad():
-            features = self.vit(x_flat)  # Shape: [B*T, 768]
+            for t in range(T):
+                x_t = x_padded[:, t]  # Shape: [Batch, 3, Height, Width]
+                
+                # Interpolate to 224x224 since the vit_base_patch16_224 requires 224x224 geometry
+                if H != 224 or W != 224:
+                    x_t = F.interpolate(x_t, size=(224, 224), mode="bilinear", align_corners=False)
+                    
+                # 5. Pass the batch of frames through the frozen ViT-Base model
+                feat_t = self.vit(x_t)  # Shape: [Batch, 768]
+                features.append(feat_t)
 
         # 6. Return the compressed sequence tensor formatted as [Batch, Time, 768]
-        out = features.view(B, T, -1)
+        out = torch.stack(features, dim=1)
 
         return out

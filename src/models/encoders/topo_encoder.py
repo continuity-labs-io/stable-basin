@@ -46,14 +46,15 @@ class TopoEncoder(nn.Module):
         """
         B, T, C, H, W = x.shape
 
-        # Fold batch and time dimensions to process frames through Conv2d
-        x = x.view(B * T, C, H, W)
-
-        # Encode spatial features
-        spatial_features = self.spatial_encoder(x)  # Shape: [B*T, d_model]
+        # Encode spatial features sequentially over the time dimension to maintain O(N) VRAM
+        spatial_features = []
+        for t in range(T):
+            x_t = x[:, t]  # Shape: [B, C, H, W]
+            feat_t = self.spatial_encoder(x_t)  # Shape: [B, d_model]
+            spatial_features.append(feat_t)
 
         # Unfold back to sequence format
-        sequence = spatial_features.view(B, T, -1)  # Shape: [B, Time, d_model]
+        sequence = torch.stack(spatial_features, dim=1)  # Shape: [B, Time, d_model]
 
         # Process through SSM to capture continuous thermodynamic loops
         hidden_states = self.ssm(sequence)  # Shape: [B, Time, d_model]
