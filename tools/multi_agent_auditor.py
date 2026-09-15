@@ -155,7 +155,16 @@ class MultiAgentAuditor:
                 "critical_bugs_found": types.Schema(type=types.Type.BOOLEAN),
                 "actionable_fixes": types.Schema(
                     type=types.Type.ARRAY,
-                    items=types.Schema(type=types.Type.STRING)
+                    items=types.Schema(
+                        type=types.Type.OBJECT,
+                        properties={
+                            "title": types.Schema(type=types.Type.STRING, description="Short, concise title of the fix"),
+                            "description": types.Schema(type=types.Type.STRING, description="Detailed explanation of what needs to be fixed"),
+                            "severity": types.Schema(type=types.Type.STRING, description="Severity of the issue: Critical, High, Medium, or Low"),
+                            "ai_execution_instructions": types.Schema(type=types.Type.STRING, description="Instructions for an AI on how to address this fix, explicitly mandating the workflow: develop a plan, get it reviewed, implement, ensure tests pass, and commit.")
+                        },
+                        required=["title", "description", "severity", "ai_execution_instructions"]
+                    )
                 ),
             },
             required=[
@@ -197,9 +206,18 @@ class MultiAgentAuditor:
         md_report += f"## Strategic Verdict\n{audit_result.get('strategic_verdict')}\n\n"
         md_report += f"**ROI Approved:** {audit_result.get('roi_approved')}\n"
         md_report += f"**Critical Bugs Found:** {audit_result.get('critical_bugs_found')}\n\n"
-        md_report += "## Actionable Fixes\n"
-        for fix in audit_result.get('actionable_fixes', []):
-            md_report += f"- {fix}\n"
+        md_report += "## Actionable Fixes (Triage Required)\n\n"
+        
+        for i, fix in enumerate(audit_result.get('actionable_fixes', [])):
+            md_report += f"### Fix {i+1}: {fix.get('title')}\n"
+            md_report += f"**Severity:** {fix.get('severity')}\n\n"
+            md_report += f"{fix.get('description')}\n\n"
+            md_report += f"**AI Execution Plan:**\n{fix.get('ai_execution_instructions')}\n\n"
+            md_report += "**Triage Decision (Human Reviewer):**\n"
+            md_report += "- [ ] Fix Now (Execute the AI Plan)\n"
+            md_report += "- [ ] Backlog\n"
+            md_report += "- [ ] Ignore\n\n"
+            md_report += "---\n\n"
             
         os.makedirs("logs/audits", exist_ok=True)
         report_path = f"logs/audits/AUDIT_{commit_hash}.md"
@@ -212,7 +230,7 @@ class MultiAgentAuditor:
             print("\n\033[91mCRITICAL BUGS FOUND! COMMIT REJECTED.\033[0m")
             print("Actionable Fixes:")
             for fix in audit_result.get("actionable_fixes", []):
-                print(f" - {fix}")
+                print(f" - [{fix.get('severity')}] {fix.get('title')}")
             sys.exit(1)
         else:
             print("\n\033[92mAUDIT PASSED. COMMIT APPROVED.\033[0m")
