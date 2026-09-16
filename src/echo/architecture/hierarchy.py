@@ -38,6 +38,8 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
     d_micro: int = eqx.field(static=True)
     d_macro: int = eqx.field(static=True)
     epsilon: float = eqx.field(static=True)
+    use_micro_blanket: bool = eqx.field(static=True)
+    use_macro_blanket: bool = eqx.field(static=True)
 
     input_ports: dict = eqx.field(static=True)
     output_spec: jax.ShapeDtypeStruct = eqx.field(static=True)
@@ -57,7 +59,9 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         W_down: eqx.nn.Linear,
         d_micro: int,
         d_macro: int,
-        epsilon: float = 1e-4
+        epsilon: float = 1e-4,
+        use_micro_blanket: bool = True,
+        use_macro_blanket: bool = True
     ):
         self.micro_hull = micro_hull
         self.macro_hull = macro_hull
@@ -78,6 +82,8 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         self.d_micro = d_micro
         self.d_macro = d_macro
         self.epsilon = epsilon
+        self.use_micro_blanket = use_micro_blanket
+        self.use_macro_blanket = use_macro_blanket
         
         self.input_ports = {
             "x": jax.ShapeDtypeStruct((d_micro + d_macro,), jnp.float32),
@@ -149,17 +155,25 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         grad_micro, grad_macro = jax.grad(self.joint_energy_fn, argnums=(0, 1))(x_micro, x_macro)
         
         # d) Apply respective Hull masks
-        M_micro = self.micro_hull.get_topology_mask()
-        Q_micro_masked = self.micro_solenoidal.Q * M_micro
         L_micro_orig = jnp.tril(self.micro_dissipative.W)
         Gamma_micro_orig = L_micro_orig @ L_micro_orig.T
-        Gamma_micro_masked = Gamma_micro_orig * M_micro
-        
-        M_macro = self.macro_hull.get_topology_mask()
-        Q_macro_masked = self.macro_solenoidal.Q * M_macro
+        if self.use_micro_blanket:
+            M_micro = self.micro_hull.get_topology_mask()
+            Q_micro_masked = self.micro_solenoidal.Q * M_micro
+            Gamma_micro_masked = Gamma_micro_orig * M_micro
+        else:
+            Q_micro_masked = self.micro_solenoidal.Q
+            Gamma_micro_masked = Gamma_micro_orig
+            
         L_macro_orig = jnp.tril(self.macro_dissipative.W)
         Gamma_macro_orig = L_macro_orig @ L_macro_orig.T
-        Gamma_macro_masked = Gamma_macro_orig * M_macro
+        if self.use_macro_blanket:
+            M_macro = self.macro_hull.get_topology_mask()
+            Q_macro_masked = self.macro_solenoidal.Q * M_macro
+            Gamma_macro_masked = Gamma_macro_orig * M_macro
+        else:
+            Q_macro_masked = self.macro_solenoidal.Q
+            Gamma_macro_masked = Gamma_macro_orig
         
         # e) Compute safe diffusion matrix S for both
         evals_u, evecs_u = jnp.linalg.eigh(Gamma_micro_masked + self.epsilon * jnp.eye(self.d_micro))
@@ -261,7 +275,9 @@ class PredictiveCodingGraph(eqx.Module):
             macro_thermostat=macro_observer.thermostat,
             W_down=self.W_down,
             d_micro=self.d_micro,
-            d_macro=self.d_macro
+            d_macro=self.d_macro,
+            use_micro_blanket=micro_observer.use_blanket_topology,
+            use_macro_blanket=macro_observer.use_blanket_topology
         )
         
         self.flow_factor = factor

@@ -128,6 +128,7 @@ class MarkovBlanketObserver(eqx.Module):
     thermostat: Thermostat
     thermalizer: TorxThermalizer
     forced_thermalizer: ForcedTorxThermalizer
+    use_blanket_topology: bool = eqx.field(static=True)
 
     def __init__(
         self,
@@ -147,6 +148,7 @@ class MarkovBlanketObserver(eqx.Module):
         import logging
         self.hull = MarkovHull(d_internal, d_sensory, d_active, d_external, D_s=D_s)
         d_state = self.hull.d_state
+        self.use_blanket_topology = use_blanket_topology
         
         if use_blanket_topology:
             logging.info("Initializing MarkovBlanketObserver with strictly positive-definite partitioned topology.")
