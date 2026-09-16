@@ -5,6 +5,8 @@ import argparse
 import urllib.parse
 import logging
 
+# Source: https://physionet.org/content/sleep-edfx/1.0.0/
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
