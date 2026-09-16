@@ -1,7 +1,7 @@
 ### Staging Prompts Guardrail
 
-- **Read-Only Directory (`docs/ai/accepted/`)**: Do not modify or edit any
-  markdown files within `docs/ai/accepted/`. These are staging prompts intended
+- **Read-Only Directory (`docs/ai/arrive/`)**: Do not modify or edit any
+  markdown files within `docs/ai/arrive/`. These are staging prompts intended
   for human review before being coded. Treat this directory as strictly
   read-only.
 
@@ -19,7 +19,7 @@
   directory (or its subdirectories) must start with a 3-digit zero-padded
   sequential prefix (e.g., `066_new_plan_name.md`).
 - **Discovery**: Before creating a new plan, always search the `docs/ai/`
-  directory (including `completed/`, `accepted/`, etc.) to determine the highest
+  directory (including `complete/`, `audit/`, `arrive/`, etc.) to determine the highest
   existing prefix number and increment it for your new file.
 
 ### Execution Scope Guardrail
@@ -83,7 +83,7 @@ unnecessary and adds technical debt. Do not use `sys.path.insert` or
 ### Design Docs and Executable Prompts Guardrail
 
 - **Context Only (Design Docs)**: Design docs (e.g., in
-  `docs/ai/accepted/design/`) provide high-level context and should not be used
+  `docs/ai/arrive/design/`) provide high-level context and should not be used
   as direct coding instructions. Do not write code directly from them.
 - **Executable Prompts (`docs/ai/audited/`)**: Actionable prompts for the coding
   agent to execute will be placed in the `docs/ai/audited/` folder. Only execute

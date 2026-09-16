@@ -1,23 +1,34 @@
-import pytest
 import torch
-
+import torch.nn as nn
 from src.models.encoders.topo_encoder import TopoEncoder
-from src.models.ssm.baseline_ssm import BaselineSSM
+from src.data.ephys.uhd_lfp_dataset import ContinuousLFPDataset
 
-def test_topo_encoder():
-    ssm = BaselineSSM(d_model=64, d_state=16)
-    model = TopoEncoder(ssm=ssm, d_model=64)
+def test_topo_encoder_integration():
+    """
+    Test that the ContinuousLFPDataset correctly applies the TopoEncoder
+    on-the-fly to compress the 4D electrophysiology field into a 1D sequence or vector.
+    """
+    # Intentionally basic for the unit test
+    ssm = nn.Identity() 
+    
+    encoder = TopoEncoder(ssm=ssm, d_model=768)
+    
+    # Test return_hidden=True (Sequence out)
+    dataset = ContinuousLFPDataset(time_steps=5, grid_size=64, encoder=encoder, return_hidden=True)
+    iterator = iter(dataset)
+    E, stim = next(iterator)
+    
+    assert E.shape == (5, 768)
+    assert stim.shape == (768,)
+    
+    # Test return_hidden=False (Final state out)
+    dataset = ContinuousLFPDataset(time_steps=5, grid_size=64, encoder=encoder, return_hidden=False)
+    iterator = iter(dataset)
+    E, stim = next(iterator)
+    
+    assert E.shape == (768,)
+    assert stim.shape == (768,)
 
-    batch = 2
-    time = 5
-    # Input shape: [Batch, Time, 2, 64, 64]
-    x = torch.randn(batch, time, 2, 64, 64)
-
-    # Test without hidden states
-    out = model(x, return_hidden=False)
-    assert out.shape == (batch, 64)
-
-    # Test with hidden states
-    out, hidden = model(x, return_hidden=True)
-    assert out.shape == (batch, 64)
-    assert hidden.shape == (batch, time, 64)
+if __name__ == "__main__":
+    test_topo_encoder_integration()
+    print("All tests passed!")

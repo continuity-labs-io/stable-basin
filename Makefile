@@ -29,7 +29,7 @@ all-experiments: baseline extrapolation density-sweep loss-ablation
 clinical-diagnostic:
 	python -m src.harness.clinical_diagnostic_runner --config configs/clinical_diagnostic.yaml
 
-.PHONY: lint-pytorch preflight
+.PHONY: lint-pytorch preflight audit
 
 lint-pytorch:
 	@echo "Running TorchFix..."
@@ -38,3 +38,6 @@ lint-pytorch:
 
 preflight: lint-pytorch
 	pytest
+
+audit:
+	python tools/multi_agent_auditor.py
