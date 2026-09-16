@@ -32,10 +32,10 @@ class CElegansGaitDataset(Dataset):
         self.data = []
 
         if data_tensors is None:
-            logger.info("Generating seeded synthetic 6D limit cycle for CI testing.")
+            logger.info("Local biological data not found. Falling back to deterministic synthetic generation for CI.")
             self.data = [
-                self.generate_synthetic_limit_cycle(seq_len=seq_len + random.randint(0, 1000))
-                for _ in range(num_synthetic_samples)
+                self.generate_synthetic_data(seq_len=seq_len + random.randint(0, 1000), seed=42 + i)
+                for i in range(num_synthetic_samples)
             ]
         else:
             self.data = data_tensors
@@ -78,7 +78,7 @@ class CElegansGaitDataset(Dataset):
         return trajectory[start_idx : start_idx + self.seq_len]
 
     @staticmethod
-    def generate_synthetic_limit_cycle(seq_len: int = 500) -> torch.Tensor:
+    def generate_synthetic_data(seq_len: int = 500, seed: int = 42) -> torch.Tensor:
         """
         Generates a seeded, deterministic 6D oscillation mimicking the biological limit cycle of forward locomotion.
         
@@ -88,7 +88,7 @@ class CElegansGaitDataset(Dataset):
         Returns:
             torch.Tensor: Synthetic trajectory of shape (seq_len, 6).
         """
-        rng = torch.Generator().manual_seed(42)
+        rng = torch.Generator().manual_seed(seed)
         time_steps = torch.arange(seq_len, dtype=torch.float32)
         frequency = 0.05
         
