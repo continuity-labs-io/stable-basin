@@ -14,7 +14,7 @@ mne.set_log_level("WARNING")
 class LemonEEGDataset(Dataset):
     """
     LEMON EEG Dataloader.
-    Uses MNE to load high-density .vhdr (BrainVision) files, performs PCA reduction
+    Uses MNE to load preprocessed .set (EEGLAB) files, performs PCA reduction
     to manage dimensionality, and yields fixed-length crops. Features a synthetic
     fallback mechanism for CI testing.
     """
@@ -29,15 +29,15 @@ class LemonEEGDataset(Dataset):
         self.data = None
         
         if os.path.exists(data_path):
-            vhdr_files = [f for f in os.listdir(data_path) if f.endswith('.vhdr')]
-            if len(vhdr_files) > 0:
+            set_files = [f for f in os.listdir(data_path) if f.endswith('.set')]
+            if len(set_files) > 0:
                 self.use_synthetic = False
                 logger.info(f"Loading real LEMON data from {data_path}")
                 # Load the first file for demonstration
-                raw_file = os.path.join(data_path, vhdr_files[0])
+                raw_file = os.path.join(data_path, set_files[0])
                 try:
                     # Load and get data
-                    raw = mne.io.read_raw_brainvision(raw_file, preload=True, verbose="WARNING")
+                    raw = mne.io.read_raw_eeglab(raw_file, preload=True, verbose="WARNING")
                     data = raw.get_data().T  # Shape: [time, channels]
                     
                     # PCA Reduction

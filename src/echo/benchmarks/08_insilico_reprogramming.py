@@ -1,0 +1,187 @@
+import os
+import logging
+import jax
+import jax.numpy as jnp
+import equinox as eqx
+import matplotlib.pyplot as plt
+import numpy as np
+
+from src.data.behavior.celegans_gait_dataset import CElegansGaitDataset
+from src.echo.architecture.observer import MarkovBlanketObserver
+from src.echo.architecture.hierarchy import PredictiveCodingGraph
+from src.echo.metrics.thermal_interpretability import HessianCurvatureTracker
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = logging.getLogger(__name__)
+
+@eqx.filter_jit
+def simulate_sde(
+    graph: PredictiveCodingGraph, 
+    x0: jax.Array, 
+    lambda_gain: float, 
+    N: int, 
+    dt: float, 
+    key: jax.random.PRNGKey
+) -> jax.Array:
+    """
+    Simulates the core Euler-Maruyama SDE rollout with precision injection.
+    """
+    d_micro = graph.d_micro
+    d_macro = graph.d_macro
+    d_full = d_micro + d_macro
+    
+    ff = graph.flow_factor
+    
+    # 1. Reconstruct block-diagonal physical matrices for the joint graph
+    Q_micro = ff.micro_solenoidal.Q
+    L_micro = jnp.tril(ff.micro_dissipative.W)
+    Gamma_micro = L_micro @ L_micro.T
+    if ff.use_micro_blanket:
+        M_micro = ff.micro_hull.get_topology_mask()
+        Q_micro = Q_micro * M_micro
+        Gamma_micro = Gamma_micro * M_micro
+        
+    Q_macro = ff.macro_solenoidal.Q
+    L_macro = jnp.tril(ff.macro_dissipative.W)
+    Gamma_macro = L_macro @ L_macro.T
+    if ff.use_macro_blanket:
+        M_macro = ff.macro_hull.get_topology_mask()
+        Q_macro = Q_macro * M_macro
+        Gamma_macro = Gamma_macro * M_macro
+        
+    Q_full = jax.scipy.linalg.block_diag(Q_micro, Q_macro)
+    Gamma_full = jax.scipy.linalg.block_diag(Gamma_micro, Gamma_macro)
+    
+    # 2. Compute diffusion matrix S (sqrt of Gamma)
+    evals, evecs = jnp.linalg.eigh(Gamma_full + ff.epsilon * jnp.eye(d_full))
+    evals = jnp.maximum(evals, 0.0)
+    S_full = evecs @ jnp.diag(jnp.sqrt(evals))
+    
+    T_micro = ff.micro_thermostat.temperature
+    
+    # 3. Define the intervention energy landscape
+    def energy_fn(x):
+        x_u = x[:d_micro]
+        x_m = x[d_micro:]
+        # Multiply the learned energy landscape by the precision injection gain lambda
+        return lambda_gain * ff.joint_energy_fn(x_u, x_m)
+        
+    # 4. Continuous-time forward scan step
+    def scan_step(x, key_step):
+        grad_E = jax.grad(energy_fn)(x)
+        # Drift matching Thermostat.py: -(Q + Gamma) @ grad_E
+        drift = -(Q_full + Gamma_full) @ grad_E
+        
+        # Stochastic environmental noise
+        dW = jax.random.normal(key_step, (d_full,))
+        diffusion = jnp.sqrt(2.0 * T_micro * dt) * (S_full @ dW)
+        
+        x_next = x + drift * dt + diffusion
+        return x_next, x_next
+        
+    keys = jax.random.split(key, N)
+    _, trajectory = jax.lax.scan(scan_step, x0, keys)
+    
+    return jnp.vstack([x0, trajectory])
+
+
+def main():
+    # Setup
+    N_steps = 1000
+    dt = 0.01
+    output_dir = "output/echo/benchmarks"
+    os.makedirs(output_dir, exist_ok=True)
+    output_plot = os.path.join(output_dir, "fig4_insilico_rescue.png")
+    
+    logger.info("Initializing the 'Young Worm' physics engine (PredictiveCodingGraph).")
+    
+    key = jax.random.PRNGKey(42)
+    k1, k2, k3, k4, k5 = jax.random.split(key, 5)
+    
+    # Instantiate Micro and Macro Observers (Young Engine)
+    d_sensory = 6
+    d_internal = 8
+    d_active = 8
+    d_external = 8
+    
+    micro = MarkovBlanketObserver(d_internal, d_sensory, d_active, d_external, 
+                                  ebm_hidden_size=32, ebm_depth=2, n_steps=1, temperature=1.0, key=k1)
+                                  
+    macro = MarkovBlanketObserver(4, 4, 2, 2, 
+                                  ebm_hidden_size=16, ebm_depth=2, n_steps=1, temperature=1.0, key=k2)
+                                  
+    graph = PredictiveCodingGraph(micro, macro, n_steps=1, key=k3)
+    d_full = graph.d_micro + graph.d_macro
+    
+    # Load fallback biological data to represent a fragment of reality
+    dataset = CElegansGaitDataset(seq_len=10)
+    bio_frame = dataset[0][0].numpy()  # 6D sensory snapshot
+    
+    # Construct "Old Worm" pathological state (erratic, high variance)
+    logger.info("Extracting pathological initial state (x0) from 'Old Worm' fallback.")
+    x0_noise = jax.random.normal(k4, (d_full,)) * 2.0
+    x0_np = np.array(x0_noise)
+    # Inject biological fragment into the sensory partition of the micro blanket
+    idx_s = micro.hull.d_internal
+    idx_e = micro.hull.d_internal + micro.hull.d_sensory
+    x0_np[idx_s:idx_e] = bio_frame
+    x0 = jnp.array(x0_np)
+    
+    # Simulate Run A (Degraded/Aged Baseline)
+    lambda_A = 0.2
+    logger.info(f"Simulating Run A: Degraded baseline with precision_injection_gain={lambda_A}")
+    traj_A = simulate_sde(graph, x0, lambda_A, N_steps, dt, k5)
+    
+    # Simulate Run B (The Rescue)
+    lambda_B = 5.0
+    logger.info(f"Simulating Run B: Therapeutic rescue with precision_injection_gain={lambda_B}")
+    traj_B = simulate_sde(graph, x0, lambda_B, N_steps, dt, k5)
+    
+    # Compute Thermodynamic Curvature
+    logger.info("Computing thermodynamic restoration metrics (Hessian trace).")
+    tracker = HessianCurvatureTracker(graph.ebm)
+    metrics_A = tracker.batch_calculate_curvature(traj_A)
+    metrics_B = tracker.batch_calculate_curvature(traj_B)
+    
+    trace_A = np.array(metrics_A["hessian_trace"])
+    trace_B = np.array(metrics_B["hessian_trace"])
+    
+    # Generate Figure 4 Visual
+    logger.info("Generating Figure 4 Beacon Plot.")
+    fig = plt.figure(figsize=(15, 5))
+    
+    # Panel A: The Pathology
+    ax1 = fig.add_subplot(131, projection='3d')
+    tA_np = np.array(traj_A)
+    ax1.plot(tA_np[:, 0], tA_np[:, 1], tA_np[:, 2], color='red', alpha=0.7, linewidth=1)
+    ax1.scatter(tA_np[0, 0], tA_np[0, 1], tA_np[0, 2], color='black', s=50, label='x0 (Old State)')
+    ax1.set_title(f"Panel A: Pathology (λ={lambda_A})")
+    ax1.legend()
+    
+    # Panel B: The Phase Space Rescue
+    ax2 = fig.add_subplot(132, projection='3d')
+    tB_np = np.array(traj_B)
+    ax2.plot(tB_np[:, 0], tB_np[:, 1], tB_np[:, 2], color='green', alpha=0.7, linewidth=1)
+    ax2.scatter(tB_np[0, 0], tB_np[0, 1], tB_np[0, 2], color='black', s=50, label='x0 (Old State)')
+    ax2.set_title(f"Panel B: Phase Space Rescue (λ={lambda_B})")
+    ax2.legend()
+    
+    # Panel C: Thermodynamic Restoration (Hessian Trace)
+    ax3 = fig.add_subplot(133)
+    ax3.plot(trace_A, color='red', label=f'Run A (λ={lambda_A})', linestyle='--')
+    ax3.plot(trace_B, color='green', label=f'Run B (λ={lambda_B})')
+    ax3.set_xlabel("Simulation Steps")
+    ax3.set_ylabel("Hessian Trace (Basin Steepness)")
+    ax3.set_title("Panel C: Thermodynamic Restoration")
+    ax3.legend()
+    
+    plt.tight_layout()
+    plt.savefig(output_plot, dpi=300)
+    plt.close()
+    
+    logger.info(f"Figure 4 successfully generated and saved to: {output_plot}")
+
+
+if __name__ == "__main__":
+    main()
