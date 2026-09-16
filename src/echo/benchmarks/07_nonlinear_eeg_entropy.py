@@ -13,9 +13,6 @@ from src.echo.primitives.ebm import PrecisionWeightedEBM
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-# =====================================================================
-# Estimator D: Model-Free Classifier (Arrow-of-Time Neural Network)
-# =====================================================================
 class ArrowOfTimeClassifier(eqx.Module):
     """
     Estimator D: A lightweight Arrow-of-Time neural network (MLP) 
@@ -49,9 +46,7 @@ def binary_cross_entropy(logits: jax.Array, labels: jax.Array) -> jax.Array:
     return optax.sigmoid_binary_cross_entropy(logits, labels).mean()
 
 
-# =====================================================================
 # Estimator E: Fitted NESS EBM (Predictive Coding Graph)
-# =====================================================================
 def build_estimator_E(key: jax.random.PRNGKey, n_pca_components: int) -> PredictiveCodingGraph:
     """
     Estimator E: Instantiate the PredictiveCodingGraph utilizing the PrecisionWeightedEBM.

@@ -26,3 +26,6 @@ An end-to-end demonstration of the 5-step clinical lifecycle on a simulated agin
 
 ## 06: Worm Gait Decline (`06_worm_gait_decline.py`)
 The ultimate integration benchmark operating on the *C. elegans* gait dataset. It orchestrates full predictive coding graph training via dual configurations (Laplace Baseline vs Precision-Weighted EBM). This script proves that the system successfully converges onto biological limit cycles and conclusively demonstrates our ability to measure the thermodynamic flattening (Hessian Curvature decline) of a Waddington basin caused by biological aging.
+
+## 07: Nonlinear EEG Entropy (`07_nonlinear_eeg_entropy.py`)
+Validates the ECHO Harness on human EEG datasets to determine if our nonlinear estimators capture non-Gaussian irreversibility (the true thermodynamic arrow of time) that linear phase-lag models miss. This script orchestrates an Arrow-of-Time neural network (Estimator D) and a Fitted NESS EBM (Estimator E) using a `PredictiveCodingGraph` to detect irreversibility in real vs phase-randomized surrogate data.
