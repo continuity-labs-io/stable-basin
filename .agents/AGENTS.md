@@ -94,3 +94,9 @@ unnecessary and adds technical debt. Do not use `sys.path.insert` or
 
 - **Method/Function Documentation**: All public methods and functions must have their arguments (`Args:`) and return values (`Returns:`) explicitly documented in their docstrings.
 
+### Standardized Commit Messages (Google Standard)
+
+All commit messages must strictly adhere to the following structure:
+1. **The "What"**: The first line (subject) must summarize exactly *what* the change is doing (e.g., `feat(data): add PyTorch dataloader for C. elegans dataset`).
+2. **The "Why"**: The first paragraph of the body must explain *why* this change is being made, providing the rationale and context behind the implementation.
+3. **The "Details"**: Following the "why", use bullet points to detail the major technical changes or specific files affected.

@@ -88,7 +88,8 @@ def simulate_sde(
 
 def main():
     # Setup
-    N_steps = 1000
+    N_steps = 3000
+    num_runs = 5
     dt = 0.01
     output_dir = "output/echo/benchmarks"
     os.makedirs(output_dir, exist_ok=True)
@@ -131,32 +132,52 @@ def main():
     # Simulate Run A (Degraded/Aged Baseline)
     lambda_A = 0.2
     logger.info(f"Simulating Run A: Degraded baseline with precision_injection_gain={lambda_A}")
-    traj_A = simulate_sde(graph, x0, lambda_A, N_steps, dt, k5)
+    keys_A = jax.random.split(k5, num_runs)
+    
+    # We vmap over the keys to simulate multiple independent noise trajectories
+    vmap_simulate = eqx.filter_jit(jax.vmap(simulate_sde, in_axes=(None, None, None, None, None, 0)))
+    traj_A_batch = vmap_simulate(graph, x0, lambda_A, N_steps, dt, keys_A)
     
     # Simulate Run B (The Rescue)
     lambda_B = 5.0
     logger.info(f"Simulating Run B: Therapeutic rescue with precision_injection_gain={lambda_B}")
-    traj_B = simulate_sde(graph, x0, lambda_B, N_steps, dt, k5)
+    keys_B = jax.random.split(k5, num_runs)  # Using the same base seeds for fair noise comparison
+    traj_B_batch = vmap_simulate(graph, x0, lambda_B, N_steps, dt, keys_B)
     
     # Compute Thermodynamic Curvature
     logger.info("Computing thermodynamic restoration metrics (Hessian trace).")
     tracker = HessianCurvatureTracker(graph.ebm)
-    metrics_A = tracker.batch_calculate_curvature(traj_A)
-    metrics_B = tracker.batch_calculate_curvature(traj_B)
     
-    trace_A = np.array(metrics_A["hessian_trace"])
-    trace_B = np.array(metrics_B["hessian_trace"])
+    def get_traces(traj_batch):
+        traces = []
+        for i in range(num_runs):
+            metrics = tracker.batch_calculate_curvature(traj_batch[i])
+            traces.append(np.array(metrics["hessian_trace"]))
+        return np.vstack(traces)
+        
+    trace_A_batch = get_traces(traj_A_batch) * lambda_A
+    trace_B_batch = get_traces(traj_B_batch) * lambda_B
+    
+    mean_trace_A = np.mean(trace_A_batch, axis=0)
+    std_trace_A = np.std(trace_A_batch, axis=0)
+    
+    mean_trace_B = np.mean(trace_B_batch, axis=0)
+    std_trace_B = np.std(trace_B_batch, axis=0)
+    
+    # For the 3D phase space plot, we just visualize the first trajectory
+    traj_A = traj_A_batch[0]
+    traj_B = traj_B_batch[0]
     
     # Generate Figure 4 Visual
     logger.info("Generating Figure 4 Beacon Plot.")
-    fig = plt.figure(figsize=(15, 5))
+    fig = plt.figure(figsize=(18, 6))
     
     # Panel A: The Pathology
     ax1 = fig.add_subplot(131, projection='3d')
     tA_np = np.array(traj_A)
     ax1.plot(tA_np[:, 0], tA_np[:, 1], tA_np[:, 2], color='red', alpha=0.7, linewidth=1)
     ax1.scatter(tA_np[0, 0], tA_np[0, 1], tA_np[0, 2], color='black', s=50, label='x0 (Old State)')
-    ax1.set_title(f"Panel A: Pathology (λ={lambda_A})")
+    ax1.set_title(f"Panel A: Degraded Pathology (λ={lambda_A})")
     ax1.legend()
     
     # Panel B: The Phase Space Rescue
@@ -164,16 +185,22 @@ def main():
     tB_np = np.array(traj_B)
     ax2.plot(tB_np[:, 0], tB_np[:, 1], tB_np[:, 2], color='green', alpha=0.7, linewidth=1)
     ax2.scatter(tB_np[0, 0], tB_np[0, 1], tB_np[0, 2], color='black', s=50, label='x0 (Old State)')
-    ax2.set_title(f"Panel B: Phase Space Rescue (λ={lambda_B})")
+    ax2.set_title(f"Panel B: Therapeutic Rescue (λ={lambda_B})")
     ax2.legend()
     
     # Panel C: Thermodynamic Restoration (Hessian Trace)
     ax3 = fig.add_subplot(133)
-    ax3.plot(trace_A, color='red', label=f'Run A (λ={lambda_A})', linestyle='--')
-    ax3.plot(trace_B, color='green', label=f'Run B (λ={lambda_B})')
+    steps = np.arange(len(mean_trace_A))
+    
+    ax3.plot(steps, mean_trace_A, color='red', label=f'Run A: Degraded (λ={lambda_A})', linestyle='--')
+    ax3.fill_between(steps, mean_trace_A - std_trace_A, mean_trace_A + std_trace_A, color='red', alpha=0.2)
+    
+    ax3.plot(steps, mean_trace_B, color='green', label=f'Run B: Rescued (λ={lambda_B})')
+    ax3.fill_between(steps, mean_trace_B - std_trace_B, mean_trace_B + std_trace_B, color='green', alpha=0.2)
+    
     ax3.set_xlabel("Simulation Steps")
-    ax3.set_ylabel("Hessian Trace (Basin Steepness)")
-    ax3.set_title("Panel C: Thermodynamic Restoration")
+    ax3.set_ylabel("Effective Hessian Trace (Steeper Basin = Healthier)")
+    ax3.set_title(f"Panel C: Thermodynamic Restoration (n={num_runs})")
     ax3.legend()
     
     plt.tight_layout()

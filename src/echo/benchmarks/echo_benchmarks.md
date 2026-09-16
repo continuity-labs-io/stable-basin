@@ -29,3 +29,6 @@ The ultimate integration benchmark operating on the *C. elegans* gait dataset. I
 
 ## 07: Nonlinear EEG Entropy (`07_nonlinear_eeg_entropy.py`)
 Validates the ECHO Harness on human EEG datasets to determine if our nonlinear estimators capture non-Gaussian irreversibility (the true thermodynamic arrow of time) that linear phase-lag models miss. This script orchestrates an Arrow-of-Time neural network (Estimator D) and a Fitted NESS EBM (Estimator E) using a `PredictiveCodingGraph` to detect irreversibility in real vs phase-randomized surrogate data.
+
+## 08: In-Silico Reprogramming & Thermodynamic Rescue (`08_insilico_reprogramming.py`)
+Serves as the scientific climax of the project (Figure 4). It demonstrates mathematically that an erratic "old" biological trajectory can be rescued by applying a synthetic control force (Precision Injection). By directly modifying the precision topology of the Markov blanket during an Euler-Maruyama SDE rollout (via `jax.lax.scan`), it artificially steepens the Waddington basin, forcing the degraded system back into a youthful, tight biological limit cycle.
