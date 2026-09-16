@@ -1,0 +1,12 @@
+optimization:
+  learning_rate: 0.001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  max_epochs: 100
+
+model:
+  hidden_dimensions: 128
+  use_blanket_topology: false
+
+logging:
+  wandb_project: "echo_training"
