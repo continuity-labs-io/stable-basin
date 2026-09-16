@@ -11,6 +11,8 @@ dependencies = [
     "rerun-sdk",
     "google-genai",
     "torchfix==0.6.0",
+    "mne",
+    "scikit-learn",
 ]
 
 [tool.ruff]
