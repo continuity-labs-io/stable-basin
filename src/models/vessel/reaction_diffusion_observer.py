@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from jaxtyping import Float
 from einops import rearrange
 
-class ObserverZero(nn.Module):
+class ReactionDiffusionObserver(nn.Module):
     """
     Observer Zero: A 2D continuous-time physics simulation using a 
     Reaction-Diffusion system (FitzHugh-Nagumo) to model self-sustaining 

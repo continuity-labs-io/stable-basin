@@ -1,11 +1,11 @@
 import torch
 import pytest
-from src.models.vessel.observer_zero import ObserverZero
+from src.models.vessel.reaction_diffusion_observer import ReactionDiffusionObserver
 
 def test_laplacian_invariants():
     # ARRANGE
     size = 16
-    model = ObserverZero(size=size)
+    model = ReactionDiffusionObserver(size=size)
     x = torch.zeros(1, 1, size, size, requires_grad=True)
     # Put a pulse at the origin (0, 0)
     with torch.no_grad():
@@ -37,7 +37,7 @@ def test_laplacian_invariants():
 def test_continuous_update_invariants():
     # ARRANGE
     size = 16
-    model = ObserverZero(size=size, dt=0.1, sigma=0.0) # sigma=0 for deterministic gradient check
+    model = ReactionDiffusionObserver(size=size, dt=0.1, sigma=0.0) # sigma=0 for deterministic gradient check
     # Require grad on buffers for testing
     model.u.requires_grad = True
     model.v.requires_grad = True
@@ -71,7 +71,7 @@ def test_continuous_update_invariants():
 def test_inject_wound_invariants():
     # ARRANGE
     size = 16
-    model = ObserverZero(size=size)
+    model = ReactionDiffusionObserver(size=size)
     model.u.requires_grad = True
     model.v.requires_grad = True
     

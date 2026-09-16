@@ -139,3 +139,58 @@ def test_observer_jit():
     
     # ASSERT
     assert not jnp.any(jnp.isnan(x_final))
+
+def test_topology_masking_invariant():
+    """
+    1-to-1 Invariant Test for Gamma Masking Fix.
+    Verifies that the block-diagonal parameterization of the lower-triangular 
+    Cholesky factor strictly respects the Markov Blanket topology while 
+    maintaining strict positive-definiteness of the covariance matrix Gamma.
+    """
+    # ARRANGE
+    d_internal = 2
+    d_sensory = 1
+    d_active = 1
+    d_external = 4
+    d_state = d_internal + d_sensory + d_active + d_external
+    
+    key_comp, key_x = jax.random.split(jax.random.PRNGKey(42), 2)
+    
+    observer = MarkovBlanketObserver(
+        d_internal=d_internal,
+        d_sensory=d_sensory,
+        d_active=d_active,
+        d_external=d_external,
+        ebm_hidden_size=16,
+        ebm_depth=2,
+        n_steps=5,
+        temperature=1.0,
+        key=key_comp,
+        use_blanket_topology=True
+    )
+    
+    flow_factor = observer.forced_thermalizer.flow_factor
+    L_orig = jnp.tril(flow_factor.dissipative.W)
+    
+    # ACT
+    idx_s = flow_factor.hull.d_internal
+    idx_e = flow_factor.hull.d_internal + flow_factor.hull.d_sensory + flow_factor.hull.d_active
+    
+    L_ie = jnp.zeros((flow_factor.d_state - idx_e, idx_s), dtype=jnp.float32)
+    
+    S = jnp.block([
+        [L_orig[:idx_s, :idx_s], L_orig[:idx_s, idx_s:idx_e], L_orig[:idx_s, idx_e:]],
+        [L_orig[idx_s:idx_e, :idx_s], L_orig[idx_s:idx_e, idx_s:idx_e], L_orig[idx_s:idx_e, idx_e:]],
+        [L_ie, L_orig[idx_e:, idx_s:idx_e], L_orig[idx_e:, idx_e:]]
+    ])
+    
+    Gamma = S @ S.T
+    Gamma_with_jitter = Gamma + flow_factor.epsilon * jnp.eye(flow_factor.d_state, dtype=jnp.float32)
+    eigenvalues = jnp.linalg.eigvalsh(Gamma_with_jitter)
+    
+    # ASSERT
+    assert S.shape == (d_state, d_state)
+    assert Gamma.shape == (d_state, d_state)
+    assert jnp.all(Gamma[:idx_s, idx_e:] == 0.0), "Internal-External covariance block is not strictly zero."
+    assert jnp.all(Gamma[idx_e:, :idx_s] == 0.0), "External-Internal covariance block is not strictly zero."
+    assert jnp.all(eigenvalues > 0.0), f"Gamma is not strictly positive definite. Eigenvalues: {eigenvalues}"

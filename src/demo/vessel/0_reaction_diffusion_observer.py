@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 
-from src.models.vessel.observer_zero import ObserverZero
+from src.models.vessel.reaction_diffusion_observer import ReactionDiffusionObserver
 
 def main():
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     
     # Initialize the model
     size = 128
-    model = ObserverZero(size=size, dt=0.01, D_u=0.16, D_v=0.08, epsilon=0.01, 
+    model = ReactionDiffusionObserver(size=size, dt=0.01, D_u=0.16, D_v=0.08, epsilon=0.01, 
                          gamma=0.5, sigma=0.0).to(device)
     model.eval()
     

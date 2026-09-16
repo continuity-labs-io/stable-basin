@@ -33,11 +33,12 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
     hull: MarkovHull
     d_state: int = eqx.field(static=True)
     epsilon: float = eqx.field(static=True)
+    use_blanket_topology: bool = eqx.field(static=True)
 
     input_ports: dict = eqx.field(static=True)
     output_spec: jax.ShapeDtypeStruct = eqx.field(static=True)
 
-    def __init__(self, ebm, solenoidal, dissipative, thermostat, hull, d_state, epsilon):
+    def __init__(self, ebm, solenoidal, dissipative, thermostat, hull, d_state, epsilon, use_blanket_topology):
         self.ebm = ebm
         self.solenoidal = solenoidal
         self.dissipative = dissipative
@@ -45,6 +46,7 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         self.hull = hull
         self.d_state = d_state
         self.epsilon = epsilon
+        self.use_blanket_topology = use_blanket_topology
         
         self.input_ports = {
             "x": jax.ShapeDtypeStruct((d_state,), jnp.float32),
@@ -74,12 +76,28 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         Q = self.solenoidal.Q
         L_orig = jnp.tril(self.dissipative.W)
         
-        # Masking
-        M = self.hull.get_topology_mask()
-        Q_masked = Q * M
-        
-        # Apply the topology mask directly to the lower-triangular Cholesky factor
-        S = L_orig * M
+        # Masking and Parameterization
+        import logging
+        if not self.use_blanket_topology:
+            Q_masked = Q
+            S = L_orig
+            # logging.info("Blanket topology disabled. Using full dense parameterization for Γ.")
+        else:
+            M = self.hull.get_topology_mask()
+            Q_masked = Q * M
+            
+            # Re-parameterize L by explicit block construction instead of naive dense masking
+            idx_s = self.hull.d_internal
+            idx_e = self.hull.d_internal + self.hull.d_sensory + self.hull.d_active
+            
+            # Explicitly enforce zero in the external-internal block (bottom left)
+            L_ie = jnp.zeros((self.d_state - idx_e, idx_s), dtype=jnp.float32)
+            
+            S = jnp.block([
+                [L_orig[:idx_s, :idx_s], L_orig[:idx_s, idx_s:idx_e], L_orig[:idx_s, idx_e:]],
+                [L_orig[idx_s:idx_e, :idx_s], L_orig[idx_s:idx_e, idx_s:idx_e], L_orig[idx_s:idx_e, idx_e:]],
+                [L_ie, L_orig[idx_e:, idx_s:idx_e], L_orig[idx_e:, idx_e:]]
+            ])
         
         # Execute Thermostat with masked matrices
         x_next = self.thermostat(
@@ -123,10 +141,17 @@ class MarkovBlanketObserver(eqx.Module):
         temperature: float,
         key: jax.random.PRNGKey,
         D_s: jax.Array | None = None,
-        epsilon: float = 1e-4
+        epsilon: float = 1e-4,
+        use_blanket_topology: bool = True
     ):
+        import logging
         self.hull = MarkovHull(d_internal, d_sensory, d_active, d_external, D_s=D_s)
         d_state = self.hull.d_state
+        
+        if use_blanket_topology:
+            logging.info("Initializing MarkovBlanketObserver with strictly positive-definite partitioned topology.")
+        else:
+            logging.info("Initializing MarkovBlanketObserver with unpartitioned full-rank dense topology.")
         
         k1, k2, k3 = jax.random.split(key, 3)
         self.ebm = PrecisionWeightedEBM(
@@ -146,7 +171,8 @@ class MarkovBlanketObserver(eqx.Module):
             thermostat=self.thermostat,
             hull=self.hull,
             d_state=d_state,
-            epsilon=epsilon
+            epsilon=epsilon,
+            use_blanket_topology=use_blanket_topology
         )
         
         self.thermalizer = TorxThermalizer(
