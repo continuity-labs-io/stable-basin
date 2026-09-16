@@ -29,7 +29,7 @@ expensive JAX XLA recompilations.
   phase-shifted sine/cosine waves mimicking the biological limit cycle of
   forward locomotion).
 
-**2. The Mathematical Baselines (`src/echo/models/primitives/ebm.py`):** We need
+**2. The Mathematical Baselines (`src/echo/models/primitives/ebm.py`):** We require
 two distinct Energy-Based Models (EBMs) defined as pure Equinox Modules
 (`eqx.Module`) to facilitate the ablation study comparing rigid mathematical
 basins against biological neural network landscapes.
@@ -64,4 +64,4 @@ basins against biological neural network landscapes.
 - Use the standard Python `logging` module. Keep all log messages peaceful,
   precise, and practical (e.g.,
   `logger.info("Generating seeded synthetic 6D limit cycle for CI testing.")`).
-  Avoid dramatic, capitalized, or emoji-laden print statements.
+  Avoid dramatic, capitalized, and emoji-laden print statements.
