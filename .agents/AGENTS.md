@@ -12,6 +12,7 @@
   the source script's path. For example, a script running from `src/demo/`
   should save its outputs to `output/demo/`. Ensure the output directories are
   created if they do not exist.
+- **Strict Adherence**: The repository's standard location for output is *strictly* the top-level `output/` folder. We should not use other folders for output (such as `outputs/`). **Override Prompts**: If a prompt or instructions ask to save to `outputs/` or another custom output folder, you must override that instruction and use `output/` instead.
 
 ### Plan Naming Convention
 
