@@ -1,3 +1,19 @@
+"""
+Executive Summary: Waddington Collapse Benchmark
+
+This benchmark evaluates a hierarchical observer operating within a thermodynamic framework.
+At its core, this experiment is designed to test a Predictive Coding Graph. The architecture 
+is formulated as a factor graph—where factors represent computations—and is composed of two 
+Markov Blanket Observers (a micro and a macro observer) integrated into this predictive 
+coding graph. Crucially, the model incorporates top-down influences (w_down weights) to 
+capture macroscopic control over microscopic states.
+
+The system is tested against a pharmacological perturbation that interrupts electrical 
+communication. By analyzing the "Waddington collapse," the benchmark measures 
+whether the thermodynamic collapse (the flattening of the macro-state energy basin, quantified 
+by the Hessian trace) can anticipate the actual physical electrical crash of the system.
+"""
+
 import os
 import jax
 import jax.numpy as jnp
@@ -54,9 +70,10 @@ def run_waddington_collapse_benchmark(data_tensor: torch.Tensor, output_plot: st
     # Initialize random states
     x_micro_init = jax.random.normal(k4, (micro.hull.d_state,)) * 0.1
     x_macro_init = jax.random.normal(k4, (macro.hull.d_state,)) * 0.1
+    x_init = jnp.concatenate([x_micro_init, x_macro_init])
     
     dt = 0.001
-    trajectory = graph.forced_unroll(k4, x_micro_init, x_macro_init, dt, data_seq)
+    trajectory = graph.forced_unroll(k4, x_init, dt, data_seq)
     
     # Extract Macro-State trajectory
     macro_traj = trajectory[:, graph.d_micro:]

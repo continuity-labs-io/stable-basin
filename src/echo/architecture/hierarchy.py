@@ -211,10 +211,38 @@ class PredictiveCodingGraph(eqx.Module):
     W_down: eqx.nn.Linear
     thermalizer: TorxThermalizer
     forced_thermalizer: ForcedTorxThermalizer
+    flow_factor: HierarchicalThermoFlowFactor
+    hull: MarkovHull
     d_micro: int = eqx.field(static=True)
     d_macro: int = eqx.field(static=True)
-    
+
+    @property
+    def ebm(self):
+        # Return a mock module that satisfies the EBM interface (returns energy, None)
+        # and computes the joint free energy over the full concatenated state.
+        # This allows EchoRunner's HessianCurvatureTracker to compute the full 46x46 Hessian.
+        class JointEBM(eqx.Module):
+            flow_factor: HierarchicalThermoFlowFactor
+            d_micro: int
+            
+            def __call__(self_, x):
+                x_micro = x[:self_.d_micro]
+                x_macro = x[self_.d_micro:]
+                E = self_.flow_factor.joint_energy_fn(x_micro, x_macro)
+                return E, jnp.eye(x.shape[0])
+                
+        return JointEBM(flow_factor=self.flow_factor, d_micro=self.d_micro)
+        
     def __init__(self, micro_observer: MarkovBlanketObserver, macro_observer: MarkovBlanketObserver, n_steps: int, key: jax.random.PRNGKey):
+        # We need a hull that represents the concatenated state so apply_sensory_degradation works safely.
+        # But EchoRunner's validation also uses model.hull to extract sensory dimensions.
+        # We will create a mock hull for the whole graph.
+        self.hull = MarkovHull(
+            d_internal=micro_observer.hull.d_internal + macro_observer.hull.d_internal,
+            d_sensory=micro_observer.hull.d_sensory,
+            d_active=micro_observer.hull.d_active,
+            d_external=micro_observer.hull.d_external + macro_observer.hull.d_state - macro_observer.hull.d_internal - micro_observer.hull.d_sensory - micro_observer.hull.d_active
+        )
         self.d_micro = micro_observer.hull.d_state
         self.d_macro = macro_observer.hull.d_state
         
@@ -236,6 +264,7 @@ class PredictiveCodingGraph(eqx.Module):
             d_macro=self.d_macro
         )
         
+        self.flow_factor = factor
         d_state = self.d_micro + self.d_macro
         self.thermalizer = TorxThermalizer(
             flow_factor=factor,
@@ -248,16 +277,14 @@ class PredictiveCodingGraph(eqx.Module):
             injection_start_idx=micro_observer.hull.d_internal
         )
         
-    def __call__(self, key: jax.random.PRNGKey, x_micro_init: jax.Array, x_macro_init: jax.Array, dt: float) -> jax.Array:
+    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float) -> jax.Array:
         """
         Executes the unrolled joint simulation over n_steps.
         """
-        x_init = jnp.concatenate([x_micro_init, x_macro_init])
         return self.thermalizer(key, x_init, dt)
 
-    def forced_unroll(self, key: jax.random.PRNGKey, x_micro_init: jax.Array, x_macro_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
+    def forced_unroll(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
         """
         Executes the unrolled joint simulation over an external sequence.
         """
-        x_init = jnp.concatenate([x_micro_init, x_macro_init])
         return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq, q_gain=q_gain, q_mask=q_mask)

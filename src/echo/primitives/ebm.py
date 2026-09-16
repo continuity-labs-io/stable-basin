@@ -91,3 +91,31 @@ class PrecisionWeightedEBM(eqx.Module):
         precision = (L @ L.T) + (self.epsilon * jnp.eye(self.d_state, dtype=jnp.float32))
         
         return energy, precision
+
+class GaussianEBM(eqx.Module):
+    """
+    Implements a rigid, single-basin parabolic landscape: E(x) = 1/2 * (x - mu)^T Pi (x - mu).
+    Pi is parameterized via Cholesky decomposition (L L^T) and is constant everywhere.
+    """
+    mu: Float[Array, "d_state"]
+    L: Float[Array, "d_state d_state"]
+    d_state: int = eqx.field(static=True)
+
+    def __init__(self, d_state: int, hidden_size: int, depth: int, key: PRNGKeyArray, epsilon: float = 1e-4):
+        """
+        Initializes the GaussianEBM.
+        (hidden_size and depth are ignored, kept for API compatibility with PrecisionWeightedEBM)
+        """
+        self.d_state = d_state
+        k1, k2 = jax.random.split(key)
+        self.mu = jax.random.normal(k1, (d_state,))
+        # Initialize L to be roughly identity so Pi is roughly identity
+        self.L = jax.random.normal(k2, (d_state, d_state)) * 0.1 + jnp.eye(d_state)
+
+    def __call__(self, x: Float[Array, "d_state"]) -> Tuple[Float[Array, ""], Float[Array, "d_state d_state"]]:
+        L_tril = jnp.tril(self.L)
+        Pi = L_tril @ L_tril.T
+        diff = x - self.mu
+        energy = 0.5 * jnp.dot(diff, jnp.dot(Pi, diff))
+        return energy, Pi
+

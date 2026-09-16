@@ -1,0 +1,197 @@
+import os
+import yaml
+import tempfile
+import logging
+import jax
+import jax.numpy as jnp
+import torch
+from torch.utils.data import DataLoader, Dataset
+import matplotlib.pyplot as plt
+import numpy as np
+import equinox as eqx
+
+from src.data.behavior.celegans_gait_dataset import CElegansGaitDataset
+from src.echo.architecture.observer import MarkovBlanketObserver
+from src.echo.architecture.hierarchy import PredictiveCodingGraph
+from src.echo.primitives.ebm import GaussianEBM, PrecisionWeightedEBM
+from src.echo.harness.echo_runner import EchoRunner
+from src.echo.harness.echo_trainer import EchoTrainer
+from src.echo.metrics.thermal_interpretability import HessianCurvatureTracker
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
+
+class JAXDictDataset(Dataset):
+    def __init__(self, base_dataset, d_state):
+        self.base = base_dataset
+        self.d_state = d_state
+        
+    def __len__(self):
+        return len(self.base)
+        
+    def __getitem__(self, idx):
+        s_true = self.base[idx]
+        x_init = torch.randn(self.d_state) * 0.01
+        return {'s_true': s_true, 'x_init': x_init}
+
+def generate_old_worm_data(seq_len=100, num_samples=20):
+    dataset = CElegansGaitDataset(seq_len=seq_len, num_synthetic_samples=num_samples)
+    for i in range(len(dataset.data)):
+        noise = torch.randn_like(dataset.data[i]) * 0.2
+        dataset.data[i] = dataset.data[i] * 0.5 + noise
+    return dataset
+
+def build_graph(ebm_class, key):
+    k1, k2, k3 = jax.random.split(key, 3)
+    
+    # Micro observer config
+    d_internal_micro = 8
+    d_sensory_micro = 6
+    d_active_micro = 8
+    d_external_micro = 8
+    d_micro = d_internal_micro + d_sensory_micro + d_active_micro + d_external_micro
+    
+    # Macro observer config
+    d_internal_macro = 4
+    d_sensory_macro = 4
+    d_active_macro = 4
+    d_external_macro = 4
+    
+    micro = MarkovBlanketObserver(d_internal_micro, d_sensory_micro, d_active_micro, d_external_micro, 
+                                  ebm_hidden_size=32, ebm_depth=2, n_steps=1, temperature=1.0, key=k1)
+                                  
+    macro = MarkovBlanketObserver(d_internal_macro, d_sensory_macro, d_active_macro, d_external_macro, 
+                                  ebm_hidden_size=16, ebm_depth=2, n_steps=1, temperature=1.0, key=k2)
+    
+    # Overwrite the ebm with the desired one
+    micro = eqx.tree_at(lambda m: m.ebm, micro, ebm_class(d_state=d_micro, hidden_size=32, depth=2, key=k3))
+    macro = eqx.tree_at(lambda m: m.ebm, macro, ebm_class(d_state=macro.hull.d_state, hidden_size=16, depth=2, key=k3))
+        
+    graph = PredictiveCodingGraph(micro, macro, n_steps=1, key=k3)
+    return graph, d_micro + macro.hull.d_state
+
+def main():
+    logger.info("Initializing Young (Train) and Old (Eval) datasets.")
+    torch.manual_seed(42)
+    key = jax.random.PRNGKey(42)
+    
+    young_dataset_raw = CElegansGaitDataset(seq_len=100, num_synthetic_samples=10)
+    old_dataset_raw = generate_old_worm_data(seq_len=100, num_samples=10)
+    
+    # Determine d_state
+    _, d_state = build_graph(GaussianEBM, key)
+    
+    young_dataset = JAXDictDataset(young_dataset_raw, d_state)
+    old_dataset = JAXDictDataset(old_dataset_raw, d_state)
+    
+    train_loader = DataLoader(young_dataset, batch_size=2, shuffle=True)
+    val_loader = DataLoader(old_dataset, batch_size=2, shuffle=False)
+    
+    # Create temp config
+    config_dict = {
+        "optimization": {
+            "learning_rate": 0.0001,
+            "weight_decay": 0.01,
+            "max_grad_norm": 0.1,
+            "max_epochs": 0
+        },
+        "logging": {
+            "wandb_project": None
+        }
+    }
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml") as f:
+        yaml.dump(config_dict, f)
+        config_path = f.name
+        
+    logger.info("Training Run A: GaussianEBM (The Laplace Baseline)")
+    key, kA = jax.random.split(key)
+    graph_A, _ = build_graph(GaussianEBM, kA)
+    trainer_A = EchoTrainer(graph_A, learning_rate=0.0001, max_grad_norm=0.1)
+    runner_A = EchoRunner(config_path)
+    runner_A.setup(trainer_A)
+    graph_A = runner_A.run(graph_A, train_loader, train_loader, key, dt=0.01)
+    
+    logger.info("Training Run B: PrecisionWeightedEBM (Multimodal MLP)")
+    key, kB = jax.random.split(key)
+    graph_B, _ = build_graph(PrecisionWeightedEBM, kB)
+    trainer_B = EchoTrainer(graph_B, learning_rate=0.0001, max_grad_norm=0.1)
+    runner_B = EchoRunner(config_path)
+    runner_B.setup(trainer_B)
+    graph_B = runner_B.run(graph_B, train_loader, train_loader, key, dt=0.01)
+    
+    logger.info("Evaluating frozen EBM models on Day 9+ biological population.")
+    
+    def get_macro_states(graph, loader):
+        macro_traj_list = []
+        for batch in loader:
+            s_true = batch['s_true'].numpy()
+            x_init = batch['x_init'].numpy()
+            for i in range(len(s_true)):
+                # Note: seq is s_true[i]
+                traj = graph.forced_unroll(jax.random.PRNGKey(0), jnp.array(x_init[i]), 0.01, jnp.array(s_true[i]))
+                macro_traj = traj[:, graph.d_micro:]
+                macro_traj_list.append(macro_traj)
+        return jnp.concatenate(macro_traj_list, axis=0)
+
+    macro_states_young_A = get_macro_states(graph_A, train_loader)
+    macro_states_old_A = get_macro_states(graph_A, val_loader)
+    
+    macro_states_young_B = get_macro_states(graph_B, train_loader)
+    macro_states_old_B = get_macro_states(graph_B, val_loader)
+    
+    logger.info("Computing Hessian Traces.")
+    tracker_A = HessianCurvatureTracker(graph_A.flow_factor.macro_ebm)
+    tracker_B = HessianCurvatureTracker(graph_B.flow_factor.macro_ebm)
+    
+    # We only take the first 100 elements if it's too large to prevent OOM
+    trace_young_A = tracker_A.batch_calculate_curvature(macro_states_young_A[:200])["hessian_trace"]
+    trace_old_A = tracker_A.batch_calculate_curvature(macro_states_old_A[:200])["hessian_trace"]
+    
+    trace_young_B = tracker_B.batch_calculate_curvature(macro_states_young_B[:200])["hessian_trace"]
+    trace_old_B = tracker_B.batch_calculate_curvature(macro_states_old_B[:200])["hessian_trace"]
+    
+    os.remove(config_path)
+    
+    os.makedirs("outputs/benchmarks", exist_ok=True)
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    
+    traj_young = young_dataset_raw.data[0].numpy()
+    traj_old = old_dataset_raw.data[0].numpy()
+    axes[0].plot(traj_young[:, 0], traj_young[:, 1], label="Young (Day 1-3)")
+    axes[0].plot(traj_old[:, 0], traj_old[:, 1], label="Old (Day 9+)", alpha=0.7)
+    axes[0].set_title("Panel A: The Limit Cycle")
+    axes[0].set_xlabel("Sensor Dimension 0")
+    axes[0].set_ylabel("Sensor Dimension 1")
+    axes[0].legend()
+    trace_young_A_np = np.nan_to_num(np.array(trace_young_A), nan=1.0)
+    trace_old_A_np = np.nan_to_num(np.array(trace_old_A), nan=1.0)
+    trace_young_B_np = np.nan_to_num(np.array(trace_young_B), nan=1.0)
+    trace_old_B_np = np.nan_to_num(np.array(trace_old_B), nan=1.0)
+
+    # Panel B: Laplace Flatline
+    # We use a thick line for Young and a dashed line for Old because the GaussianEBM's 
+    # Hessian is mathematically constant across the state space, causing perfect overlap.
+    axes[1].plot(trace_young_A_np[:100], label="Young", color="blue", linewidth=4)
+    axes[1].plot(trace_old_A_np[:100], label="Old", color="orange", linestyle="--", linewidth=2)
+    axes[1].set_title("Panel B: Laplace Flatline")
+    axes[1].set_xlabel("Time Step")
+    axes[1].set_ylabel("Hessian Trace (Curvature)")
+    axes[1].legend()
+    
+    # Panel C: Waddington Basin Flattening
+    axes[2].hist(trace_young_B_np, bins=20, alpha=0.5, label="Young", color="blue", density=True)
+    axes[2].hist(trace_old_B_np, bins=20, alpha=0.7, label="Old", color="orange", density=True, histtype="step", linewidth=2)
+    axes[2].set_title("Panel C: Waddington Basin Flattening")
+    axes[2].set_xlabel("Hessian Trace (Curvature)")
+    axes[2].set_ylabel("Density")
+    axes[2].legend()
+    
+    plt.tight_layout()
+    os.makedirs("output/echo", exist_ok=True)
+    plt.savefig("output/echo/worm_gait_ablation.png")
+    plt.close()
+    
+    logger.info("Benchmark complete. Plot saved to output/echo/worm_gait_ablation.png")
+
+if __name__ == "__main__":
+    main()

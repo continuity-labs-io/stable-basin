@@ -29,8 +29,9 @@ def test_hierarchy_execution():
     
     x_micro = jax.random.normal(k_x1, (4,), dtype=jnp.float32)
     x_macro = jax.random.normal(k_x2, (6,), dtype=jnp.float32)
+    x_init = jnp.concatenate([x_micro, x_macro])
     
-    out = graph(k_run, x_micro, x_macro, dt=0.01)
+    out = graph(k_run, x_init, dt=0.01)
     
     # Out may be a trajectory of (3, 10) or just final state (10,) depending on feedback_porting
     # But TorxThermalizer in the previous tests outputted either. We just assert no NaNs.
@@ -59,7 +60,8 @@ def test_hierarchy_cross_talk_acid_test():
     # Test 1: Bottom-Up Surprisal
     @eqx.filter_value_and_grad
     def macro_loss_fn(x_u):
-        out = graph(k_run, x_u, x_macro, dt)
+        x_init = jnp.concatenate([x_u, x_macro])
+        out = graph(k_run, x_init, dt)
         if out.ndim > 1:
             out = out[-1]
         macro_out = out[4:]
@@ -74,7 +76,8 @@ def test_hierarchy_cross_talk_acid_test():
     # Test 2: Top-Down Enslavement
     @eqx.filter_value_and_grad
     def micro_loss_fn(x_m):
-        out = graph(k_run, x_micro, x_m, dt)
+        x_init = jnp.concatenate([x_micro, x_m])
+        out = graph(k_run, x_init, dt)
         if out.ndim > 1:
             out = out[-1]
         micro_out = out[:4]
@@ -100,7 +103,8 @@ def test_hierarchy_jit():
     
     @eqx.filter_jit
     def jitted_call(g, k, xu, xm):
-        return g(k, xu, xm, 0.01)
+        x_init = jnp.concatenate([xu, xm])
+        return g(k, x_init, 0.01)
         
     out = jitted_call(graph, k_run, x_micro, x_macro)
     assert not jnp.any(jnp.isnan(out))

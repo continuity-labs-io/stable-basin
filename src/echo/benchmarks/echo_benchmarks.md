@@ -23,3 +23,6 @@ An end-to-end demonstration of the 5-step clinical lifecycle on a simulated agin
 3. **Ping**: Inject a bioelectric shock to detect Silent Drift (Hierarchical Discordance).
 4. **Compute Counterfactual**: Mathematically anneal the Digital Twin in silico to forge an optimal reference point.
 5. **Actuate**: Extract the exact exogenous hardware energy (`Q_actuation`) required to push the patient back into a youthful limit cycle.
+
+## 06: Worm Gait Decline (`06_worm_gait_decline.py`)
+The ultimate integration benchmark operating on the *C. elegans* gait dataset. It orchestrates full predictive coding graph training via dual configurations (Laplace Baseline vs Precision-Weighted EBM). This script proves that the system successfully converges onto biological limit cycles and conclusively demonstrates our ability to measure the thermodynamic flattening (Hessian Curvature decline) of a Waddington basin caused by biological aging.
