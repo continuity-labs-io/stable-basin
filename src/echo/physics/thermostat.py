@@ -30,7 +30,8 @@ class Thermostat(eqx.Module):
         dt: float,
         key: PRNGKeyArray,
         omega_ext: jax.Array | None = None,
-        q_ext: jax.Array | None = None
+        q_ext: jax.Array | None = None,
+        Gamma: Float[Array, "d_state d_state"] | None = None
     ) -> Float[Array, "d_state"]:
         """
         Computes the next state using the Euler-Maruyama method.
@@ -53,7 +54,8 @@ class Thermostat(eqx.Module):
         T = jnp.array(self.temperature, dtype=jnp.float32)
 
         # 1. Compute Gamma
-        Gamma = L @ L.T
+        if Gamma is None:
+            Gamma = L @ L.T
         
         # 2. Deterministic drift: -(Q + Gamma) @ grad_E
         # This equation decomposes the physical flow on the energy landscape into two orthogonal components:

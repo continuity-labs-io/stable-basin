@@ -191,22 +191,24 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             x=x_micro,
             grad_E=grad_micro,
             Q=Q_micro_masked,
-            L=S_micro,
+            L=jax.lax.stop_gradient(S_micro),
             dt=dt,
             key=k_micro,
             omega_ext=omega_micro,
-            q_ext=q_micro
+            q_ext=q_micro,
+            Gamma=Gamma_micro_masked + self.epsilon * jnp.eye(self.d_micro)
         )
         
         x_macro_next = self.macro_thermostat(
             x=x_macro,
             grad_E=grad_macro,
             Q=Q_macro_masked,
-            L=S_macro,
+            L=jax.lax.stop_gradient(S_macro),
             dt=dt,
             key=k_macro,
             omega_ext=omega_macro,
-            q_ext=q_macro
+            q_ext=q_macro,
+            Gamma=Gamma_macro_masked + self.epsilon * jnp.eye(self.d_macro)
         )
         
         # g) Concatenate and return

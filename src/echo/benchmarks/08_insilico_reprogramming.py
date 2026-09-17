@@ -9,6 +9,7 @@ import numpy as np
 from src.data.behavior.celegans_gait_dataset import CElegansGaitDataset
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.hierarchy import PredictiveCodingGraph
+from src.echo.primitives.ebm import PrecisionWeightedEBM
 from src.echo.metrics.thermal_interpretability import HessianCurvatureTracker
 
 # Configure logging
@@ -111,8 +112,17 @@ def main():
                                   
     macro = MarkovBlanketObserver(4, 4, 2, 2, 
                                   ebm_hidden_size=16, ebm_depth=2, n_steps=1, temperature=1.0, key=k2)
+    
+    micro = eqx.tree_at(lambda m: m.ebm, micro, PrecisionWeightedEBM(d_state=d_internal + d_sensory + d_active + d_external, hidden_size=32, depth=2, key=k3))
+    macro = eqx.tree_at(lambda m: m.ebm, macro, PrecisionWeightedEBM(d_state=4 + 4 + 2 + 2, hidden_size=16, depth=2, key=k3))
                                   
     graph = PredictiveCodingGraph(micro, macro, n_steps=1, key=k3)
+    
+    try:
+        graph = eqx.tree_deserialise_leaves("output/echo/trained_young_worm_engine.eqx", graph)
+        logger.info("Successfully loaded trained Young Worm engine.")
+    except Exception as e:
+        logger.warning("Trained model not found! Proceeding with random initialization.")
     d_full = graph.d_micro + graph.d_macro
     
     # Load fallback biological data to represent a fragment of reality

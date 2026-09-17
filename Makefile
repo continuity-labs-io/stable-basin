@@ -40,4 +40,4 @@ preflight: lint-pytorch
 	pytest
 
 audit:
-	python tools/multi_agent_auditor.py
+	python tools/multi_agent_auditor.py --mode "repo"

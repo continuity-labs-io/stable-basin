@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import equinox as eqx
 
+jax.config.update("jax_debug_nans", True)
+
 from src.data.behavior.celegans_gait_dataset import CElegansGaitDataset
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.hierarchy import PredictiveCodingGraph
@@ -87,22 +89,7 @@ def main():
     train_loader = DataLoader(young_dataset, batch_size=2, shuffle=True)
     val_loader = DataLoader(old_dataset, batch_size=2, shuffle=False)
     
-    # Create temp config
-    config_dict = {
-        "optimization": {
-            "learning_rate": 0.0001,
-            "weight_decay": 0.01,
-            "max_grad_norm": 0.1,
-            "max_epochs": 0
-        },
-        "logging": {
-            "wandb_project": None
-        }
-    }
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml") as f:
-        yaml.dump(config_dict, f)
-        config_path = f.name
-        
+    config_path = "configs/echo_training.yaml"
     logger.info("Training Run A: GaussianEBM (The Laplace Baseline)")
     key, kA = jax.random.split(key)
     graph_A, _ = build_graph(GaussianEBM, kA)
@@ -118,6 +105,10 @@ def main():
     runner_B = EchoRunner(config_path)
     runner_B.setup(trainer_B)
     graph_B = runner_B.run(graph_B, train_loader, train_loader, key, dt=0.01)
+    
+    logger.info("Serializing trained Young Worm engine to disk.")
+    os.makedirs("output/echo", exist_ok=True)
+    eqx.tree_serialise_leaves("output/echo/trained_young_worm_engine.eqx", graph_B)
     
     logger.info("Evaluating frozen EBM models on Day 9+ biological population.")
     
@@ -150,7 +141,7 @@ def main():
     trace_young_B = tracker_B.batch_calculate_curvature(macro_states_young_B[:200])["hessian_trace"]
     trace_old_B = tracker_B.batch_calculate_curvature(macro_states_old_B[:200])["hessian_trace"]
     
-    os.remove(config_path)
+
     
     os.makedirs("outputs/benchmarks", exist_ok=True)
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
