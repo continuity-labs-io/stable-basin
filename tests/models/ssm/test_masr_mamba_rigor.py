@@ -287,10 +287,10 @@ def test_mamba_zoh_expm1_precision():
     B_64 = B.double()
     A_safe_64 = torch.where(A_64.abs() <= 1e-8, torch.full_like(A_64, -1e-8), A_64)
     # the true mathematical value
-    B_bar_true = (torch.exp(dt_64 * A_64) - 1.0) / A_safe_64 * B_64.unsqueeze(1)
+    B_bar_true = torch.special.expm1(dt_64 * A_64) / A_safe_64 * B_64.unsqueeze(1)
     
     # Compute what float32 WOULD be if someone reverted to exp(x) - 1.0
-    B_bar_reverted = (torch.exp(dt * A) - 1.0) / A_safe * B.unsqueeze(1)
+    B_bar_reverted = torch.exp(dt * A).sub(1.0) / A_safe * B.unsqueeze(1)
     
     # ASSERT
     # Make sure our fix matches true mathematical value well

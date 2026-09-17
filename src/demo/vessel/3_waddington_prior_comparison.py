@@ -142,10 +142,10 @@ def main():
         
         # Update Telemetry Display
         u_youth = potential_energy(x_youth, mu, Pi_youth).item()
-        dist_youth = torch.norm(x_youth - mu).item()
+        dist_youth = torch.linalg.norm(x_youth - mu).item()
         
         u_aged = potential_energy(x_aged, mu, Pi_aged).item()
-        dist_aged = torch.norm(x_aged - mu).item()
+        dist_aged = torch.linalg.norm(x_aged - mu).item()
         
         text_youth.set_text(
             f"Trace(Π): {torch.trace(Pi_youth).item():.1f}\n"
