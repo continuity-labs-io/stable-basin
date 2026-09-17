@@ -91,86 +91,18 @@ def get_macro_states(graph, loader):
     return jnp.concatenate(macro_traj_list, axis=0)
 
 
-def main():
-    logger.info("Initializing Young (Train) and Old (Eval) datasets.")
-    torch.manual_seed(42)
-    key = jax.random.PRNGKey(42)
-    
-    try:
-        train_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=100, is_aged=False
-        )
-        test_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=100, is_aged=True
-        )
-    except FileNotFoundError:
-        logger.warning("Local biological data not found. Falling back to SyntheticWormMockDataset.")
-        train_dataset_raw = SyntheticWormMockDataset(seq_len=100, num_samples=50)
-        test_dataset_raw = SyntheticWormMockDataset(seq_len=100, num_samples=50)
-    
-    # Determine d_state
-    _, d_state = build_graph(GaussianEBM, key)
-    
-    train_dataset = JAXDictDataset(train_dataset_raw, d_state)
-    test_dataset = JAXDictDataset(test_dataset_raw, d_state)
-    
-    train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True)
-    val_loader = DataLoader(test_dataset, batch_size=2, shuffle=False)
-    
-    config_path = "configs/echo_training.yaml"
-    logger.info("Training Run A: GaussianEBM (The Laplace Baseline)")
-    key, kA = jax.random.split(key)
-    graph_A, _ = build_graph(GaussianEBM, kA)
-    trainer_A = EchoTrainer(graph_A, learning_rate=0.0001, max_grad_norm=0.1)
-    runner_A = EchoRunner(config_path)
-    runner_A.setup(trainer_A)
-    graph_A = runner_A.run(graph_A, train_loader, train_loader, key, dt=0.01)
-    
-    logger.info("Training Run B: PrecisionWeightedEBM (Multimodal MLP)")
-    key, kB = jax.random.split(key)
-    graph_B, _ = build_graph(PrecisionWeightedEBM, kB)
-    trainer_B = EchoTrainer(graph_B, learning_rate=0.0001, max_grad_norm=0.1)
-    runner_B = EchoRunner(config_path)
-    runner_B.setup(trainer_B)
-    graph_B = runner_B.run(graph_B, train_loader, train_loader, key, dt=0.01)
-    
-    logger.info("Serializing trained Young Worm engine to disk.")
-    os.makedirs("output/echo/benchmarks", exist_ok=True)
-    eqx.tree_serialise_leaves(
-        "output/echo/benchmarks/06_worm_gait_decline_trained_engine.eqx", graph_B
-    )
-    
-    logger.info("Evaluating frozen EBM models on Day 9+ biological population.")
-
-    macro_states_young_A = get_macro_states(graph_A, train_loader)
-    macro_states_old_A = get_macro_states(graph_A, val_loader)
-    
-    macro_states_young_B = get_macro_states(graph_B, train_loader)
-    macro_states_old_B = get_macro_states(graph_B, val_loader)
-    
-    logger.info("Computing Hessian Traces.")
-    tracker_A = HessianCurvatureTracker(graph_A.flow_factor.macro_ebm)
-    tracker_B = HessianCurvatureTracker(graph_B.flow_factor.macro_ebm)
-    
-    # We only take the first 100 elements if it's too large to prevent OOM
-    trace_young_A = tracker_A.batch_calculate_curvature(
-        macro_states_young_A[::10][:1000]
-    )["hessian_trace"]
-    trace_old_A = tracker_A.batch_calculate_curvature(
-        macro_states_old_A[::10][:1000]
-    )["hessian_trace"]
-    
-    trace_young_B = tracker_B.batch_calculate_curvature(
-        macro_states_young_B[::10][:1000]
-    )["hessian_trace"]
-    trace_old_B = tracker_B.batch_calculate_curvature(
-        macro_states_old_B[::10][:1000]
-    )["hessian_trace"]
-    
+def plot_ablation_results(
+    eval_young_dataset_raw,
+    eval_old_dataset_raw,
+    trace_young_A,
+    trace_old_A,
+    trace_young_B,
+    trace_old_B,
+):
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     
-    traj_young = train_dataset_raw.data[0].numpy()
-    traj_old = test_dataset_raw.data[0].numpy()
+    traj_young = eval_young_dataset_raw.data[0].numpy()
+    traj_old = eval_old_dataset_raw.data[0].numpy()
     axes[0].plot(traj_young[:500, 0], traj_young[:500, 1], label="Young (Day 1-3)")
     axes[0].plot(traj_old[:500, 0], traj_old[:500, 1], label="Old (Day 9+)", alpha=0.7)
     axes[0].set_title("Panel A: The Limit Cycle")
@@ -185,9 +117,9 @@ def main():
     # Panel B: Laplace Flatline We use a thick line for Young and a dashed line
     # for Old because the GaussianEBM's Hessian is mathematically constant
     # across the state space, causing perfect overlap.
-    axes[1].plot(trace_young_A_np[:100], label="Young", color="blue", linewidth=4)
+    axes[1].plot(trace_young_A_np, label="Young", color="blue", linewidth=4)
     axes[1].plot(
-        trace_old_A_np[:100], label="Old", color="orange", linestyle="--", linewidth=2
+        trace_old_A_np, label="Old", color="orange", linestyle="--", linewidth=2
     )
     axes[1].set_title("Panel B: Laplace Flatline")
     axes[1].set_xlabel("Time Step")
@@ -215,6 +147,98 @@ def main():
     logger.info(
         "Benchmark complete. Plot saved to "
         "output/echo/benchmarks/06_worm_gait_decline_ablation.png"
+    )
+
+
+def main():
+    logger.info("Initializing Young (Train) and Old (Eval) datasets.")
+    torch.manual_seed(42)
+    key = jax.random.PRNGKey(42)
+    
+    try:
+        train_young_dataset_raw = RealEigenwormDataset(
+            data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=100, is_aged=False
+        )
+        eval_young_dataset_raw = RealEigenwormDataset(
+            data_path="data/worm/EigenWorms_TEST.ts", seq_len=100, is_aged=False
+        )
+        eval_old_dataset_raw = RealEigenwormDataset(
+            data_path="data/worm/EigenWorms_TEST.ts", seq_len=100, is_aged=True
+        )
+    except FileNotFoundError:
+        logger.warning("Local biological data not found. Falling back to SyntheticWormMockDataset.")
+        train_young_dataset_raw = SyntheticWormMockDataset(seq_len=100, num_samples=50)
+        eval_young_dataset_raw = SyntheticWormMockDataset(seq_len=100, num_samples=50)
+        eval_old_dataset_raw = SyntheticWormMockDataset(seq_len=100, num_samples=50)
+    
+    # Determine d_state
+    _, d_state = build_graph(GaussianEBM, key)
+    
+    train_young_dataset = JAXDictDataset(train_young_dataset_raw, d_state)
+    eval_young_dataset = JAXDictDataset(eval_young_dataset_raw, d_state)
+    eval_old_dataset = JAXDictDataset(eval_old_dataset_raw, d_state)
+    
+    train_young_loader = DataLoader(train_young_dataset, batch_size=2, shuffle=True)
+    eval_young_loader = DataLoader(eval_young_dataset, batch_size=2, shuffle=False)
+    eval_old_loader = DataLoader(eval_old_dataset, batch_size=2, shuffle=False)
+    
+    config_path = "configs/echo_training.yaml"
+    logger.info("Training Run A: GaussianEBM (The Laplace Baseline)")
+    key, kA = jax.random.split(key)
+    graph_A, _ = build_graph(GaussianEBM, kA)
+    trainer_A = EchoTrainer(graph_A, learning_rate=0.0001, max_grad_norm=0.1)
+    runner_A = EchoRunner(config_path)
+    runner_A.setup(trainer_A)
+    graph_A = runner_A.run(graph_A, train_young_loader, train_young_loader, key, dt=0.01)
+    
+    logger.info("Training Run B: PrecisionWeightedEBM (Multimodal MLP)")
+    key, kB = jax.random.split(key)
+    graph_B, _ = build_graph(PrecisionWeightedEBM, kB)
+    trainer_B = EchoTrainer(graph_B, learning_rate=0.0001, max_grad_norm=0.1)
+    runner_B = EchoRunner(config_path)
+    runner_B.setup(trainer_B)
+    graph_B = runner_B.run(graph_B, train_young_loader, train_young_loader, key, dt=0.01)
+    
+    logger.info("Serializing trained Young Worm engine to disk.")
+    os.makedirs("output/echo/benchmarks", exist_ok=True)
+    eqx.tree_serialise_leaves(
+        "output/echo/benchmarks/06_worm_gait_decline_trained_engine.eqx", graph_B
+    )
+    
+    logger.info("Evaluating frozen EBM models on Day 9+ biological population.")
+
+    # Core experimental conditions: 
+    # - Population Age: Young (1-3 days) vs. Old (9+ days)
+    # - EBM Architecture: A. Gaussian (Laplace baseline) vs. B. Precision Weighted (multimodal MLP).
+    macro_states_young_A = get_macro_states(graph_A, eval_young_loader)
+    macro_states_old_A = get_macro_states(graph_A, eval_old_loader)
+    
+    macro_states_young_B = get_macro_states(graph_B, eval_young_loader)
+    macro_states_old_B = get_macro_states(graph_B, eval_old_loader)
+    
+    logger.info("Computing Hessian Traces.")
+    tracker_A = HessianCurvatureTracker(graph_A.flow_factor.macro_ebm)
+    tracker_B = HessianCurvatureTracker(graph_B.flow_factor.macro_ebm)
+    
+    eval_states_young_A = macro_states_young_A[::10][:1000]
+    trace_young_A = tracker_A.batch_calculate_curvature(eval_states_young_A)["hessian_trace"]
+    
+    eval_states_old_A = macro_states_old_A[::10][:1000]
+    trace_old_A = tracker_A.batch_calculate_curvature(eval_states_old_A)["hessian_trace"]
+    
+    eval_states_young_B = macro_states_young_B[::10][:1000]
+    trace_young_B = tracker_B.batch_calculate_curvature(eval_states_young_B)["hessian_trace"]
+    
+    eval_states_old_B = macro_states_old_B[::10][:1000]
+    trace_old_B = tracker_B.batch_calculate_curvature(eval_states_old_B)["hessian_trace"]
+    
+    plot_ablation_results(
+        eval_young_dataset_raw,
+        eval_old_dataset_raw,
+        trace_young_A,
+        trace_old_A,
+        trace_young_B,
+        trace_old_B,
     )
 
 if __name__ == "__main__":
