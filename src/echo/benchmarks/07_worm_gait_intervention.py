@@ -6,7 +6,7 @@ import equinox as eqx
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.data.behavior.celegans_gait_dataset import CElegansGaitDataset
+from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.hierarchy import PredictiveCodingGraph
 from src.echo.primitives.ebm import PrecisionWeightedEBM
@@ -127,8 +127,11 @@ def main():
         logger.warning("Trained model not found! Proceeding with random initialization.")
     d_full = graph.d_micro + graph.d_macro
     
-    # Load fallback biological data to represent a fragment of reality
-    dataset = CElegansGaitDataset(data_path="data/worm/EigenWorms_TEST.ts", seq_len=10, is_aged=True)
+    try:
+        dataset = RealEigenwormDataset(data_path="data/worm/EigenWorms_TEST.ts", seq_len=10, is_aged=True)
+    except FileNotFoundError:
+        logger.warning("Biological data not found. Falling back to synthetic dataset.")
+        dataset = SyntheticWormMockDataset(seq_len=10, num_samples=1)
     bio_frame = dataset[0][0].numpy()  # 6D sensory snapshot
     
     # Construct "Old Worm" pathological state (erratic, high variance)

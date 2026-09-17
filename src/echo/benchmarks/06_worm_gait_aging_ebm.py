@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import equinox as eqx
 
-from src.data.behavior.celegans_gait_dataset import CElegansGaitDataset
+from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.hierarchy import PredictiveCodingGraph
 from src.echo.primitives.ebm import GaussianEBM, PrecisionWeightedEBM
@@ -34,8 +34,6 @@ class JAXDictDataset(Dataset):
         x_init = torch.randn(self.d_state) * 0.01
         return {'s_true': s_true, 'x_init': x_init}
 
-# generate_old_worm_data is now handled internally by CElegansGaitDataset(is_aged=True)
-
 def build_graph(ebm_class, key):
     k1, k2, k3 = jax.random.split(key, 3)
     
@@ -52,35 +50,72 @@ def build_graph(ebm_class, key):
     d_active_macro = 4
     d_external_macro = 4
     
-    micro = MarkovBlanketObserver(d_internal_micro, d_sensory_micro, d_active_micro, d_external_micro, 
-                                  ebm_hidden_size=32, ebm_depth=2, n_steps=1, temperature=1.0, key=k1)
+    micro = MarkovBlanketObserver(
+        d_internal_micro, d_sensory_micro, d_active_micro, d_external_micro, 
+        ebm_hidden_size=32, ebm_depth=2, n_steps=1, temperature=1.0, key=k1
+    )
                                   
-    macro = MarkovBlanketObserver(d_internal_macro, d_sensory_macro, d_active_macro, d_external_macro, 
-                                  ebm_hidden_size=16, ebm_depth=2, n_steps=1, temperature=1.0, key=k2)
+    macro = MarkovBlanketObserver(
+        d_internal_macro, d_sensory_macro, d_active_macro, d_external_macro, 
+        ebm_hidden_size=16, ebm_depth=2, n_steps=1, temperature=1.0, key=k2
+    )
     
     # Overwrite the ebm with the desired one
-    micro = eqx.tree_at(lambda m: m.ebm, micro, ebm_class(d_state=d_micro, hidden_size=32, depth=2, key=k3))
-    macro = eqx.tree_at(lambda m: m.ebm, macro, ebm_class(d_state=macro.hull.d_state, hidden_size=16, depth=2, key=k3))
+    micro = eqx.tree_at(
+        lambda m: m.ebm, 
+        micro, 
+        ebm_class(d_state=d_micro, hidden_size=32, depth=2, key=k3)
+    )
+    macro = eqx.tree_at(
+        lambda m: m.ebm, 
+        macro, 
+        ebm_class(d_state=macro.hull.d_state, hidden_size=16, depth=2, key=k3)
+    )
         
     graph = PredictiveCodingGraph(micro, macro, n_steps=1, key=k3)
     return graph, d_micro + macro.hull.d_state
+
+
+def get_macro_states(graph, loader):
+    macro_traj_list = []
+    for batch in loader:
+        s_true = batch['s_true'].numpy()
+        x_init = batch['x_init'].numpy()
+        for i in range(len(s_true)):
+            # Note: seq is s_true[i]
+            traj = graph.forced_unroll(
+                jax.random.PRNGKey(0), jnp.array(x_init[i]), 0.01, jnp.array(s_true[i])
+            )
+            macro_traj = traj[:, graph.d_micro:]
+            macro_traj_list.append(macro_traj)
+    return jnp.concatenate(macro_traj_list, axis=0)
+
 
 def main():
     logger.info("Initializing Young (Train) and Old (Eval) datasets.")
     torch.manual_seed(42)
     key = jax.random.PRNGKey(42)
     
-    young_dataset_raw = CElegansGaitDataset(data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=100, num_synthetic_samples=50, is_aged=False)
-    old_dataset_raw = CElegansGaitDataset(data_path="data/worm/EigenWorms_TEST.ts", seq_len=100, num_synthetic_samples=50, is_aged=True)
+    try:
+        train_dataset_raw = RealEigenwormDataset(
+            data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=100, is_aged=False
+        )
+        test_dataset_raw = RealEigenwormDataset(
+            data_path="data/worm/EigenWorms_TEST.ts", seq_len=100, is_aged=True
+        )
+    except FileNotFoundError:
+        logger.warning("Local biological data not found. Falling back to SyntheticWormMockDataset.")
+        train_dataset_raw = SyntheticWormMockDataset(seq_len=100, num_samples=50)
+        test_dataset_raw = SyntheticWormMockDataset(seq_len=100, num_samples=50)
     
     # Determine d_state
     _, d_state = build_graph(GaussianEBM, key)
     
-    young_dataset = JAXDictDataset(young_dataset_raw, d_state)
-    old_dataset = JAXDictDataset(old_dataset_raw, d_state)
+    train_dataset = JAXDictDataset(train_dataset_raw, d_state)
+    test_dataset = JAXDictDataset(test_dataset_raw, d_state)
     
-    train_loader = DataLoader(young_dataset, batch_size=2, shuffle=True)
-    val_loader = DataLoader(old_dataset, batch_size=2, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True)
+    val_loader = DataLoader(test_dataset, batch_size=2, shuffle=False)
     
     config_path = "configs/echo_training.yaml"
     logger.info("Training Run A: GaussianEBM (The Laplace Baseline)")
@@ -101,21 +136,11 @@ def main():
     
     logger.info("Serializing trained Young Worm engine to disk.")
     os.makedirs("output/echo/benchmarks", exist_ok=True)
-    eqx.tree_serialise_leaves("output/echo/benchmarks/06_worm_gait_decline_trained_engine.eqx", graph_B)
+    eqx.tree_serialise_leaves(
+        "output/echo/benchmarks/06_worm_gait_decline_trained_engine.eqx", graph_B
+    )
     
     logger.info("Evaluating frozen EBM models on Day 9+ biological population.")
-    
-    def get_macro_states(graph, loader):
-        macro_traj_list = []
-        for batch in loader:
-            s_true = batch['s_true'].numpy()
-            x_init = batch['x_init'].numpy()
-            for i in range(len(s_true)):
-                # Note: seq is s_true[i]
-                traj = graph.forced_unroll(jax.random.PRNGKey(0), jnp.array(x_init[i]), 0.01, jnp.array(s_true[i]))
-                macro_traj = traj[:, graph.d_micro:]
-                macro_traj_list.append(macro_traj)
-        return jnp.concatenate(macro_traj_list, axis=0)
 
     macro_states_young_A = get_macro_states(graph_A, train_loader)
     macro_states_old_A = get_macro_states(graph_A, val_loader)
@@ -128,21 +153,26 @@ def main():
     tracker_B = HessianCurvatureTracker(graph_B.flow_factor.macro_ebm)
     
     # We only take the first 100 elements if it's too large to prevent OOM
-    trace_young_A = tracker_A.batch_calculate_curvature(macro_states_young_A[:200])["hessian_trace"]
-    trace_old_A = tracker_A.batch_calculate_curvature(macro_states_old_A[:200])["hessian_trace"]
+    trace_young_A = tracker_A.batch_calculate_curvature(
+        macro_states_young_A[::10][:1000]
+    )["hessian_trace"]
+    trace_old_A = tracker_A.batch_calculate_curvature(
+        macro_states_old_A[::10][:1000]
+    )["hessian_trace"]
     
-    trace_young_B = tracker_B.batch_calculate_curvature(macro_states_young_B[:200])["hessian_trace"]
-    trace_old_B = tracker_B.batch_calculate_curvature(macro_states_old_B[:200])["hessian_trace"]
+    trace_young_B = tracker_B.batch_calculate_curvature(
+        macro_states_young_B[::10][:1000]
+    )["hessian_trace"]
+    trace_old_B = tracker_B.batch_calculate_curvature(
+        macro_states_old_B[::10][:1000]
+    )["hessian_trace"]
     
-
-    
-
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     
-    traj_young = young_dataset_raw.data[0].numpy()
-    traj_old = old_dataset_raw.data[0].numpy()
-    axes[0].plot(traj_young[:, 0], traj_young[:, 1], label="Young (Day 1-3)")
-    axes[0].plot(traj_old[:, 0], traj_old[:, 1], label="Old (Day 9+)", alpha=0.7)
+    traj_young = train_dataset_raw.data[0].numpy()
+    traj_old = test_dataset_raw.data[0].numpy()
+    axes[0].plot(traj_young[:500, 0], traj_young[:500, 1], label="Young (Day 1-3)")
+    axes[0].plot(traj_old[:500, 0], traj_old[:500, 1], label="Old (Day 9+)", alpha=0.7)
     axes[0].set_title("Panel A: The Limit Cycle")
     axes[0].set_xlabel("Sensor Dimension 0")
     axes[0].set_ylabel("Sensor Dimension 1")
@@ -152,19 +182,26 @@ def main():
     trace_young_B_np = np.nan_to_num(np.array(trace_young_B), nan=1.0)
     trace_old_B_np = np.nan_to_num(np.array(trace_old_B), nan=1.0)
 
-    # Panel B: Laplace Flatline
-    # We use a thick line for Young and a dashed line for Old because the GaussianEBM's 
-    # Hessian is mathematically constant across the state space, causing perfect overlap.
+    # Panel B: Laplace Flatline We use a thick line for Young and a dashed line
+    # for Old because the GaussianEBM's Hessian is mathematically constant
+    # across the state space, causing perfect overlap.
     axes[1].plot(trace_young_A_np[:100], label="Young", color="blue", linewidth=4)
-    axes[1].plot(trace_old_A_np[:100], label="Old", color="orange", linestyle="--", linewidth=2)
+    axes[1].plot(
+        trace_old_A_np[:100], label="Old", color="orange", linestyle="--", linewidth=2
+    )
     axes[1].set_title("Panel B: Laplace Flatline")
     axes[1].set_xlabel("Time Step")
     axes[1].set_ylabel("Hessian Trace (Curvature)")
     axes[1].legend()
     
     # Panel C: Waddington Basin Flattening
-    axes[2].hist(trace_young_B_np, bins=20, alpha=0.5, label="Young", color="blue", density=True)
-    axes[2].hist(trace_old_B_np, bins=20, alpha=0.7, label="Old", color="orange", density=True, histtype="step", linewidth=2)
+    axes[2].hist(
+        trace_young_B_np, bins=20, alpha=0.5, label="Young", color="blue", density=True
+    )
+    axes[2].hist(
+        trace_old_B_np, bins=20, alpha=0.7, label="Old", color="orange", 
+        density=True, histtype="step", linewidth=2
+    )
     axes[2].set_title("Panel C: Waddington Basin Flattening")
     axes[2].set_xlabel("Hessian Trace (Curvature)")
     axes[2].set_ylabel("Density")
@@ -175,7 +212,10 @@ def main():
     plt.savefig("output/echo/benchmarks/06_worm_gait_decline_ablation.png")
     plt.close()
     
-    logger.info("Benchmark complete. Plot saved to output/echo/benchmarks/06_worm_gait_decline_ablation.png")
+    logger.info(
+        "Benchmark complete. Plot saved to "
+        "output/echo/benchmarks/06_worm_gait_decline_ablation.png"
+    )
 
 if __name__ == "__main__":
     main()
