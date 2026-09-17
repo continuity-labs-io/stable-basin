@@ -5,6 +5,9 @@ import logging
 import jax
 import jax.numpy as jnp
 import torch
+import json
+import pingouin as pg
+from scipy.stats import ks_2samp, wasserstein_distance
 from torch.utils.data import DataLoader, Dataset
 import matplotlib.pyplot as plt
 import numpy as np
@@ -74,6 +77,16 @@ def build_graph(ebm_class, key):
         
     graph = PredictiveCodingGraph(micro, macro, n_steps=1, key=k3)
     return graph, d_micro + macro.hull.d_state
+
+
+def compute_full_trace(tracker, states, batch_size=1000):
+    num_states = states.shape[0]
+    traces = []
+    for i in range(0, num_states, batch_size):
+        batch = states[i:i+batch_size]
+        res = tracker.batch_calculate_curvature(batch)
+        traces.append(res["hessian_trace"])
+    return jnp.concatenate(traces, axis=0)
 
 
 def get_macro_states(graph, loader):
@@ -216,21 +229,53 @@ def main():
     macro_states_young_B = get_macro_states(graph_B, eval_young_loader)
     macro_states_old_B = get_macro_states(graph_B, eval_old_loader)
     
-    logger.info("Computing Hessian Traces.")
+    logger.info("Computing Hessian Traces (Full Evaluation Dataset).")
     tracker_A = HessianCurvatureTracker(graph_A.flow_factor.macro_ebm)
     tracker_B = HessianCurvatureTracker(graph_B.flow_factor.macro_ebm)
     
-    eval_states_young_A = macro_states_young_A[::10][:1000]
-    trace_young_A = tracker_A.batch_calculate_curvature(eval_states_young_A)["hessian_trace"]
+    trace_young_A = compute_full_trace(tracker_A, macro_states_young_A)
+    trace_old_A = compute_full_trace(tracker_A, macro_states_old_A)
     
-    eval_states_old_A = macro_states_old_A[::10][:1000]
-    trace_old_A = tracker_A.batch_calculate_curvature(eval_states_old_A)["hessian_trace"]
+    trace_young_B = compute_full_trace(tracker_B, macro_states_young_B)
+    trace_old_B = compute_full_trace(tracker_B, macro_states_old_B)
     
-    eval_states_young_B = macro_states_young_B[::10][:1000]
-    trace_young_B = tracker_B.batch_calculate_curvature(eval_states_young_B)["hessian_trace"]
-    
-    eval_states_old_B = macro_states_old_B[::10][:1000]
-    trace_old_B = tracker_B.batch_calculate_curvature(eval_states_old_B)["hessian_trace"]
+    def compute_metrics(name, t_young, t_old):
+        ty = np.nan_to_num(np.array(t_young), nan=1.0)
+        to = np.nan_to_num(np.array(t_old), nan=1.0)
+        ks_stat, ks_pval = ks_2samp(ty, to)
+        wd = wasserstein_distance(ty, to)
+        d = pg.compute_effsize(ty, to, eftype='cohen')
+        metrics = {
+            "mean_young": float(np.mean(ty)),
+            "std_young": float(np.std(ty)),
+            "mean_old": float(np.mean(to)),
+            "std_old": float(np.std(to)),
+            "ks_statistic": float(ks_stat),
+            "ks_p_value": float(ks_pval),
+            "wasserstein_distance": float(wd),
+            "cohens_d": float(d)
+        }
+        logger.info(f"--- Metrics for {name} ---")
+        logger.info(f"Young: mean={metrics['mean_young']:.4f}, std={metrics['std_young']:.4f}")
+        logger.info(f"Old:   mean={metrics['mean_old']:.4f}, std={metrics['std_old']:.4f}")
+        logger.info(f"KS Stat: {metrics['ks_statistic']:.4f} (p={metrics['ks_p_value']:.4e})")
+        logger.info(f"Wasserstein Dist: {metrics['wasserstein_distance']:.4f}")
+        logger.info(f"Cohen's d: {metrics['cohens_d']:.4f}")
+        return metrics
+
+    logger.info("Calculating Full-Series Thermodynamic Statistics.")
+    metrics_A = compute_metrics("Run A (GaussianEBM)", trace_young_A, trace_old_A)
+    metrics_B = compute_metrics("Run B (PrecisionWeightedEBM)", trace_young_B, trace_old_B)
+
+    all_metrics = {
+        "GaussianEBM": metrics_A,
+        "PrecisionWeightedEBM": metrics_B
+    }
+
+    metrics_path = "output/echo/benchmarks/06_worm_gait_metrics.json"
+    with open(metrics_path, "w") as f:
+        json.dump(all_metrics, f, indent=2)
+    logger.info(f"Serialized full statistical metrics to {metrics_path}")
     
     plot_ablation_results(
         eval_young_dataset_raw,

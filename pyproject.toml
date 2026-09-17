@@ -13,6 +13,7 @@ dependencies = [
     "torchfix==0.6.0",
     "mne",
     "scikit-learn",
+    "pingouin",
 ]
 
 [tool.ruff]
