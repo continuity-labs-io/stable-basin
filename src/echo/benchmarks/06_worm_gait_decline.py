@@ -77,8 +77,8 @@ def main():
     torch.manual_seed(42)
     key = jax.random.PRNGKey(42)
     
-    young_dataset_raw = CElegansGaitDataset(seq_len=100, num_synthetic_samples=10)
-    old_dataset_raw = generate_old_worm_data(seq_len=100, num_samples=10)
+    young_dataset_raw = CElegansGaitDataset(seq_len=100, num_synthetic_samples=50)
+    old_dataset_raw = generate_old_worm_data(seq_len=100, num_samples=50)
     
     # Determine d_state
     _, d_state = build_graph(GaussianEBM, key)

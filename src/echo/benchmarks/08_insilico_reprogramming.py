@@ -68,6 +68,8 @@ def simulate_sde(
         # Multiply the learned energy landscape by the precision injection gain lambda
         return lambda_gain * ff.joint_energy_fn(x_u, x_m)
         
+    # Lower the random thermal jitter for camera clarity
+    T_micro = 0.05
     # 4. Continuous-time forward scan step
     def scan_step(x, key_step):
         grad_E = jax.grad(energy_fn)(x)
@@ -110,11 +112,11 @@ def main():
     micro = MarkovBlanketObserver(d_internal, d_sensory, d_active, d_external, 
                                   ebm_hidden_size=32, ebm_depth=2, n_steps=1, temperature=1.0, key=k1)
                                   
-    macro = MarkovBlanketObserver(4, 4, 2, 2, 
+    macro = MarkovBlanketObserver(4, 4, 4, 4, 
                                   ebm_hidden_size=16, ebm_depth=2, n_steps=1, temperature=1.0, key=k2)
     
     micro = eqx.tree_at(lambda m: m.ebm, micro, PrecisionWeightedEBM(d_state=d_internal + d_sensory + d_active + d_external, hidden_size=32, depth=2, key=k3))
-    macro = eqx.tree_at(lambda m: m.ebm, macro, PrecisionWeightedEBM(d_state=4 + 4 + 2 + 2, hidden_size=16, depth=2, key=k3))
+    macro = eqx.tree_at(lambda m: m.ebm, macro, PrecisionWeightedEBM(d_state=4 + 4 + 4 + 4, hidden_size=16, depth=2, key=k3))
                                   
     graph = PredictiveCodingGraph(micro, macro, n_steps=1, key=k3)
     

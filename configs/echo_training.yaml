@@ -2,7 +2,7 @@ optimization:
   learning_rate: 0.001
   weight_decay: 0.01
   max_grad_norm: 1.0
-  max_epochs: 100
+  max_epochs: 1000
 
 model:
   hidden_dimensions: 128
