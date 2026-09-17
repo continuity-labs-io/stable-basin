@@ -80,7 +80,11 @@ class PrecisionWeightedEBM(eqx.Module):
         # 2. Compute scalar energy
         energy_raw = self.energy_head(h)
         # Bound energy from below to ensure a thermodynamic floor (prevents infinite sinkholes)
-        energy = jnp.squeeze(jax.nn.softplus(energy_raw))  # Shape: ()
+        e_mlp = jnp.squeeze(jax.nn.softplus(energy_raw))  # Shape: ()
+        
+        # Add a global structural prior to guarantee the landscape is a positive-definite basin
+        e_prior = 0.5 * 0.1 * jnp.sum(x ** 2)
+        energy = e_prior + e_mlp
         
         # 3. Compute precision matrix
         precision_flat = self.precision_head(h)
