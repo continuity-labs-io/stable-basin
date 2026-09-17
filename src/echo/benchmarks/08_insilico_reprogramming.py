@@ -94,7 +94,7 @@ def main():
     dt = 0.01
     output_dir = "output/echo/benchmarks"
     os.makedirs(output_dir, exist_ok=True)
-    output_plot = os.path.join(output_dir, "fig4_insilico_rescue.png")
+    output_plot = os.path.join(output_dir, "08_insilico_reprogramming_fig4_insilico_rescue.png")
     
     logger.info("Initializing the 'Young Worm' physics engine (PredictiveCodingGraph).")
     
@@ -119,7 +119,7 @@ def main():
     graph = PredictiveCodingGraph(micro, macro, n_steps=1, key=k3)
     
     try:
-        graph = eqx.tree_deserialise_leaves("output/echo/trained_young_worm_engine.eqx", graph)
+        graph = eqx.tree_deserialise_leaves("output/echo/benchmarks/06_worm_gait_decline_trained_engine.eqx", graph)
         logger.info("Successfully loaded trained Young Worm engine.")
     except Exception as e:
         logger.warning("Trained model not found! Proceeding with random initialization.")

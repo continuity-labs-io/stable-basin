@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import equinox as eqx
 import matplotlib.pyplot as plt
 import logging
-
+import os
 from src.echo.architecture.markov_hull import MarkovHull
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.hierarchy import PredictiveCodingGraph
@@ -164,7 +164,8 @@ def main():
     
     plt.suptitle("Active Inference Clinical Workflow")
     plt.tight_layout()
-    plt.savefig("output/echo/active_inference_clinical_workflow.png")
+    os.makedirs("output/echo/benchmarks", exist_ok=True)
+    plt.savefig("output/echo/benchmarks/05_clinical_workflow_demo.png")
     plt.close()
 
 if __name__ == "__main__":

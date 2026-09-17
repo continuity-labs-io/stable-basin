@@ -159,7 +159,7 @@ def main():
     traj_a_p1, traj_a_p2, traj_b_p1, traj_b_p2, diag_a, diag_b = run_simulation()
     
     # Generate Matplotlib figure
-    os.makedirs("output/echo", exist_ok=True)
+    os.makedirs("output/echo/benchmarks", exist_ok=True)
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
     
@@ -194,7 +194,7 @@ def main():
     
     plt.suptitle("Decidability Diagnostic\nRef: Hahne (2026) 'Beyond Return to Baseline: Reachability, Observability, and the Measurement of Physiological Margin'")
     plt.tight_layout()
-    plt.savefig("output/echo/decidability_diagnostic.png")
+    plt.savefig("output/echo/benchmarks/04_decidability_diagnostic.png")
     plt.close()
 
 if __name__ == "__main__":

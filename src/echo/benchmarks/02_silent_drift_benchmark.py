@@ -84,8 +84,8 @@ def main():
     surp_blind_np = np.array(surp_blind)
 
     # 4. Output
-    os.makedirs("output/echo", exist_ok=True)
-    plot_path = "output/echo/silent_drift.png"
+    os.makedirs("output/echo/benchmarks", exist_ok=True)
+    plot_path = "output/echo/benchmarks/02_silent_drift_benchmark.png"
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
     

@@ -107,8 +107,8 @@ def main():
     graph_B = runner_B.run(graph_B, train_loader, train_loader, key, dt=0.01)
     
     logger.info("Serializing trained Young Worm engine to disk.")
-    os.makedirs("output/echo", exist_ok=True)
-    eqx.tree_serialise_leaves("output/echo/trained_young_worm_engine.eqx", graph_B)
+    os.makedirs("output/echo/benchmarks", exist_ok=True)
+    eqx.tree_serialise_leaves("output/echo/benchmarks/06_worm_gait_decline_trained_engine.eqx", graph_B)
     
     logger.info("Evaluating frozen EBM models on Day 9+ biological population.")
     
@@ -143,7 +143,7 @@ def main():
     
 
     
-    os.makedirs("outputs/benchmarks", exist_ok=True)
+
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     
     traj_young = young_dataset_raw.data[0].numpy()
@@ -178,11 +178,11 @@ def main():
     axes[2].legend()
     
     plt.tight_layout()
-    os.makedirs("output/echo", exist_ok=True)
-    plt.savefig("output/echo/worm_gait_ablation.png")
+    os.makedirs("output/echo/benchmarks", exist_ok=True)
+    plt.savefig("output/echo/benchmarks/06_worm_gait_decline_ablation.png")
     plt.close()
     
-    logger.info("Benchmark complete. Plot saved to output/echo/worm_gait_ablation.png")
+    logger.info("Benchmark complete. Plot saved to output/echo/benchmarks/06_worm_gait_decline_ablation.png")
 
 if __name__ == "__main__":
     main()

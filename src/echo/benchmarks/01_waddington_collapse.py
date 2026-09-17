@@ -27,7 +27,7 @@ from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.hierarchy import PredictiveCodingGraph
 from src.echo.metrics.thermal_interpretability import HessianCurvatureTracker
 
-def run_waddington_collapse_benchmark(data_tensor: torch.Tensor, output_plot: str = "output/echo/waddington_collapse.png") -> int:
+def run_waddington_collapse_benchmark(data_tensor: torch.Tensor, output_plot: str = "output/echo/benchmarks/01_waddington_collapse_plot.png") -> int:
     """
     Executes the Waddington Collapse benchmark on the given sequence tensor.
     Computes the Energy Basin Escape Time (EBET).
