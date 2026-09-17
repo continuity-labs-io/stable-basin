@@ -9,22 +9,30 @@ from google.genai import types
 from personas import PHYSICIST_PROMPT, ARCHITECT_PROMPT, STRATEGIC_LEAD_PROMPT
 
 class MultiAgentAuditor:
-    def __init__(self):
+    def __init__(self, mode="repo", n_commits=1):
         # genai.Client() automatically checks the GEMINI_API_KEY environment
         # variable, but we can explicitly pass it if needed.
         self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         self.model_name = os.getenv("GEMINI_MODEL", "gemini-3-pro-preview")
+        self.mode = mode
+        self.n_commits = n_commits
         
-    def get_staged_diff(self) -> str:
+    def get_diff(self) -> str:
         """
-        Runs git diff to get staged changes (or latest commit if no staged
-        changes). Returns the output as a string, or a fallback message if no
-        changes.
+        Returns the appropriate git diff based on the selected mode.
         """
+        if self.mode == "repo":
+            return "N/A - Auditing entire repository."
+            
         try:
-            # Try --cached for pre-commit hooks
+            cmd = ["git", "diff"]
+            if self.mode == "staged":
+                cmd.append("--cached")
+            elif self.mode == "commits":
+                cmd.extend([f"HEAD~{self.n_commits}", "HEAD"])
+                
             result = subprocess.run(
-                ["git", "diff", "--cached"],
+                cmd,
                 capture_output=True,
                 text=True,
                 check=True
@@ -32,23 +40,11 @@ class MultiAgentAuditor:
             diff_output = result.stdout.strip()
             
             if not diff_output:
-                # Fallback to HEAD~1 HEAD if there are no staged changes, for
-                # testing purposes
-                result = subprocess.run(
-                    ["git", "diff", "HEAD~1", "HEAD"],
-                    capture_output=True,
-                    text=True,
-                    check=True
-                )
-                diff_output = result.stdout.strip()
-                
-            if not diff_output:
-                return "No staged changes found."
+                return f"No changes found for mode: {self.mode}."
                 
             return diff_output
         except Exception as e:
-            # Catching exception and returning fallback string
-            return f"No staged changes found. (Error: {e})"
+            return f"Failed to get diff for mode {self.mode}. (Error: {e})"
 
     def run_preflight_tools(self) -> str:
         try:
@@ -68,11 +64,17 @@ class MultiAgentAuditor:
             return f"Preflight failed: {str(e)}"
 
     def get_modified_files(self) -> list[str]:
+        if self.mode == "repo":
+            return []
+            
         try:
-            output = subprocess.check_output(
-                ["git", "diff", "--name-only", "HEAD~1", "HEAD"], 
-                text=True
-            )
+            cmd = ["git", "diff", "--name-only"]
+            if self.mode == "staged":
+                cmd.append("--cached")
+            elif self.mode == "commits":
+                cmd.extend([f"HEAD~{self.n_commits}", "HEAD"])
+                
+            output = subprocess.check_output(cmd, text=True)
             return [line.strip() for line in output.strip().split("\n") if line.strip()]
         except Exception as e:
             print(f"Warning: Failed to get modified files: {e}")
@@ -111,8 +113,8 @@ class MultiAgentAuditor:
         return response.text
 
     async def execute_audit(self):
-        diff = self.get_staged_diff()
-        print(f"Length of staged diff: {len(diff)}")
+        diff = self.get_diff()
+        print(f"Length of diff: {len(diff)}")
         
         print("Running preflight tools...")
         test_logs = self.run_preflight_tools()
@@ -237,5 +239,11 @@ class MultiAgentAuditor:
             sys.exit(0)
 
 if __name__ == "__main__":
-    auditor = MultiAgentAuditor()
+    import argparse
+    parser = argparse.ArgumentParser(description="Multi-Agent Auditor")
+    parser.add_argument("--mode", type=str, choices=["repo", "staged", "commits"], default="repo", help="Audit mode: 'repo' (entire repo), 'staged' (staged changes), or 'commits' (previous N commits).")
+    parser.add_argument("--n-commits", type=int, default=1, help="Number of previous commits to audit (only used in 'commits' mode).")
+    args = parser.parse_args()
+
+    auditor = MultiAgentAuditor(mode=args.mode, n_commits=args.n_commits)
     asyncio.run(auditor.execute_audit())
