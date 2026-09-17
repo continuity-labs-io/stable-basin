@@ -1,4 +1,5 @@
 import os
+import argparse
 import yaml
 import tempfile
 import logging
@@ -16,6 +17,7 @@ import equinox as eqx
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.hierarchy import PredictiveCodingGraph
+from src.echo.architecture.datasets import JAXDictDataset
 from src.echo.primitives.ebm import GaussianEBM, PrecisionWeightedEBM
 from src.echo.harness.echo_runner import EchoRunner
 from src.echo.harness.echo_trainer import EchoTrainer
@@ -24,69 +26,71 @@ from src.echo.metrics.thermal_interpretability import HessianCurvatureTracker
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-class JAXDictDataset(Dataset):
-    def __init__(self, base_dataset, d_state):
-        self.base = base_dataset
-        self.d_state = d_state
-        
-    def __len__(self):
-        return len(self.base)
-        
-    def __getitem__(self, idx):
-        s_true = self.base[idx]
-        x_init = torch.randn(self.d_state) * 0.01
-        return {'s_true': s_true, 'x_init': x_init}
 
-def build_graph(ebm_class, key):
+def build_graph(ebm_class, key, config):
+    """
+    Constructs the hierarchical Predictive Coding Graph for the worm gait benchmark.
+    
+    Args:
+        ebm_class: The Energy-Based Model class to use (e.g., GaussianEBM or PrecisionWeightedEBM).
+        key: JAX PRNG key for random number generation.
+        config: Dictionary containing the configuration values for the observers.
+        
+    Returns:
+        A tuple containing:
+            - graph (PredictiveCodingGraph): The initialized PredictiveCodingGraph.
+            - d_state (int): The total internal state dimensionality of the combined micro and macro observers.
+    """
     k1, k2, k3 = jax.random.split(key, 3)
     
     # Micro observer config
-    d_internal_micro = 8
-    d_sensory_micro = 6
-    d_active_micro = 8
-    d_external_micro = 8
+    d_internal_micro = config['observer']['micro']['d_internal']
+    d_sensory_micro = config['observer']['micro']['d_sensory']
+    d_active_micro = config['observer']['micro']['d_active']
+    d_external_micro = config['observer']['micro']['d_external']
     d_micro = d_internal_micro + d_sensory_micro + d_active_micro + d_external_micro
     
     # Macro observer config
-    d_internal_macro = 4
-    d_sensory_macro = 4
-    d_active_macro = 4
-    d_external_macro = 4
+    d_internal_macro = config['observer']['macro']['d_internal']
+    d_sensory_macro = config['observer']['macro']['d_sensory']
+    d_active_macro = config['observer']['macro']['d_active']
+    d_external_macro = config['observer']['macro']['d_external']
+    
+    micro_cfg = config['observer']['micro']
+    macro_cfg = config['observer']['macro']
     
     micro = MarkovBlanketObserver(
         d_internal_micro, d_sensory_micro, d_active_micro, d_external_micro, 
-        ebm_hidden_size=32, ebm_depth=2, n_steps=1, temperature=1.0, key=k1
+        ebm_hidden_size=micro_cfg['ebm_hidden_size'], 
+        ebm_depth=micro_cfg['ebm_depth'], 
+        n_steps=micro_cfg['n_steps'], 
+        temperature=micro_cfg['temperature'], 
+        key=k1
     )
                                   
     macro = MarkovBlanketObserver(
         d_internal_macro, d_sensory_macro, d_active_macro, d_external_macro, 
-        ebm_hidden_size=16, ebm_depth=2, n_steps=1, temperature=1.0, key=k2
+        ebm_hidden_size=macro_cfg['ebm_hidden_size'], 
+        ebm_depth=macro_cfg['ebm_depth'], 
+        n_steps=macro_cfg['n_steps'], 
+        temperature=macro_cfg['temperature'], 
+        key=k2
     )
     
     # Overwrite the ebm with the desired one
     micro = eqx.tree_at(
         lambda m: m.ebm, 
         micro, 
-        ebm_class(d_state=d_micro, hidden_size=32, depth=2, key=k3)
+        ebm_class(d_state=d_micro, hidden_size=micro_cfg['ebm_hidden_size'], depth=micro_cfg['ebm_depth'], key=k3)
     )
     macro = eqx.tree_at(
         lambda m: m.ebm, 
         macro, 
-        ebm_class(d_state=macro.hull.d_state, hidden_size=16, depth=2, key=k3)
+        ebm_class(d_state=macro.hull.d_state, hidden_size=macro_cfg['ebm_hidden_size'], depth=macro_cfg['ebm_depth'], key=k3)
     )
         
-    graph = PredictiveCodingGraph(micro, macro, n_steps=1, key=k3)
+    graph = PredictiveCodingGraph(micro, macro, n_steps=config['graph']['n_steps'], key=k3)
     return graph, d_micro + macro.hull.d_state
-
-
-def compute_full_trace(tracker, states, batch_size=1000):
-    num_states = states.shape[0]
-    traces = []
-    for i in range(0, num_states, batch_size):
-        batch = states[i:i+batch_size]
-        res = tracker.batch_calculate_curvature(batch)
-        traces.append(res["hessian_trace"])
-    return jnp.concatenate(traces, axis=0)
 
 
 def get_macro_states(graph, loader):
@@ -102,6 +106,16 @@ def get_macro_states(graph, loader):
             macro_traj = traj[:, graph.d_micro:]
             macro_traj_list.append(macro_traj)
     return jnp.concatenate(macro_traj_list, axis=0)
+
+
+def compute_full_trace(tracker, states, batch_size=1000):
+    num_states = states.shape[0]
+    traces = []
+    for i in range(0, num_states, batch_size):
+        batch = states[i:i+batch_size]
+        res = tracker.batch_calculate_curvature(batch)
+        traces.append(res["hessian_trace"])
+    return jnp.concatenate(traces, axis=0)
 
 
 def plot_ablation_results(
@@ -164,53 +178,67 @@ def plot_ablation_results(
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Worm Gait Aging EBM Benchmark")
+    parser.add_argument("--config", type=str, default="configs/worm_gait_ebm.yaml", help="Path to the YAML configuration file.")
+    args = parser.parse_args()
+
+    with open(args.config, "r") as f:
+        config = yaml.safe_load(f)
+
     logger.info("Initializing Young (Train) and Old (Eval) datasets.")
-    torch.manual_seed(42)
-    key = jax.random.PRNGKey(42)
+    seed = config.get('experiment', {}).get('seed', 42)
+    torch.manual_seed(seed)
+    key = jax.random.PRNGKey(seed)
     
     try:
+        seq_len = config['dataset']['seq_len']
         train_young_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=100, is_aged=False
+            data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=seq_len, is_aged=False
         )
         eval_young_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=100, is_aged=False
+            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, is_aged=False
         )
         eval_old_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=100, is_aged=True
+            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, is_aged=True
         )
     except FileNotFoundError:
         logger.warning("Local biological data not found. Falling back to SyntheticWormMockDataset.")
-        train_young_dataset_raw = SyntheticWormMockDataset(seq_len=100, num_samples=50)
-        eval_young_dataset_raw = SyntheticWormMockDataset(seq_len=100, num_samples=50)
-        eval_old_dataset_raw = SyntheticWormMockDataset(seq_len=100, num_samples=50)
+        train_young_dataset_raw = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
+        eval_young_dataset_raw = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
+        eval_old_dataset_raw = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
     
     # Determine d_state
-    _, d_state = build_graph(GaussianEBM, key)
+    _, d_state = build_graph(GaussianEBM, key, config)
     
     train_young_dataset = JAXDictDataset(train_young_dataset_raw, d_state)
     eval_young_dataset = JAXDictDataset(eval_young_dataset_raw, d_state)
     eval_old_dataset = JAXDictDataset(eval_old_dataset_raw, d_state)
     
-    train_young_loader = DataLoader(train_young_dataset, batch_size=2, shuffle=True)
-    eval_young_loader = DataLoader(eval_young_dataset, batch_size=2, shuffle=False)
-    eval_old_loader = DataLoader(eval_old_dataset, batch_size=2, shuffle=False)
+    batch_size = config.get('dataset', {}).get('batch_size', 2)
+    train_young_loader = DataLoader(train_young_dataset, batch_size=batch_size, shuffle=True)
+    eval_young_loader = DataLoader(eval_young_dataset, batch_size=batch_size, shuffle=False)
+    eval_old_loader = DataLoader(eval_old_dataset, batch_size=batch_size, shuffle=False)
     
-    config_path = "configs/echo_training.yaml"
+    opt_cfg = config.get('optimization', {})
+    lr = opt_cfg.get('learning_rate', 0.0001)
+    max_grad_norm = opt_cfg.get('max_grad_norm', 0.1)
+    dt = config.get('experiment', {}).get('dt', 0.01)
+    
     logger.info("Training Run A: GaussianEBM (The Laplace Baseline)")
     key, kA = jax.random.split(key)
-    graph_A, _ = build_graph(GaussianEBM, kA)
-    trainer_A = EchoTrainer(graph_A, learning_rate=0.0001, max_grad_norm=0.1)
-    runner_A = EchoRunner(config_path)
+    graph_A, _ = build_graph(GaussianEBM, kA, config)
+    trainer_A = EchoTrainer(graph_A, learning_rate=lr, max_grad_norm=max_grad_norm)
+    runner_A = EchoRunner(args.config)
     runner_A.setup(trainer_A)
-    graph_A = runner_A.run(graph_A, train_young_loader, train_young_loader, key, dt=0.01)
+    graph_A = runner_A.run(graph_A, train_young_loader, train_young_loader, key, dt=dt)
     
     logger.info("Training Run B: PrecisionWeightedEBM (Multimodal MLP)")
     key, kB = jax.random.split(key)
-    graph_B, _ = build_graph(PrecisionWeightedEBM, kB)
-    trainer_B = EchoTrainer(graph_B, learning_rate=0.0001, max_grad_norm=0.1)
-    runner_B = EchoRunner(config_path)
+    graph_B, _ = build_graph(PrecisionWeightedEBM, kB, config)
+    trainer_B = EchoTrainer(graph_B, learning_rate=lr, max_grad_norm=max_grad_norm)
+    runner_B = EchoRunner(args.config)
     runner_B.setup(trainer_B)
-    graph_B = runner_B.run(graph_B, train_young_loader, train_young_loader, key, dt=0.01)
+    graph_B = runner_B.run(graph_B, train_young_loader, train_young_loader, key, dt=dt)
     
     logger.info("Serializing trained Young Worm engine to disk.")
     os.makedirs("output/echo/benchmarks", exist_ok=True)

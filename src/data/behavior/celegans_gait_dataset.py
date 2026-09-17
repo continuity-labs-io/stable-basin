@@ -22,7 +22,10 @@ class RealEigenwormDataset(Dataset):
 
         Args:
             data_path: Path to the biological eigenworm data (.npy, .csv, .ts).
-            seq_len: The fixed length of each extracted sequence crop.
+            seq_len: The fixed length of each extracted sequence crop. Biological recordings are often 
+                     too long to process all at once due to memory and BPTT constraints. This parameter 
+                     defines the number of consecutive frames in the bite-sized chunks that the dataset 
+                     will return when sampled, ensuring uniform and computationally manageable inputs.
             is_aged: If True, applies an OU/Gaussian noise process to simulate thermodynamic degradation.
         """
         self.seq_len = seq_len

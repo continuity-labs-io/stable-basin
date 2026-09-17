@@ -100,3 +100,8 @@ All commit messages must strictly adhere to the following structure:
 1. **The "What"**: The first line (subject) must summarize exactly *what* the change is doing (e.g., `feat(data): add PyTorch dataloader for C. elegans dataset`).
 2. **The "Why"**: The first paragraph of the body must explain *why* this change is being made, providing the rationale and context behind the implementation.
 3. **The "Details"**: Following the "why", use bullet points to detail the major technical changes or specific files affected.
+
+### Reproducible Machine Learning Experiments Guardrail
+
+- **No Magic Numbers**: All machine learning scripts and benchmark runners must NEVER hardcode hyperparameters, seeds, dataset sizes, dimensionalities, or optimization parameters directly in Python code.
+- **Config-Driven Architecture**: Any magic numbers or configurable variables must be extracted and defined in a corresponding configuration file (e.g., YAML), and parsed dynamically in the script. Ensure all experiments are fully reproducible from the configuration file alone.

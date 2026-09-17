@@ -41,3 +41,8 @@ preflight: lint-pytorch
 
 audit:
 	python tools/multi_agent_auditor.py --mode "repo"
+
+.PHONY: worm-gait-ebm
+
+worm-gait-ebm:
+	python -m src.echo.benchmarks.06_worm_gait_aging_ebm --config configs/worm_gait_ebm.yaml
