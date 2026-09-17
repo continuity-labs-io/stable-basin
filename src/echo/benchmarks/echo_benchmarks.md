@@ -27,8 +27,8 @@ An end-to-end demonstration of the 5-step clinical lifecycle on a simulated agin
 ## 06: Worm Gait Decline (`06_worm_gait_decline.py`)
 The ultimate integration benchmark operating on the *C. elegans* gait dataset. It orchestrates full predictive coding graph training via dual configurations (Laplace Baseline vs Precision-Weighted EBM). This script proves that the system successfully converges onto biological limit cycles and conclusively demonstrates our ability to measure the thermodynamic flattening (Hessian Curvature decline) of a Waddington basin caused by biological aging.
 
-## 07: Nonlinear EEG Entropy (`07_nonlinear_eeg_entropy.py`)
-Validates the ECHO Harness on human EEG datasets to determine if our nonlinear estimators capture non-Gaussian irreversibility (the true thermodynamic arrow of time) that linear phase-lag models miss. This script orchestrates an Arrow-of-Time neural network (Estimator D) and a Fitted NESS EBM (Estimator E) using a `PredictiveCodingGraph` to detect irreversibility in real vs phase-randomized surrogate data.
-
-## 08: In-Silico Reprogramming & Thermodynamic Rescue (`08_insilico_reprogramming.py`)
+## 07: In-Silico Reprogramming & Thermodynamic Rescue (`07_insilico_reprogramming.py`)
 Serves as the scientific climax of the project (Figure 4). It demonstrates mathematically that an erratic "old" biological trajectory can be rescued by applying a synthetic control force (Precision Injection). By directly modifying the precision topology of the Markov blanket during an Euler-Maruyama SDE rollout (via `jax.lax.scan`), it artificially steepens the Waddington basin, forcing the degraded system back into a youthful, tight biological limit cycle.
+
+## 08: Nonlinear EEG Entropy (`08_nonlinear_eeg_entropy.py`)
+Validates the ECHO Harness on human EEG datasets to determine if our nonlinear estimators capture non-Gaussian irreversibility (the true thermodynamic arrow of time) that linear phase-lag models miss. This script orchestrates an Arrow-of-Time neural network (Estimator D) and a Fitted NESS EBM (Estimator E) using a `PredictiveCodingGraph` to detect irreversibility in real vs phase-randomized surrogate data.

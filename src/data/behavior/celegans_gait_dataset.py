@@ -1,7 +1,10 @@
+import os
 import logging
 import math
 import random
 import torch
+import numpy as np
+import pandas as pd
 from torch.utils.data import Dataset
 from typing import Optional
 
@@ -11,34 +14,73 @@ class CElegansGaitDataset(Dataset):
     """
     Dataset for C. elegans gait trajectories.
     Extracts random, contiguous, fixed-length crops from variable-length 6D eigenworm time series.
+    See https://zenodo.org/records/11206196 for underlying data (EigenWorms_TEST.ts and EigenWorms_TRAIN.ts).
     """
 
     def __init__(
         self,
-        data_tensors: Optional[list[torch.Tensor]] = None,
+        data_path: Optional[str] = None,
         seq_len: int = 500,
-        num_synthetic_samples: int = 100
+        num_synthetic_samples: int = 100,
+        is_aged: bool = False
     ):
         """
         Initializes the dataset.
 
         Args:
-            data_tensors: List of 2D tensors of shape (time_steps, 6) representing the variable-length trajectories.
-                          If None, falls back to generating synthetic data.
+            data_path: Path to the biological eigenworm data (.npy or .csv).
             seq_len: The fixed length of each extracted sequence crop.
-            num_synthetic_samples: The number of synthetic trajectories to generate if data_tensors is None.
+            num_synthetic_samples: The number of synthetic trajectories to generate if data_path is None or missing.
+            is_aged: If True, applies an OU/Gaussian noise process to simulate thermodynamic degradation.
         """
         self.seq_len = seq_len
         self.data = []
 
-        if data_tensors is None:
-            logger.info("Local biological data not found. Falling back to deterministic synthetic generation for CI.")
+        if data_path and os.path.exists(data_path):
+            logger.info(f"Loaded Real Biological Data from {data_path}")
+            if data_path.endswith('.npy'):
+                raw_data = np.load(data_path)
+                if raw_data.ndim == 2:
+                    self.data = [torch.tensor(raw_data, dtype=torch.float32)]
+                elif raw_data.ndim == 3:
+                    self.data = [torch.tensor(traj, dtype=torch.float32) for traj in raw_data]
+                else:
+                    raise ValueError("Unexpected shape for biological data.")
+            elif data_path.endswith('.csv'):
+                df = pd.read_csv(data_path)
+                self.data = [torch.tensor(df.values, dtype=torch.float32)]
+            elif data_path.endswith('.ts'):
+                with open(data_path, 'r') as f:
+                    in_data = False
+                    for line in f:
+                        line = line.strip()
+                        if not line: continue
+                        if line.startswith('@data'):
+                            in_data = True
+                            continue
+                        if in_data:
+                            parts = line.split(':')
+                            dims = parts[:6]
+                            tensor_dims = []
+                            for d in dims:
+                                vals = [float(x) for x in d.split(',') if x]
+                                tensor_dims.append(vals)
+                            traj = torch.tensor(tensor_dims, dtype=torch.float32).t()
+                            self.data.append(traj)
+        else:
+            logger.info("Local biological data not found or path not provided. Falling back to deterministic Synthetic Fallback.")
             self.data = [
                 self.generate_synthetic_data(seq_len=seq_len + random.randint(0, 1000), seed=42 + i)
                 for i in range(num_synthetic_samples)
             ]
-        else:
-            self.data = data_tensors
+
+        if is_aged:
+            aged_data = []
+            for traj in self.data:
+                noise = torch.randn_like(traj) * 0.2
+                aged_traj = traj * 0.5 + noise
+                aged_data.append(aged_traj)
+            self.data = aged_data
             
         # Filter out trajectories that are shorter than seq_len
         valid_data = [t for t in self.data if t.shape[0] >= self.seq_len]

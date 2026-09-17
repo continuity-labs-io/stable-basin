@@ -79,10 +79,13 @@ class PrecisionWeightedEBM(eqx.Module):
         
         # 2. Compute scalar energy
         energy_raw = self.energy_head(h)
-        energy = jnp.squeeze(energy_raw)  # Shape: ()
+        # Bound energy from below to ensure a thermodynamic floor (prevents infinite sinkholes)
+        energy = jnp.squeeze(jax.nn.softplus(energy_raw))  # Shape: ()
         
         # 3. Compute precision matrix
         precision_flat = self.precision_head(h)
+        # Smoothly bound the raw precision to prevent exponential blowup during long BPTT unrolls
+        precision_flat = jnp.tanh(precision_flat) * 5.0
         # Reshape to (d_state, d_state)
         W_raw = precision_flat.reshape((self.d_state, self.d_state))
         

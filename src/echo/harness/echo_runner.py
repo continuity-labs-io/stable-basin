@@ -156,6 +156,10 @@ class EchoRunner:
         """
         max_epochs = self.config.get("optimization", {}).get("max_epochs", 1)
         learning_rate = self.config.get("optimization", {}).get("learning_rate", 1e-3)
+        patience = self.config.get("optimization", {}).get("early_stopping_patience", None)
+        
+        best_val_loss = float('inf')
+        epochs_without_improvement = 0
         
         for epoch in range(max_epochs):
             key, train_key, val_key = jax.random.split(key, 3)
@@ -184,5 +188,15 @@ class EchoRunner:
                     pass
                 except Exception as e:
                     logger.debug(f"Ray train report failed: {e}")
+                    
+            if patience is not None:
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    epochs_without_improvement = 0
+                else:
+                    epochs_without_improvement += 1
+                    if epochs_without_improvement >= patience:
+                        logger.info(f"Early stopping triggered at epoch {epoch + 1} due to no improvement in validation loss for {patience} epochs.")
+                        break
                     
         return model

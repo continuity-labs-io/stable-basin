@@ -128,7 +128,7 @@ def main():
     d_full = graph.d_micro + graph.d_macro
     
     # Load fallback biological data to represent a fragment of reality
-    dataset = CElegansGaitDataset(seq_len=10)
+    dataset = CElegansGaitDataset(data_path="data/worm/EigenWorms_TEST.ts", seq_len=10, is_aged=True)
     bio_frame = dataset[0][0].numpy()  # 6D sensory snapshot
     
     # Construct "Old Worm" pathological state (erratic, high variance)

@@ -72,6 +72,9 @@ class Thermostat(eqx.Module):
         
         drift_total = drift + (omega_ext if omega_ext is not None else 0.0) + (q_ext if q_ext is not None else 0.0)
         
+        # Clip the drift to guarantee explicit Euler stability during chaotic BPTT exploration
+        drift_total = jnp.clip(drift_total, -100.0, 100.0)
+        
         # 3. Stochastic diffusion (noise): sqrt(2 * T * dt) * (L @ dW)
         dW = jax.random.normal(key, shape=x.shape, dtype=jnp.float32)
         diffusion = jnp.sqrt(2.0 * T * dt_jnp) * (L @ dW)

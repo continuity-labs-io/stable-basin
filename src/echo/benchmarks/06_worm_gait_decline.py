@@ -10,8 +10,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import equinox as eqx
 
-jax.config.update("jax_debug_nans", True)
-
 from src.data.behavior.celegans_gait_dataset import CElegansGaitDataset
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.hierarchy import PredictiveCodingGraph
@@ -36,12 +34,7 @@ class JAXDictDataset(Dataset):
         x_init = torch.randn(self.d_state) * 0.01
         return {'s_true': s_true, 'x_init': x_init}
 
-def generate_old_worm_data(seq_len=100, num_samples=20):
-    dataset = CElegansGaitDataset(seq_len=seq_len, num_synthetic_samples=num_samples)
-    for i in range(len(dataset.data)):
-        noise = torch.randn_like(dataset.data[i]) * 0.2
-        dataset.data[i] = dataset.data[i] * 0.5 + noise
-    return dataset
+# generate_old_worm_data is now handled internally by CElegansGaitDataset(is_aged=True)
 
 def build_graph(ebm_class, key):
     k1, k2, k3 = jax.random.split(key, 3)
@@ -77,8 +70,8 @@ def main():
     torch.manual_seed(42)
     key = jax.random.PRNGKey(42)
     
-    young_dataset_raw = CElegansGaitDataset(seq_len=100, num_synthetic_samples=50)
-    old_dataset_raw = generate_old_worm_data(seq_len=100, num_samples=50)
+    young_dataset_raw = CElegansGaitDataset(data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=100, num_synthetic_samples=50, is_aged=False)
+    old_dataset_raw = CElegansGaitDataset(data_path="data/worm/EigenWorms_TEST.ts", seq_len=100, num_synthetic_samples=50, is_aged=True)
     
     # Determine d_state
     _, d_state = build_graph(GaussianEBM, key)
