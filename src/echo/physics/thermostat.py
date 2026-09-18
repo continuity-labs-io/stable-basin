@@ -2,7 +2,8 @@ import math
 import jax
 import jax.numpy as jnp
 import equinox as eqx
-from jaxtyping import Float, Array, PRNGKeyArray
+from jaxtyping import Float, Array, PRNGKeyArray, jaxtyped
+from beartype import beartype
 
 class Thermostat(eqx.Module):
     """
@@ -21,16 +22,17 @@ class Thermostat(eqx.Module):
         """
         self.temperature = float(temperature)
 
+    @jaxtyped(typechecker=beartype)
     def __call__(
         self,
         x: Float[Array, "d_state"],
         grad_E: Float[Array, "d_state"],
         Q: Float[Array, "d_state d_state"],
         L: Float[Array, "d_state d_state"],
-        dt: float,
+        dt: float | Float[Array, ""],
         key: PRNGKeyArray,
-        omega_ext: jax.Array | None = None,
-        q_ext: jax.Array | None = None,
+        omega_ext: Float[Array, "d_state"] | None = None,
+        q_ext: Float[Array, "d_state"] | None = None,
         Gamma: Float[Array, "d_state d_state"] | None = None
     ) -> Float[Array, "d_state"]:
         """

@@ -69,10 +69,10 @@ this persona and adhere to the following tactical checklist:
 
 ### Enforcing Shape Discipline
 
-ALL new PyTorch neural network modules must use `jaxtyping` (e.g.,
-`Float[Tensor, "batch seq d_model"]`) in their method signatures. Additionally,
-strictly use `einops` for complex reshapes/rearranges instead of native
-`.view()` or `.reshape()`.
+ALL new PyTorch and JAX mathematical functions (including `__call__`, `forward`, `sample`, etc.) MUST be strictly validated at runtime. You must:
+1. Use `jaxtyping` type hints (e.g., `Float[Tensor, "batch seq d_model"]` or `Float[Array, "d_state"]`) in their method signatures.
+2. Decorate these methods with `@jaxtyped(typechecker=beartype)` and properly import `from jaxtyping import jaxtyped` and `from beartype import beartype`.
+3. Strictly use `einops` for complex reshapes/rearranges instead of native `.view()` or `.reshape()`.
 
 ### Proper Package Imports
 

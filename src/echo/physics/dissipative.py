@@ -2,7 +2,8 @@ import math
 import jax
 import jax.numpy as jnp
 import equinox as eqx
-from jaxtyping import Float, Array, PRNGKeyArray
+from jaxtyping import Float, Array, PRNGKeyArray, jaxtyped
+from beartype import beartype
 
 from typing import Any
 
@@ -19,6 +20,7 @@ class DissipativeFriction(eqx.Module):
     epsilon: float
     hull: Any
 
+    @jaxtyped(typechecker=beartype)
     def __init__(self, d_state: int, key: PRNGKeyArray, epsilon: float = 1e-4, hull: Any = None):
         """
         Initializes the DissipativeFriction module.
@@ -78,6 +80,7 @@ class DissipativeFriction(eqx.Module):
         
         return gamma + jitter
 
+    @jaxtyped(typechecker=beartype)
     def __call__(self, x: Float[Array, "d_state"]) -> Float[Array, "d_state"]:
         """
         Computes the matrix-vector product Γx.

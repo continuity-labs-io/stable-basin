@@ -1,7 +1,8 @@
 import jax
 import jax.numpy as jnp
 import equinox as eqx
-from jaxtyping import Float, Array
+from jaxtyping import Float, Array, jaxtyped
+from beartype import beartype
 from typing import Dict
 
 class MarkovHull(eqx.Module):
@@ -27,6 +28,7 @@ class MarkovHull(eqx.Module):
     d_state: int = eqx.field(static=True)
     D_s: jax.Array | None = eqx.field(default=None)
 
+    @jaxtyped(typechecker=beartype)
     def __init__(
         self,
         d_internal: int,
@@ -45,6 +47,7 @@ class MarkovHull(eqx.Module):
         self.d_state = d_internal + d_sensory + d_active + d_external
         self.D_s = D_s
 
+    @jaxtyped(typechecker=beartype)
     def partition(self, x: Float[Array, "d_state"]) -> Dict[str, Float[Array, "..."]]:
         """
         Splits a flat 1D state array into its functional components.
@@ -66,6 +69,7 @@ class MarkovHull(eqx.Module):
             "external": x[idx_e:]
         }
 
+    @jaxtyped(typechecker=beartype)
     def reconstruct(self, partitions: Dict[str, Float[Array, "..."]]) -> Float[Array, "d_state"]:
         """
         Concatenates functional components back into a flat 1D array.
@@ -83,7 +87,8 @@ class MarkovHull(eqx.Module):
             partitions["external"]
         ])
 
-    def apply_sensory_degradation(self, x: jax.Array) -> jax.Array:
+    @jaxtyped(typechecker=beartype)
+    def apply_sensory_degradation(self, x: Float[Array, "d_state"]) -> Float[Array, "d_state"]:
         """
         Degrades the sensory partition of the state if a sensory degradation matrix (D_s) is provided.
         """
@@ -95,6 +100,7 @@ class MarkovHull(eqx.Module):
         partitions["sensory"] = s_obs
         return self.reconstruct(partitions)
 
+    @jaxtyped(typechecker=beartype)
     def get_topology_mask(self) -> Float[Array, "d_state d_state"]:
         """
         Constructs a binary adjacency mask enforcing the Markov Blanket.

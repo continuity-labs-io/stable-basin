@@ -10,7 +10,8 @@ import math
 import jax
 import jax.numpy as jnp
 import equinox as eqx
-from jaxtyping import Float, Array, PRNGKeyArray
+from jaxtyping import Float, Array, PRNGKeyArray, jaxtyped
+from beartype import beartype
 
 from typing import Any
 
@@ -22,6 +23,7 @@ class SolenoidalFlow(eqx.Module):
     W: Float[Array, "d_state d_state"]
     hull: Any
     
+    @jaxtyped(typechecker=beartype)
     def __init__(self, d_state: int, key: PRNGKeyArray, hull: Any = None):
         """
         Initializes the unconstrained weight matrix W.
@@ -58,6 +60,7 @@ class SolenoidalFlow(eqx.Module):
             return Q_unconstrained * self.hull.get_topology_mask()
         return Q_unconstrained
         
+    @jaxtyped(typechecker=beartype)
     def __call__(self, x: Float[Array, "d_state"]) -> Float[Array, "d_state"]:
         """
         Computes the matrix-vector product Qx.

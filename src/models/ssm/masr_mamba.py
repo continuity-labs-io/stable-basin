@@ -7,7 +7,8 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from jaxtyping import Float
+from jaxtyping import Float, jaxtyped
+from beartype import beartype
 from torch import Tensor
 
 from src.models.ssm.physics import create_a_matrix
@@ -46,6 +47,7 @@ def pscan(A, X):
         
     return X[:, :L]
 
+@jaxtyped(typechecker=beartype)
 def mamba_masr_reference_scan(
     x: Float[Tensor, "batch seq d_model"],
     dt: Float[Tensor, "batch seq d_model"],

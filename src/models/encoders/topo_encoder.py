@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 from src.config import settings
+from jaxtyping import Float, jaxtyped
+from beartype import beartype
+from torch import Tensor
 
 
 class TopoEncoder(nn.Module):
@@ -34,7 +37,12 @@ class TopoEncoder(nn.Module):
             nn.Linear(d_model, d_model), nn.GELU(), nn.Linear(d_model, d_model)
         )
 
-    def forward(self, x, return_hidden=False):
+    @jaxtyped(typechecker=beartype)
+    def forward(
+        self,
+        x: Float[Tensor, "batch time 2 64 64"],
+        return_hidden: bool = False
+    ):
         """
         Args:
             x: Tensor of shape [Batch, Time, 2, 64, 64] representing the E-field flow

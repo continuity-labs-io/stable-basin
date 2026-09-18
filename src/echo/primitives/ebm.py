@@ -1,7 +1,8 @@
 import jax
 import jax.numpy as jnp
 import equinox as eqx
-from jaxtyping import Float, Array, PRNGKeyArray
+from jaxtyping import Float, Array, PRNGKeyArray, jaxtyped
+from beartype import beartype
 from typing import Tuple
 
 class PrecisionWeightedEBM(eqx.Module):
@@ -18,6 +19,7 @@ class PrecisionWeightedEBM(eqx.Module):
     d_state: int = eqx.field(static=True)
     epsilon: float = eqx.field(static=True)
 
+    @jaxtyped(typechecker=beartype)
     def __init__(
         self,
         d_state: int,
