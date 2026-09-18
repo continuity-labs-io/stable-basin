@@ -107,7 +107,8 @@ class ThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         
         # 2. Extract the physical matrices
         Q = self.solenoidal.Q
-        L = self.dissipative.L
+        Gamma = self.dissipative.Gamma
+        L = jnp.linalg.cholesky(Gamma)
         
         # 3. Execute the physical integration (Thermostat)
         x_next = self.thermostat(
@@ -118,7 +119,8 @@ class ThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             dt=dt,
             key=key,
             omega_ext=omega_ext,
-            q_ext=q_ext
+            q_ext=q_ext,
+            Gamma=Gamma
         )
         
         if return_aux:

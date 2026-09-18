@@ -106,11 +106,11 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         """
         Q_micro_masked = self.micro_solenoidal.Q
         Gamma_micro_masked = self.micro_dissipative.Gamma
-        S_micro = jnp.linalg.cholesky(Gamma_micro_masked + self.epsilon * jnp.eye(self.d_micro))
+        S_micro = jnp.linalg.cholesky(Gamma_micro_masked)
         
         Q_macro_masked = self.macro_solenoidal.Q
         Gamma_macro_masked = self.macro_dissipative.Gamma
-        S_macro = jnp.linalg.cholesky(Gamma_macro_masked + self.epsilon * jnp.eye(self.d_macro))
+        S_macro = jnp.linalg.cholesky(Gamma_macro_masked)
         
         return {
             "Q_micro_masked": Q_micro_masked,
@@ -193,7 +193,7 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             S_micro = params["S_micro"]
         else:
             logging.warning("HierarchicalThermoFlowFactor fallback to slow jnp.linalg.eigh for S_micro")
-            evals_u, evecs_u = jnp.linalg.eigh(Gamma_micro_masked + self.epsilon * jnp.eye(self.d_micro))
+            evals_u, evecs_u = jnp.linalg.eigh(Gamma_micro_masked)
             evals_u = jnp.maximum(evals_u, 0.0)
             S_micro = evecs_u @ jnp.diag(jnp.sqrt(evals_u))
             
@@ -201,7 +201,7 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             S_macro = params["S_macro"]
         else:
             logging.warning("HierarchicalThermoFlowFactor fallback to slow jnp.linalg.eigh for S_macro")
-            evals_m, evecs_m = jnp.linalg.eigh(Gamma_macro_masked + self.epsilon * jnp.eye(self.d_macro))
+            evals_m, evecs_m = jnp.linalg.eigh(Gamma_macro_masked)
             evals_m = jnp.maximum(evals_m, 0.0)
             S_macro = evecs_m @ jnp.diag(jnp.sqrt(evals_m))
         
@@ -217,7 +217,7 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             key=k_micro,
             omega_ext=omega_micro,
             q_ext=q_micro,
-            Gamma=Gamma_micro_masked + self.epsilon * jnp.eye(self.d_micro)
+            Gamma=Gamma_micro_masked
         )
         
         x_macro_next = self.macro_thermostat(
@@ -229,7 +229,7 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             key=k_macro,
             omega_ext=omega_macro,
             q_ext=q_macro,
-            Gamma=Gamma_macro_masked + self.epsilon * jnp.eye(self.d_macro)
+            Gamma=Gamma_macro_masked
         )
         
         # g) Concatenate and return

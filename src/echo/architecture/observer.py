@@ -67,10 +67,11 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         """
         Precomputes and hoists O(D^3) matrix constructions out of the ODE loop.
         """
+        Gamma = self.dissipative.Gamma
         return {
             "Q": self.solenoidal.Q,
-            "L": self.dissipative.L,
-            "Gamma": self.dissipative.Gamma
+            "L": jnp.linalg.cholesky(Gamma),
+            "Gamma": Gamma
         }
 
     @jaxtyped(typechecker=beartype)
@@ -109,8 +110,8 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         
         params = params or {}
         Q = params.get("Q", self.solenoidal.Q)
-        L = params.get("L", self.dissipative.L)
-        Gamma = params.get("Gamma", None)
+        Gamma = params.get("Gamma", self.dissipative.Gamma)
+        L = params.get("L", jnp.linalg.cholesky(Gamma))
         
         x_next = self.thermostat(
             x=x,
