@@ -46,3 +46,8 @@ audit:
 
 worm-gait-ebm:
 	python -m src.echo.benchmarks.06_worm_gait_aging_ebm --config configs/worm_gait_ebm.yaml
+
+.PHONY: worm-gait-intervention
+
+worm-gait-intervention:
+	python -m src.echo.benchmarks.07_worm_gait_intervention --config configs/worm_gait_intervention.yaml
