@@ -108,3 +108,61 @@ def test_hierarchy_jit():
         
     out = jitted_call(graph, k_run, x_micro, x_macro)
     assert not jnp.any(jnp.isnan(out))
+
+def test_hierarchical_surprisal_blindness():
+    key = jax.random.PRNGKey(0)
+    k1, k2, k3 = jax.random.split(key, 3)
+    
+    d_i, d_s, d_a, d_e = 4, 3, 2, 1
+    D_s_zero = jnp.zeros((d_s, d_s))
+    
+    micro = MarkovBlanketObserver(
+        d_internal=d_i,
+        d_sensory=d_s,
+        d_active=d_a,
+        d_external=d_e,
+        ebm_hidden_size=8,
+        ebm_depth=1,
+        n_steps=1,
+        temperature=1.0,
+        key=k1,
+        D_s=D_s_zero
+    )
+    
+    macro = MarkovBlanketObserver(
+        d_internal=d_i,
+        d_sensory=d_s,
+        d_active=d_a,
+        d_external=d_e,
+        ebm_hidden_size=8,
+        ebm_depth=1,
+        n_steps=1,
+        temperature=1.0,
+        key=k2
+    )
+    
+    graph = PredictiveCodingGraph(micro, macro, n_steps=1, key=k3)
+    factor = graph.forced_thermalizer.flow_factor
+    
+    x_u = jax.random.normal(k1, (micro.hull.d_state,))
+    x_m = jax.random.normal(k2, (macro.hull.d_state,))
+    
+    def joint_energy_fn(x_u_val, x_m_val):
+        x_u_obs = factor.micro_hull.apply_sensory_degradation(x_u_val)
+        x_m_obs = factor.macro_hull.apply_sensory_degradation(x_m_val)
+        
+        E_micro, _ = factor.micro_ebm(x_u_obs)
+        E_macro, Pi_macro = factor.macro_ebm(x_m_obs)
+        
+        belief = factor.W_down(x_m_obs)
+        diff = x_u_obs - belief
+        
+        diff_proj = factor.W_down.weight.T @ diff
+        penalty = 0.5 * diff_proj.T @ Pi_macro @ diff_proj
+        
+        return E_micro + E_macro + penalty
+        
+    grad_u = jax.grad(joint_energy_fn, argnums=0)(x_u, x_m)
+    grad_u_part = factor.micro_hull.partition(grad_u)
+    
+    assert jnp.allclose(grad_u_part["sensory"], jnp.zeros(d_s))

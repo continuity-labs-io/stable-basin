@@ -116,3 +116,28 @@ def test_markov_hull_jit():
     assert mask.shape == (total_dims, total_dims)
     assert not jnp.any(jnp.isnan(x_new))
     assert not jnp.any(jnp.isnan(mask))
+
+def test_hull_degradation():
+    d_i, d_s, d_a, d_e = 4, 3, 2, 1
+    x = jnp.arange(10, dtype=jnp.float32)
+    
+    # Test 1: D_s = None
+    hull_none = MarkovHull(d_i, d_s, d_a, d_e, D_s=None)
+    x_obs_none = hull_none.apply_sensory_degradation(x)
+    assert jnp.allclose(x, x_obs_none)
+    
+    # Test 2: D_s = zeros
+    D_s = jnp.zeros((d_s, d_s))
+    hull_zero = MarkovHull(d_i, d_s, d_a, d_e, D_s=D_s)
+    x_obs_zero = hull_zero.apply_sensory_degradation(x)
+    
+    part_orig = hull_none.partition(x)
+    part_obs = hull_zero.partition(x_obs_zero)
+    
+    assert jnp.allclose(part_orig["internal"], part_obs["internal"])
+    assert jnp.allclose(part_orig["active"], part_obs["active"])
+    assert jnp.allclose(part_orig["external"], part_obs["external"])
+    
+    assert jnp.allclose(part_obs["sensory"], jnp.zeros(d_s))
+
+

@@ -194,3 +194,91 @@ def test_topology_masking_invariant():
     assert jnp.all(Gamma[:idx_s, idx_e:] == 0.0), "Internal-External covariance block is not strictly zero."
     assert jnp.all(Gamma[idx_e:, :idx_s] == 0.0), "External-Internal covariance block is not strictly zero."
     assert jnp.all(eigenvalues > 0.0), f"Gamma is not strictly positive definite. Eigenvalues: {eigenvalues}"
+
+def test_actuation_observer():
+    key = jax.random.PRNGKey(42)
+    obs_key, sim_key = jax.random.split(key, 2)
+    
+    observer = MarkovBlanketObserver(
+        d_internal=2,
+        d_sensory=2,
+        d_active=2,
+        d_external=2,
+        ebm_hidden_size=16,
+        ebm_depth=1,
+        n_steps=1,
+        temperature=0.0,
+        key=obs_key
+    )
+    
+    seq_len = 10
+    d_state = 8
+    dt = 0.1
+    x_init = jnp.zeros(d_state)
+    
+    omega_seq = jnp.zeros((seq_len, d_state))
+    q_mask = jnp.ones(d_state)
+    q_gain = 2.0
+
+    # Assert it executes without JAX concretization or shape errors
+    traj = observer.forced_unroll(sim_key, x_init, dt, seq=None, omega_seq=omega_seq, q_gain=q_gain, q_mask=q_mask)
+    
+    assert traj.shape == (seq_len, d_state)
+    assert not jnp.any(jnp.isnan(traj))
+
+
+def test_forced_thermalizer_omega_seq():
+    key = jax.random.PRNGKey(0)
+    obs = MarkovBlanketObserver(
+        d_internal=4,
+        d_sensory=4,
+        d_active=4,
+        d_external=4,
+        ebm_hidden_size=8,
+        ebm_depth=1,
+        n_steps=1,
+        temperature=1.0,
+        key=key
+    )
+    
+    x_init = jnp.zeros(obs.hull.d_state)
+    dt = 0.01
+    
+    seq_len = 5
+    omega_seq = jnp.ones((seq_len, obs.hull.d_state)) * 2.0
+    
+    traj = obs.forced_unroll(key, x_init, dt, seq=None, omega_seq=omega_seq)
+    
+    assert traj.shape == (seq_len, obs.hull.d_state)
+
+def test_observer_gradient_blindness():
+    key = jax.random.PRNGKey(0)
+    d_i, d_s, d_a, d_e = 4, 3, 2, 1
+    D_s = jnp.zeros((d_s, d_s))
+    
+    obs = MarkovBlanketObserver(
+        d_internal=d_i,
+        d_sensory=d_s,
+        d_active=d_a,
+        d_external=d_e,
+        ebm_hidden_size=8,
+        ebm_depth=1,
+        n_steps=1,
+        temperature=1.0,
+        key=key,
+        D_s=D_s
+    )
+    
+    x = jax.random.normal(key, (obs.hull.d_state,))
+    
+    def energy_fn(state):
+        state_obs = obs.hull.apply_sensory_degradation(state)
+        e, _ = obs.ebm(state_obs)
+        return e
+        
+    grad_x = jax.grad(energy_fn)(x)
+    grad_part = obs.hull.partition(grad_x)
+    
+    assert jnp.allclose(grad_part["sensory"], jnp.zeros(d_s))
+
+

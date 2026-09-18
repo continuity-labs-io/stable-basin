@@ -171,3 +171,20 @@ def test_solenoidal_flow_topological_masking():
     # Gradient Stability
     assert not jnp.isnan(loss), "Loss is NaN"
     assert not jnp.any(jnp.isnan(grads.W)), "Gradients contain NaNs due to masking"
+
+def test_solenoidal_flow_antisymmetry():
+    d_state = 16
+    key = jax.random.PRNGKey(42)
+    flow = SolenoidalFlow(d_state=d_state, key=key)
+    
+    Q = flow.Q
+    
+    # Assert Q is skew-symmetric
+    assert jnp.allclose(Q, -Q.T, atol=1e-6)
+    
+    # Assert v^T Q v = 0
+    v = jax.random.normal(jax.random.PRNGKey(99), (d_state,))
+    quadratic_form = v.T @ Q @ v
+    
+    assert jnp.allclose(quadratic_form, 0.0, atol=1e-6)
+

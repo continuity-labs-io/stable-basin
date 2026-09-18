@@ -3,6 +3,9 @@ import pytest
 from src.metrics.mamba_lrp import MambaLRPEpsilon
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
 from src.utils.device import get_optimal_device
+import torch.nn as nn
+import torch.nn.functional as F
+
 
 
 def test_relevance_conservation_axiom():
@@ -39,3 +42,47 @@ def test_relevance_conservation_axiom():
     assert error < 1e-2, (
         f"Relevance Conservation Axiom Violated! Expected: {expected_relevance}, Actual: {actual_relevance}, Error: {error}"
     )
+
+class DummyFusion(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.W_proj = nn.Linear(5, 5)
+        self.W_gate = nn.Linear(5, 5)  # Required by attribute mask initialization
+
+class DummyModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fusion = DummyFusion()
+        self.readout = nn.Linear(5, 5)
+        
+    def get_hidden_states(self, x, mask=None):
+        # Dummy return of hidden states
+        return x
+
+    def forward(self, x):
+        h = self.get_hidden_states(x)
+        return self.readout(h)
+
+def test_mamba_lrp_relevance_conservation():
+    model = DummyModel()
+    model.eval()
+    
+    lrp = MambaLRPEpsilon(model=model)
+    
+    x = torch.randn(1, 10, 5)
+    
+    # Run attribution
+    target_time_step = 9
+    R_x = lrp.attribute(x, target_time_step=target_time_step)
+    
+    # Reconstruct what the attribute method calculated as 'preds'
+    hidden_states = model.get_hidden_states(x)
+    W_out = model.readout.weight.data
+    b_out = model.readout.bias.data
+    preds = F.linear(hidden_states, W_out, b_out)
+    
+    total_relevance = R_x.sum().item()
+    total_prediction = preds[:, target_time_step, :].sum().item()
+    
+    # Assert relevance is conserved within 1% relative tolerance
+    assert torch.isclose(torch.tensor(total_relevance), torch.tensor(total_prediction), rtol=0.01)

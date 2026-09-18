@@ -139,3 +139,47 @@ def test_thermostat_vmap():
     # ASSERT
     assert x_next_batch.shape == (batch_size, d_state), "Batched output shape mismatch"
     assert not jnp.any(jnp.isnan(x_next_batch)), "Batched output contains NaNs"
+
+def test_actuation_thermostat():
+    # Instantiate a Thermostat with temperature = 0.0.
+    thermostat = Thermostat(temperature=0.0)
+    
+    d_state = 2
+    x = jnp.array([1.0, -1.0])
+    grad_E = jnp.array([0.1, -0.1])
+    Q = jnp.zeros((d_state, d_state))
+    L = jnp.eye(d_state)
+    dt = 0.1
+    key = jax.random.PRNGKey(0)
+    
+    q_ext = jnp.array([5.0, -5.0])
+    
+    x_next = thermostat(x, grad_E, Q, L, dt, key, q_ext=q_ext)
+    
+    Gamma = L @ L.T
+    drift = -(Q + Gamma) @ grad_E
+    
+    expected_x_next = x + (drift * dt) + (q_ext * dt)
+    
+    assert jnp.allclose(x_next, expected_x_next)
+
+def test_thermostat_omega_ext():
+    thermostat = Thermostat(temperature=0.0)
+    d_state = 10
+    x = jnp.zeros(d_state)
+    grad_E = jnp.zeros(d_state)
+    Q = jnp.zeros((d_state, d_state))
+    L = jnp.zeros((d_state, d_state))
+    dt = 0.01
+    key = jax.random.PRNGKey(0)
+
+    x_next_no_force = thermostat(x, grad_E, Q, L, dt, key, omega_ext=None)
+    
+    omega_ext = jnp.ones(d_state) * 10.0
+    x_next_force = thermostat(x, grad_E, Q, L, dt, key, omega_ext=omega_ext)
+
+    shift = x_next_force - x_next_no_force
+    expected_shift = omega_ext * dt
+
+    assert jnp.allclose(shift, expected_shift)
+
