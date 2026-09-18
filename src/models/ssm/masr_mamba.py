@@ -35,8 +35,14 @@ def pscan(A, X):
         X_update = X[:, shift:] + A[:, shift:] * X_shifted
         A_update = A[:, shift:] * A_shifted
         
-        X = torch.cat([X[:, :shift], X_update], dim=1)
-        A = torch.cat([A[:, :shift], A_update], dim=1)
+        X_new = X.clone()
+        A_new = A.clone()
+        
+        X_new[:, shift:] = X_update
+        A_new[:, shift:] = A_update
+        
+        X = X_new
+        A = A_new
         
     return X[:, :L]
 
