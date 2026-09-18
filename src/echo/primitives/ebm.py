@@ -64,6 +64,7 @@ class PrecisionWeightedEBM(eqx.Module):
             key=key_precision
         )
 
+    @jaxtyped(typechecker=beartype)
     def __call__(self, x: Float[Array, "d_state"]) -> Tuple[Float[Array, ""], Float[Array, "d_state d_state"]]:
         """
         Forward pass mapping state vector `x` to (energy, precision).
@@ -121,6 +122,7 @@ class GaussianEBM(eqx.Module):
         # Initialize L to be roughly identity so Pi is roughly identity
         self.L = jax.random.normal(k2, (d_state, d_state)) * 0.1 + jnp.eye(d_state)
 
+    @jaxtyped(typechecker=beartype)
     def __call__(self, x: Float[Array, "d_state"]) -> Tuple[Float[Array, ""], Float[Array, "d_state d_state"]]:
         L_tril = jnp.tril(self.L)
         Pi = L_tril @ L_tril.T
