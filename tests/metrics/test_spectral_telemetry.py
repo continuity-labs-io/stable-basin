@@ -2,6 +2,7 @@ import torch
 import math
 import pytest
 from src.metrics import SpectralMetrics
+from src.metrics.spectral import _hilbert_transform
 
 @pytest.fixture
 def hardware_monitor():
@@ -118,3 +119,24 @@ def test_vram_leak_hardware_scaling(hardware_monitor):
     # ASSERT
     # Expect memory to not grow significantly after warmup
     assert final_mem <= post_warmup_mem + (1024 * 1024), "VRAM leak detected! Memory grew significantly after warmup."
+
+def test_native_hilbert_transform():
+    """
+    Test that the native PyTorch _hilbert_transform correctly computes the analytic signal.
+    For a real cosine wave cos(wt), the analytic signal is cos(wt) + j*sin(wt).
+    """
+    # ARRANGE
+    t = torch.arange(100, dtype=torch.float64) / 100.0
+    freq = 5.0
+    x = torch.cos(2 * math.pi * freq * t)
+    
+    # ACT
+    actual_analytic = _hilbert_transform(x, dim=0)
+    
+    # ASSERT
+    # The real part should be exactly the original signal
+    assert torch.allclose(actual_analytic.real, x, atol=1e-5)
+    
+    # The imaginary part should be sin(wt)
+    expected_imag = torch.sin(2 * math.pi * freq * t)
+    assert torch.allclose(actual_analytic.imag, expected_imag, atol=1e-5)
