@@ -70,27 +70,36 @@ class SyntheticWaddingtonDataset(Dataset):
         
         # Restore the global state so __getitem__ still respects the external runner's seed
         torch.set_rng_state(global_rng_state)
+        
+        self._pregenerate_data()
 
-    def __len__(self):
-        return self.size
+    def _pregenerate_data(self):
+        # Vectorized integration over the entire dataset size
+        v = torch.zeros(self.seq_len, self.size, 1)
+        w = torch.zeros(self.seq_len, self.size, 1)
 
-    def __getitem__(self, idx):
-        v = torch.zeros(self.seq_len, 1)
-        w = torch.zeros(self.seq_len, 1)
+        v_curr = torch.randn(self.size, 1) * self.init_v_scale
+        w_curr = torch.randn(self.size, 1) * self.init_w_scale
 
-        # Randomize initial conditions slightly to vary sequences
-        v_curr = torch.randn(1).item() * self.init_v_scale
-        w_curr = torch.randn(1).item() * self.init_w_scale
-
-        # Euler Integration Loop
         for i in range(self.seq_len):
             for _ in range(self.sub_steps):
                 dv = v_curr - (v_curr**3) / 3.0 - w_curr + self.I_ext
                 dw = (v_curr + self.a - self.b * w_curr) / self.tau
                 v_curr += dv * self.dt
                 w_curr += dw * self.dt
-            v[i, 0] = v_curr
-            w[i, 0] = w_curr
+            v[i] = v_curr
+            w[i] = w_curr
+            
+        # Store as [size, seq_len, 1]
+        self.v_all = v.transpose(0, 1)
+        self.w_all = w.transpose(0, 1)
+
+    def __len__(self):
+        return self.size
+
+    def __getitem__(self, idx):
+        v = self.v_all[idx]
+        w = self.w_all[idx]
 
         # Target is the fast variable
         y_true = v
