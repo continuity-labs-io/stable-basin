@@ -54,3 +54,6 @@ include = ["src*"]
 
 [tool.pyright]
 reportUnusedImport = false
+
+[tool.coverage.run]
+omit = ["src/demo/*", "src/harness/*"]
