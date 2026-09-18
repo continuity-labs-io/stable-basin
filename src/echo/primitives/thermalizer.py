@@ -252,5 +252,6 @@ class ForcedTorxThermalizer(eqx.Module):
         scan_seq = seq if seq is not None else dummy_seq
         scan_omega = omega_seq if omega_seq is not None else dummy_seq
         
+        step_fn = jax.checkpoint(step_fn)
         _, traj = jax.lax.scan(step_fn, x_init, (scan_seq, scan_omega, keys))
         return traj
