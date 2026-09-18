@@ -154,26 +154,12 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         # c) Compute gradients simultaneously
         grad_micro, grad_macro = jax.grad(self.joint_energy_fn, argnums=(0, 1))(x_micro, x_macro)
         
-        # d) Apply respective Hull masks
-        L_micro_orig = jnp.tril(self.micro_dissipative.W)
-        Gamma_micro_orig = L_micro_orig @ L_micro_orig.T
-        if self.use_micro_blanket:
-            M_micro = self.micro_hull.get_topology_mask()
-            Q_micro_masked = self.micro_solenoidal.Q * M_micro
-            Gamma_micro_masked = Gamma_micro_orig * M_micro
-        else:
-            Q_micro_masked = self.micro_solenoidal.Q
-            Gamma_micro_masked = Gamma_micro_orig
-            
-        L_macro_orig = jnp.tril(self.macro_dissipative.W)
-        Gamma_macro_orig = L_macro_orig @ L_macro_orig.T
-        if self.use_macro_blanket:
-            M_macro = self.macro_hull.get_topology_mask()
-            Q_macro_masked = self.macro_solenoidal.Q * M_macro
-            Gamma_macro_masked = Gamma_macro_orig * M_macro
-        else:
-            Q_macro_masked = self.macro_solenoidal.Q
-            Gamma_macro_masked = Gamma_macro_orig
+        # d) The physics primitives natively enforce topological constraints now.
+        Q_micro_masked = self.micro_solenoidal.Q
+        Gamma_micro_masked = self.micro_dissipative.Gamma
+        
+        Q_macro_masked = self.macro_solenoidal.Q
+        Gamma_macro_masked = self.macro_dissipative.Gamma
         
         # e) Compute safe diffusion matrix S for both
         evals_u, evecs_u = jnp.linalg.eigh(Gamma_micro_masked + self.epsilon * jnp.eye(self.d_micro))

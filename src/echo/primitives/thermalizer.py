@@ -103,7 +103,7 @@ class ThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         
         # 2. Extract the physical matrices
         Q = self.solenoidal.Q
-        L = jnp.tril(self.dissipative.W)
+        L = self.dissipative.L
         
         # 3. Execute the physical integration (Thermostat)
         x_next = self.thermostat(

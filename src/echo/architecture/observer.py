@@ -3,6 +3,7 @@ import jax.numpy as jnp
 import equinox as eqx
 import torx
 import torx.factor
+import logging
 
 from src.echo.architecture.markov_hull import MarkovHull
 from src.echo.primitives.ebm import PrecisionWeightedEBM
@@ -34,7 +35,6 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
     d_state: int = eqx.field(static=True)
     epsilon: float = eqx.field(static=True)
     use_blanket_topology: bool = eqx.field(static=True)
-
     input_ports: dict = eqx.field(static=True)
     output_spec: jax.ShapeDtypeStruct = eqx.field(static=True)
 
@@ -57,9 +57,30 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         self.output_spec = jax.ShapeDtypeStruct((d_state,), jnp.float32)
 
     def init_params(self, key):
+        # Required by torx.factor.AbstractReferenceFactor interface
         return {}
 
     def sample(self, key, inputs, params, info=None, site_info=None, return_aux=False):
+        """
+        Executes a single discrete integration step of the physical thermodynamic factor.
+        
+        Args:
+            key: JAX PRNG key for stochastic sampling (e.g., Langevin noise).
+            inputs: Dictionary containing the necessary state variables:
+                - "x": The current state vector.
+                - "dt": The time delta for the integration step.
+                - "omega_ext": (Optional) External solenoidal forcing.
+                - "q_ext": (Optional) External heat injection.
+            params: Parameters dictionary (unused, required by torx interface).
+            info: Optional factor info (unused, required by torx interface).
+            site_info: Optional site info (unused, required by torx interface).
+            return_aux: If True, returns a tuple of (next_state, auxiliary_data).
+                Required by the torx AbstractReferenceFactor signature.
+                
+        Returns:
+            x_next: The integrated state vector for the next time step. If 
+                return_aux is True, returns (x_next, None).
+        """
         x = inputs["x"]
         dt = inputs["dt"]
         omega_ext = inputs.get("omega_ext", jnp.zeros(self.d_state, dtype=jnp.float32))
@@ -69,42 +90,13 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             state_obs = self.hull.apply_sensory_degradation(state)
             e, _ = self.ebm(state_obs)
             return e
-            
+
         grad_E = jax.grad(energy_fn)(x)
-        
-        # Original matrices
-        Q = self.solenoidal.Q
-        L_orig = jnp.tril(self.dissipative.W)
-        
-        # Masking and Parameterization
-        import logging
-        if not self.use_blanket_topology:
-            Q_masked = Q
-            S = L_orig
-            # logging.info("Blanket topology disabled. Using full dense parameterization for Γ.")
-        else:
-            M = self.hull.get_topology_mask()
-            Q_masked = Q * M
-            
-            # Re-parameterize L by explicit block construction instead of naive dense masking
-            idx_s = self.hull.d_internal
-            idx_e = self.hull.d_internal + self.hull.d_sensory + self.hull.d_active
-            
-            # Explicitly enforce zero in the external-internal block (bottom left)
-            L_ie = jnp.zeros((self.d_state - idx_e, idx_s), dtype=jnp.float32)
-            
-            S = jnp.block([
-                [L_orig[:idx_s, :idx_s], L_orig[:idx_s, idx_s:idx_e], L_orig[:idx_s, idx_e:]],
-                [L_orig[idx_s:idx_e, :idx_s], L_orig[idx_s:idx_e, idx_s:idx_e], L_orig[idx_s:idx_e, idx_e:]],
-                [L_ie, L_orig[idx_e:, idx_s:idx_e], L_orig[idx_e:, idx_e:]]
-            ])
-        
-        # Execute Thermostat with masked matrices
         x_next = self.thermostat(
             x=x,
             grad_E=grad_E,
-            Q=Q_masked,
-            L=S,
+            Q=self.solenoidal.Q,
+            L=self.dissipative.L,
             dt=dt,
             key=key,
             omega_ext=omega_ext,
@@ -113,6 +105,7 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         
         if return_aux:
             return x_next, None
+
         return x_next
 
 
@@ -145,7 +138,6 @@ class MarkovBlanketObserver(eqx.Module):
         epsilon: float = 1e-4,
         use_blanket_topology: bool = True
     ):
-        import logging
         self.hull = MarkovHull(d_internal, d_sensory, d_active, d_external, D_s=D_s)
         d_state = self.hull.d_state
         self.use_blanket_topology = use_blanket_topology
@@ -162,8 +154,8 @@ class MarkovBlanketObserver(eqx.Module):
             depth=ebm_depth,
             key=k1
         )
-        self.solenoidal = SolenoidalFlow(d_state=d_state, key=k2)
-        self.dissipative = DissipativeFriction(d_state=d_state, key=k3)
+        self.solenoidal = SolenoidalFlow(d_state=d_state, key=k2, hull=self.hull if use_blanket_topology else None)
+        self.dissipative = DissipativeFriction(d_state=d_state, key=k3, hull=self.hull if use_blanket_topology else None)
         self.thermostat = Thermostat(temperature=temperature)
         
         masked_factor = MaskedThermoFlowFactor(

@@ -105,3 +105,10 @@ All commit messages must strictly adhere to the following structure:
 
 - **No Magic Numbers**: All machine learning scripts and benchmark runners must NEVER hardcode hyperparameters, seeds, dataset sizes, dimensionalities, or optimization parameters directly in Python code.
 - **Config-Driven Architecture**: Any magic numbers or configurable variables must be extracted and defined in a corresponding configuration file (e.g., YAML), and parsed dynamically in the script. Ensure all experiments are fully reproducible from the configuration file alone.
+
+### Proactive Test Coverage Guardrail
+
+Whenever you author new code, add new logic, or modify existing functionality, you MUST proactively verify if the changes are covered by existing tests. 
+- If the new code is uncovered, you MUST proactively write new unit tests (or update existing ones) alongside the implementation.
+- You must not wait for the user to ask for tests. Consider writing tests an inseparable part of writing the code itself.
+- Ensure that the tests verify both positive (happy path) and negative (defensive guardrails/error handling) boundaries.

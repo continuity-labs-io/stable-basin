@@ -42,7 +42,11 @@ preflight: lint-pytorch
 audit:
 	python tools/multi_agent_auditor.py --mode "repo"
 
-.PHONY: worm-gait-ebm
+.PHONY: worm-gait-ebm coverage
+
+coverage:
+	@echo "Running unit tests with coverage analysis..."
+	pytest --cov=src --cov-report=term-missing tests/
 
 worm-gait-ebm:
 	python -m src.echo.benchmarks.06_worm_gait_aging_ebm --config configs/worm_gait_ebm.yaml
