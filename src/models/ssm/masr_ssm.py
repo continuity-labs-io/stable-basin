@@ -1,4 +1,4 @@
-from jaxtyping import jaxtyped
+from jaxtyping import jaxtyped, Float
 from beartype import beartype
 import math
 import torch
@@ -41,7 +41,7 @@ class MaskAwareSSM(nn.Module):
         return dt_gated, B_gated
 
     @jaxtyped(typechecker=beartype)
-    def forward(self, latent_x: torch.Tensor, latent_gate: torch.Tensor):
+    def forward(self, latent_x: Float[torch.Tensor, "batch seq_len d_model"], latent_gate: Float[torch.Tensor, "batch seq_len d_model"]) -> Float[torch.Tensor, "batch seq_len d_model"]:
         """
         Args:
             latent_x: Tensor of shape [batch, seq_len, d_model] 

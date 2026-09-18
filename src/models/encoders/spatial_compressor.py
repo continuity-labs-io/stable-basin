@@ -1,4 +1,4 @@
-from jaxtyping import jaxtyped
+from jaxtyping import jaxtyped, Float
 from beartype import beartype
 import torch
 import torch.nn as nn
@@ -28,7 +28,7 @@ class SpatialCompressor(nn.Module):
         self.vit.eval()
 
     @jaxtyped(typechecker=beartype)
-    def forward(self, x):
+    def forward(self, x: Float[torch.Tensor, "B T C D H W"]) -> Float[torch.Tensor, "B T 768"]:
         """
         Args:
             x (torch.Tensor): 6D tensor of shape [Batch, Time, Channels, Depth, Height, Width]

@@ -22,7 +22,7 @@ density-sweep:
 		--config configs/baseline_experiments.yaml \
 		--task density_sweep
 
-all-experiments: baseline extrapolation density-sweep loss-ablation
+ssm-experiments: baseline extrapolation density-sweep loss-ablation
 
 .PHONY: clinical-diagnostic
 

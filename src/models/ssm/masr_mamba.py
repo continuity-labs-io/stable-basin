@@ -113,7 +113,7 @@ class PyTorchMambaMASR(nn.Module):
         self.dt_proj.bias.data.uniform_(math.log(0.001), math.log(0.1))
         
     @jaxtyped(typechecker=beartype)
-    def forward(self, x, mask):
+    def forward(self, x: Float[Tensor, "batch seq_len d_model"], mask: Float[Tensor, "batch seq_len d_model"]) -> Float[Tensor, "batch seq_len d_model"]:
         """
         x: (batch_size, seq_len, d_model)
         mask: (batch_size, seq_len, d_model)
@@ -169,7 +169,7 @@ class MaskAwareMamba(nn.Module):
         self.reverse_head = nn.Linear(d_model, input_dim)
 
     @jaxtyped(typechecker=beartype)
-    def forward(self, x, mask=None, return_hidden=False):
+    def forward(self, x: Float[Tensor, "batch seq_len input_dim"], mask: Float[Tensor, "batch seq_len input_dim"] | None = None, return_hidden: bool = False):
         if self.mask_aware:
             if mask is None:
                 mask = torch.isnan(x).float()

@@ -1,4 +1,4 @@
-from jaxtyping import jaxtyped
+from jaxtyping import jaxtyped, Float
 from beartype import beartype
 import torch
 import torch.nn as nn
@@ -19,7 +19,7 @@ class GRUDModel(nn.Module):
         self.gru_cell = nn.GRUCell(d_model, d_model)
         
     @jaxtyped(typechecker=beartype)
-    def forward(self, x: torch.Tensor, delta_t: torch.Tensor):
+    def forward(self, x: Float[torch.Tensor, "batch seq_len d_model"], delta_t: Float[torch.Tensor, "batch seq_len 1"]) -> Float[torch.Tensor, "batch seq_len d_model"]:
         """
         Args:
             x: (B, L, d_model) - the latent features

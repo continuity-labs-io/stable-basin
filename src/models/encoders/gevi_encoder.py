@@ -1,4 +1,4 @@
-from jaxtyping import jaxtyped
+from jaxtyping import jaxtyped, Float
 from beartype import beartype
 import torch
 import torch.nn as nn
@@ -27,7 +27,7 @@ class GEVIEncoder(nn.Module):
         )
 
     @jaxtyped(typechecker=beartype)
-    def forward(self, x):
+    def forward(self, x: Float[torch.Tensor, "batch 1 total_steps"]) -> Float[torch.Tensor, "batch target_time_steps gevi_dim"]:
         """
         Args:
             x: Tensor of shape (Batch, 1, Total_Steps) representing high-frequency GEVI data

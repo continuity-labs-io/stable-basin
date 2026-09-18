@@ -1,4 +1,4 @@
-from jaxtyping import jaxtyped
+from jaxtyping import jaxtyped, Float
 from beartype import beartype
 import torch
 import torch.nn as nn
@@ -31,7 +31,7 @@ class BaselineTransformer(nn.Module):
         )
 
     @jaxtyped(typechecker=beartype)
-    def forward(self, latent_x: torch.Tensor):
+    def forward(self, latent_x: Float[torch.Tensor, "batch seq_len d_model"]) -> Float[torch.Tensor, "batch seq_len d_model"]:
         batch, seq_len, d_model = latent_x.size()
 
         # Add positional embeddings
