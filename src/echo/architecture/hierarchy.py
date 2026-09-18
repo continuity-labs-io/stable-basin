@@ -3,6 +3,7 @@ import jax.numpy as jnp
 import equinox as eqx
 import torx
 import torx.factor
+import logging
 
 from src.echo.architecture.markov_hull import MarkovHull
 from src.echo.primitives.ebm import PrecisionWeightedEBM
@@ -187,6 +188,7 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         if "S_micro" in params:
             S_micro = params["S_micro"]
         else:
+            logging.warning("HierarchicalThermoFlowFactor fallback to slow jnp.linalg.eigh for S_micro")
             evals_u, evecs_u = jnp.linalg.eigh(Gamma_micro_masked + self.epsilon * jnp.eye(self.d_micro))
             evals_u = jnp.maximum(evals_u, 0.0)
             S_micro = evecs_u @ jnp.diag(jnp.sqrt(evals_u))
@@ -194,6 +196,7 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         if "S_macro" in params:
             S_macro = params["S_macro"]
         else:
+            logging.warning("HierarchicalThermoFlowFactor fallback to slow jnp.linalg.eigh for S_macro")
             evals_m, evecs_m = jnp.linalg.eigh(Gamma_macro_masked + self.epsilon * jnp.eye(self.d_macro))
             evals_m = jnp.maximum(evals_m, 0.0)
             S_macro = evecs_m @ jnp.diag(jnp.sqrt(evals_m))
