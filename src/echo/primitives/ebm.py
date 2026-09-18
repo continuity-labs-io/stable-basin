@@ -83,7 +83,7 @@ class PrecisionWeightedEBM(eqx.Module):
         e_mlp = jnp.squeeze(jax.nn.softplus(energy_raw))  # Shape: ()
         
         # Add a global structural prior to guarantee the landscape is a positive-definite basin
-        e_prior = 0.5 * 0.1 * jnp.sum(x ** 2)
+        e_prior = 0.5 * 0.001 * jnp.sum(x ** 2)
         energy = e_prior + e_mlp
         
         # 3. Compute precision matrix

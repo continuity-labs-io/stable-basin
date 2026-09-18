@@ -3,7 +3,7 @@ optimization:
   weight_decay: 0.0
   max_grad_norm: 0.1
   max_epochs: 2000
-  early_stopping_patience: 50
+  early_stopping_patience: 2000
 
 model:
   hidden_dimensions: 128

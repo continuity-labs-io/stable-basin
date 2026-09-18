@@ -93,8 +93,8 @@ def build_graph(ebm_class, key, config):
     return graph, d_micro + macro.hull.d_state
 
 
-def get_macro_states(graph, loader):
-    macro_traj_list = []
+def get_full_states(graph, loader):
+    full_traj_list = []
     for batch in loader:
         s_true = batch['s_true'].numpy()
         x_init = batch['x_init'].numpy()
@@ -103,9 +103,9 @@ def get_macro_states(graph, loader):
             traj = graph.forced_unroll(
                 jax.random.PRNGKey(0), jnp.array(x_init[i]), 0.01, jnp.array(s_true[i])
             )
-            macro_traj = traj[:, graph.d_micro:]
-            macro_traj_list.append(macro_traj)
-    return jnp.concatenate(macro_traj_list, axis=0)
+            full_traj = traj
+            full_traj_list.append(full_traj)
+    return jnp.concatenate(full_traj_list, axis=0)
 
 
 def compute_full_trace(tracker, states, batch_size=1000):
@@ -251,21 +251,21 @@ def main():
     # Core experimental conditions: 
     # - Population Age: Young (1-3 days) vs. Old (9+ days)
     # - EBM Architecture: A. Gaussian (Laplace baseline) vs. B. Precision Weighted (multimodal MLP).
-    macro_states_young_A = get_macro_states(graph_A, eval_young_loader)
-    macro_states_old_A = get_macro_states(graph_A, eval_old_loader)
+    full_states_young_A = get_full_states(graph_A, eval_young_loader)
+    full_states_old_A = get_full_states(graph_A, eval_old_loader)
     
-    macro_states_young_B = get_macro_states(graph_B, eval_young_loader)
-    macro_states_old_B = get_macro_states(graph_B, eval_old_loader)
+    full_states_young_B = get_full_states(graph_B, eval_young_loader)
+    full_states_old_B = get_full_states(graph_B, eval_old_loader)
     
     logger.info("Computing Hessian Traces (Full Evaluation Dataset).")
-    tracker_A = HessianCurvatureTracker(graph_A.flow_factor.macro_ebm)
-    tracker_B = HessianCurvatureTracker(graph_B.flow_factor.macro_ebm)
+    tracker_A = HessianCurvatureTracker(graph_A.ebm)
+    tracker_B = HessianCurvatureTracker(graph_B.ebm)
     
-    trace_young_A = compute_full_trace(tracker_A, macro_states_young_A)
-    trace_old_A = compute_full_trace(tracker_A, macro_states_old_A)
+    trace_young_A = compute_full_trace(tracker_A, full_states_young_A)
+    trace_old_A = compute_full_trace(tracker_A, full_states_old_A)
     
-    trace_young_B = compute_full_trace(tracker_B, macro_states_young_B)
-    trace_old_B = compute_full_trace(tracker_B, macro_states_old_B)
+    trace_young_B = compute_full_trace(tracker_B, full_states_young_B)
+    trace_old_B = compute_full_trace(tracker_B, full_states_old_B)
     
     def compute_metrics(name, t_young, t_old):
         ty = np.nan_to_num(np.array(t_young), nan=1.0)
