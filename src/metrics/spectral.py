@@ -1,9 +1,30 @@
 import torch
-import scipy.signal
-import numpy as np
 import logging
 
 logger = logging.getLogger("DiagnosticLogger")
+
+def _hilbert_transform(x: torch.Tensor, dim: int = 0) -> torch.Tensor:
+    """
+    Computes the analytic signal using the Hilbert transform in native PyTorch.
+    This replicates scipy.signal.hilbert exactly and prevents CPU syncs.
+    """
+    N = x.shape[dim]
+    Xf = torch.fft.fft(x, dim=dim)
+    
+    h = torch.zeros(N, device=x.device, dtype=x.dtype)
+    if N % 2 == 0:
+        h[0] = 1
+        h[N // 2] = 1
+        h[1:N // 2] = 2
+    else:
+        h[0] = 1
+        h[1:(N + 1) // 2] = 2
+        
+    shape = [1] * x.dim()
+    shape[dim] = N
+    h = h.view(shape)
+    
+    return torch.fft.ifft(Xf * h, dim=dim)
 
 class SpectralMetrics:
     def calculate_psd(self, tensor_seq: torch.Tensor, sampling_rate: float):
@@ -52,20 +73,16 @@ class SpectralMetrics:
             seq_a = seq_a[:min_steps, ...]
             seq_b = seq_b[:min_steps, ...]
 
-        device = seq_a.device
-        np_a = seq_a.detach().cpu().numpy()
-        np_b = seq_b.detach().cpu().numpy()
-
-        analytic_a = scipy.signal.hilbert(np_a, axis=time_dim)
-        analytic_b = scipy.signal.hilbert(np_b, axis=time_dim)
+        analytic_a = _hilbert_transform(seq_a, dim=time_dim)
+        analytic_b = _hilbert_transform(seq_b, dim=time_dim)
 
         # Add a microscopic epsilon to prevent angle singularities on zero
         # magnitude
         analytic_a += 1e-8
         analytic_b += 1e-8
 
-        phase_a = torch.tensor(np.angle(analytic_a), device=device)
-        phase_b = torch.tensor(np.angle(analytic_b), device=device)
+        phase_a = torch.angle(analytic_a)
+        phase_b = torch.angle(analytic_b)
 
         phase_diff = phase_a - phase_b
         complex_phase_diff = torch.exp(1j * phase_diff)
@@ -100,22 +117,18 @@ class SpectralMetrics:
         # Assert identical temporal dimensions after trimming
         assert slow_seq.shape[time_dim] == fast_seq.shape[time_dim], "Temporal dimensions must be identical for PAC computation."
 
-        device = slow_seq.device
-        np_slow = slow_seq.detach().cpu().numpy()
-        np_fast = fast_seq.detach().cpu().numpy()
-
         # Extract the analytic signal for both sequences using the Hilbert
-        # transform
-        analytic_slow = scipy.signal.hilbert(np_slow, axis=time_dim)
-        analytic_fast = scipy.signal.hilbert(np_fast, axis=time_dim)
+        # transform natively in PyTorch
+        analytic_slow = _hilbert_transform(slow_seq, dim=time_dim)
+        analytic_fast = _hilbert_transform(fast_seq, dim=time_dim)
 
         # The instantaneous phase of the slow macroscopic variable (the top-down
         # prior)
-        theta_slow = torch.tensor(np.angle(analytic_slow), device=device)
+        theta_slow = torch.angle(analytic_slow)
         
         # The instantaneous amplitude envelope of the fast microscopic variable
         # (the enslaved state)
-        A_fast = torch.tensor(np.abs(analytic_fast), device=device)
+        A_fast = torch.abs(analytic_fast)
 
         # Compute the complex composite signal: z(t) = A_fast(t) * exp(i *
         # theta_slow(t))
