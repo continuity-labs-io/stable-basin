@@ -177,6 +177,85 @@ def plot_ablation_results(
     )
 
 
+def compute_metrics(name, t_young, t_old):
+    ty = np.nan_to_num(np.array(t_young), nan=1.0)
+    to = np.nan_to_num(np.array(t_old), nan=1.0)
+    ks_stat, ks_pval = ks_2samp(ty, to)
+    wd = wasserstein_distance(ty, to)
+    d = pg.compute_effsize(ty, to, eftype='cohen')
+    metrics = {
+        "mean_young": float(np.mean(ty)),
+        "std_young": float(np.std(ty)),
+        "mean_old": float(np.mean(to)),
+        "std_old": float(np.std(to)),
+        "ks_statistic": float(ks_stat),
+        "ks_p_value": float(ks_pval),
+        "wasserstein_distance": float(wd),
+        "cohens_d": float(d)
+    }
+    logger.info(f"--- Metrics for {name} ---")
+    logger.info(f"Young: mean={metrics['mean_young']:.4f}, std={metrics['std_young']:.4f}")
+    logger.info(f"Old:   mean={metrics['mean_old']:.4f}, std={metrics['std_old']:.4f}")
+    logger.info(f"KS Stat: {metrics['ks_statistic']:.4f} (p={metrics['ks_p_value']:.4e})")
+    logger.info(f"Wasserstein Dist: {metrics['wasserstein_distance']:.4f}")
+    logger.info(f"Cohen's d: {metrics['cohens_d']:.4f}")
+    return metrics
+
+def run_worm_gait_experiment(
+    config, 
+    ebm_class, 
+    key, 
+    train_young_loader, 
+    eval_young_loader, 
+    eval_old_loader,
+    config_path
+):
+    """
+    Executes a complete training and evaluation pipeline for a given Energy-Based Model class 
+    on the worm gait aging dataset.
+
+    Args:
+        config (dict): The configuration dictionary containing optimization and experiment settings.
+        ebm_class (type): The class of the Energy-Based Model to instantiate.
+        key (jax.Array): A JAX PRNG key for random initialization.
+        train_young_loader (DataLoader): DataLoader for the training set (Young population).
+        eval_young_loader (DataLoader): DataLoader for evaluating the Young population.
+        eval_old_loader (DataLoader): DataLoader for evaluating the Old population.
+        config_path (str): The file path to the YAML configuration to be read by the EchoRunner.
+
+    Returns:
+        tuple: A 4-tuple containing:
+            - metrics (dict): A dictionary of statistics including Cohen's d and Wasserstein distance.
+            - trace_young (jnp.ndarray): The calculated Hessian traces for the Young population.
+            - trace_old (jnp.ndarray): The calculated Hessian traces for the Old population.
+            - graph (PredictiveCodingGraph): The fully trained predictive coding graph.
+    """
+    opt_cfg = config.get('optimization', {})
+    lr = opt_cfg.get('learning_rate', 0.0001)
+    max_grad_norm = opt_cfg.get('max_grad_norm', 0.1)
+    dt = config.get('experiment', {}).get('dt', 0.01)
+    
+    logger.info(f"Training Run: {ebm_class.__name__}")
+    graph, _ = build_graph(ebm_class, key, config)
+    trainer = EchoTrainer(graph, learning_rate=lr, max_grad_norm=max_grad_norm)
+    
+    runner = EchoRunner(config_path)
+    runner.setup(trainer)
+    graph = runner.run(graph, train_young_loader, train_young_loader, key, dt=dt)
+    
+    logger.info(f"Evaluating {ebm_class.__name__} on biological population.")
+    full_states_young = get_full_states(graph, eval_young_loader)
+    full_states_old = get_full_states(graph, eval_old_loader)
+    
+    logger.info(f"Computing Hessian Traces for {ebm_class.__name__}.")
+    tracker = HessianCurvatureTracker(graph.ebm)
+    trace_young = compute_full_trace(tracker, full_states_young)
+    trace_old = compute_full_trace(tracker, full_states_old)
+    
+    metrics = compute_metrics(ebm_class.__name__, trace_young, trace_old)
+    return metrics, trace_young, trace_old, graph
+
+
 def main():
     parser = argparse.ArgumentParser(description="Worm Gait Aging EBM Benchmark")
     parser.add_argument("--config", type=str, default="configs/worm_gait_ebm.yaml", help="Path to the YAML configuration file.")
@@ -219,26 +298,15 @@ def main():
     eval_young_loader = DataLoader(eval_young_dataset, batch_size=batch_size, shuffle=False)
     eval_old_loader = DataLoader(eval_old_dataset, batch_size=batch_size, shuffle=False)
     
-    opt_cfg = config.get('optimization', {})
-    lr = opt_cfg.get('learning_rate', 0.0001)
-    max_grad_norm = opt_cfg.get('max_grad_norm', 0.1)
-    dt = config.get('experiment', {}).get('dt', 0.01)
-    
-    logger.info("Training Run A: GaussianEBM (The Laplace Baseline)")
     key, kA = jax.random.split(key)
-    graph_A, _ = build_graph(GaussianEBM, kA, config)
-    trainer_A = EchoTrainer(graph_A, learning_rate=lr, max_grad_norm=max_grad_norm)
-    runner_A = EchoRunner(args.config)
-    runner_A.setup(trainer_A)
-    graph_A = runner_A.run(graph_A, train_young_loader, train_young_loader, key, dt=dt)
+    metrics_A, trace_young_A, trace_old_A, graph_A = run_worm_gait_experiment(
+        config, GaussianEBM, kA, train_young_loader, eval_young_loader, eval_old_loader, args.config
+    )
     
-    logger.info("Training Run B: PrecisionWeightedEBM (Multimodal MLP)")
     key, kB = jax.random.split(key)
-    graph_B, _ = build_graph(PrecisionWeightedEBM, kB, config)
-    trainer_B = EchoTrainer(graph_B, learning_rate=lr, max_grad_norm=max_grad_norm)
-    runner_B = EchoRunner(args.config)
-    runner_B.setup(trainer_B)
-    graph_B = runner_B.run(graph_B, train_young_loader, train_young_loader, key, dt=dt)
+    metrics_B, trace_young_B, trace_old_B, graph_B = run_worm_gait_experiment(
+        config, PrecisionWeightedEBM, kB, train_young_loader, eval_young_loader, eval_old_loader, args.config
+    )
     
     logger.info("Serializing trained Young Worm engine to disk.")
     os.makedirs("output/echo/benchmarks", exist_ok=True)
@@ -246,55 +314,6 @@ def main():
         "output/echo/benchmarks/06_worm_gait_decline_trained_engine.eqx", graph_B
     )
     
-    logger.info("Evaluating frozen EBM models on Day 9+ biological population.")
-
-    # Core experimental conditions: 
-    # - Population Age: Young (1-3 days) vs. Old (9+ days)
-    # - EBM Architecture: A. Gaussian (Laplace baseline) vs. B. Precision Weighted (multimodal MLP).
-    full_states_young_A = get_full_states(graph_A, eval_young_loader)
-    full_states_old_A = get_full_states(graph_A, eval_old_loader)
-    
-    full_states_young_B = get_full_states(graph_B, eval_young_loader)
-    full_states_old_B = get_full_states(graph_B, eval_old_loader)
-    
-    logger.info("Computing Hessian Traces (Full Evaluation Dataset).")
-    tracker_A = HessianCurvatureTracker(graph_A.ebm)
-    tracker_B = HessianCurvatureTracker(graph_B.ebm)
-    
-    trace_young_A = compute_full_trace(tracker_A, full_states_young_A)
-    trace_old_A = compute_full_trace(tracker_A, full_states_old_A)
-    
-    trace_young_B = compute_full_trace(tracker_B, full_states_young_B)
-    trace_old_B = compute_full_trace(tracker_B, full_states_old_B)
-    
-    def compute_metrics(name, t_young, t_old):
-        ty = np.nan_to_num(np.array(t_young), nan=1.0)
-        to = np.nan_to_num(np.array(t_old), nan=1.0)
-        ks_stat, ks_pval = ks_2samp(ty, to)
-        wd = wasserstein_distance(ty, to)
-        d = pg.compute_effsize(ty, to, eftype='cohen')
-        metrics = {
-            "mean_young": float(np.mean(ty)),
-            "std_young": float(np.std(ty)),
-            "mean_old": float(np.mean(to)),
-            "std_old": float(np.std(to)),
-            "ks_statistic": float(ks_stat),
-            "ks_p_value": float(ks_pval),
-            "wasserstein_distance": float(wd),
-            "cohens_d": float(d)
-        }
-        logger.info(f"--- Metrics for {name} ---")
-        logger.info(f"Young: mean={metrics['mean_young']:.4f}, std={metrics['std_young']:.4f}")
-        logger.info(f"Old:   mean={metrics['mean_old']:.4f}, std={metrics['std_old']:.4f}")
-        logger.info(f"KS Stat: {metrics['ks_statistic']:.4f} (p={metrics['ks_p_value']:.4e})")
-        logger.info(f"Wasserstein Dist: {metrics['wasserstein_distance']:.4f}")
-        logger.info(f"Cohen's d: {metrics['cohens_d']:.4f}")
-        return metrics
-
-    logger.info("Calculating Full-Series Thermodynamic Statistics.")
-    metrics_A = compute_metrics("Run A (GaussianEBM)", trace_young_A, trace_old_A)
-    metrics_B = compute_metrics("Run B (PrecisionWeightedEBM)", trace_young_B, trace_old_B)
-
     all_metrics = {
         "GaussianEBM": metrics_A,
         "PrecisionWeightedEBM": metrics_B

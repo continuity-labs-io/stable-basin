@@ -1,44 +1,38 @@
-optimization:
-  learning_rate: 0.0001
-  weight_decay: 0.0
-  max_grad_norm: 0.1
-  max_epochs: 2000
-  early_stopping_patience: 2000
-
+dataset:
+  batch_size: 2
+  seq_len: 100
+experiment:
+  dt: 0.01
+  seed: 42
+graph:
+  n_steps: 1
+logging:
+  wandb_project: worm_gait_ebm
 model:
   hidden_dimensions: 128
   use_blanket_topology: false
-
-logging:
-  wandb_project: "worm_gait_ebm"
-
 observer:
-  micro:
-    d_internal: 8
-    d_sensory: 6
-    d_active: 8
-    d_external: 8
-    ebm_depth: 2
-    n_steps: 1
-    temperature: 1.0
-    ebm_hidden_size: 128
   macro:
-    d_internal: 4
-    d_sensory: 4
     d_active: 4
     d_external: 4
-    ebm_hidden_size: 16
-    ebm_depth: 2
+    d_internal: 4
+    d_sensory: 4
+    ebm_depth: 3
+    ebm_hidden_size: 64
     n_steps: 1
     temperature: 1.0
-
-graph:
-  n_steps: 1
-
-dataset:
-  seq_len: 100
-  batch_size: 2
-
-experiment:
-  seed: 42
-  dt: 0.01
+  micro:
+    d_active: 8
+    d_external: 8
+    d_internal: 8
+    d_sensory: 6
+    ebm_depth: 3
+    ebm_hidden_size: 256
+    n_steps: 1
+    temperature: 1.0
+optimization:
+  early_stopping_patience: 4000
+  learning_rate: 5.0e-05
+  max_epochs: 4000
+  max_grad_norm: 0.1
+  weight_decay: 0.0

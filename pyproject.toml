@@ -17,6 +17,7 @@ dependencies = [
     "pytest-cov",
     "jaxtyping",
     "beartype",
+    "optuna",
 ]
 
 [tool.ruff]
