@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import math
 import torch
 import torch.nn as nn
@@ -98,6 +100,7 @@ class ActiveInferenceAgent(nn.Module):
         div_y = self._apply_conv(fy, self.grad_y_kernel)
         return div_x + div_y
 
+    @jaxtyped(typechecker=beartype)
     def forward(self) -> tuple[Float[torch.Tensor, "batch channels height width"], Float[torch.Tensor, "batch channels height width"]]:
         """Executes one continuous-time update step."""
         # 1. Passive Diffusion

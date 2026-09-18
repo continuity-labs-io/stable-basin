@@ -112,6 +112,7 @@ class PyTorchMambaMASR(nn.Module):
         nn.init.uniform_(self.dt_proj.weight, -1e-4, 1e-4)
         self.dt_proj.bias.data.uniform_(math.log(0.001), math.log(0.1))
         
+    @jaxtyped(typechecker=beartype)
     def forward(self, x, mask):
         """
         x: (batch_size, seq_len, d_model)
@@ -167,6 +168,7 @@ class MaskAwareMamba(nn.Module):
         # Reverse head for thermodynamic loss (reconstructs x_t)
         self.reverse_head = nn.Linear(d_model, input_dim)
 
+    @jaxtyped(typechecker=beartype)
     def forward(self, x, mask=None, return_hidden=False):
         if self.mask_aware:
             if mask is None:

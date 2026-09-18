@@ -6,6 +6,8 @@ It shows how the model handles sparse, intermittent multimodal sensor data by dy
 gating the continuous state transitions based on sensor availability masks.
 """
 
+from jaxtyping import jaxtyped
+from beartype import beartype
 import math
 import torch
 import torch.nn as nn
@@ -30,6 +32,7 @@ class MaskAwareMambaCell(nn.Module):
         # Maps the 5D biological mask to the 256D latent space gating vector
         self.mask_router = nn.Linear(n_modalities, d_model)
 
+    @jaxtyped(typechecker=beartype)
     def forward(self, x_t, mask_t, h_prev):
         A = -torch.exp(self.A_log)
         B = self.B_proj(x_t)

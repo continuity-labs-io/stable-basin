@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import torch
 import torch.nn as nn
 
@@ -28,6 +30,7 @@ class BaselineTransformer(nn.Module):
             enable_nested_tensor=False
         )
 
+    @jaxtyped(typechecker=beartype)
     def forward(self, latent_x: torch.Tensor):
         batch, seq_len, d_model = latent_x.size()
 

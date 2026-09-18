@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
@@ -15,6 +17,7 @@ class MorphologicalVectorField(nn.Module):
         super().__init__()
         self.net = nn.Sequential(nn.Linear(dim + 1, 128), nn.Tanh(), nn.Linear(128, dim))
 
+    @jaxtyped(typechecker=beartype)
     def forward(self, t, z):
         # t is a scalar tensor of time, z is the state
         # expand t to append to z

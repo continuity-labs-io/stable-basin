@@ -1,3 +1,6 @@
+from jaxtyping import PRNGKeyArray
+from jaxtyping import jaxtyped
+from beartype import beartype
 import jax
 import jax.numpy as jnp
 import equinox as eqx
@@ -70,6 +73,7 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             "Gamma": self.dissipative.Gamma
         }
 
+    @jaxtyped(typechecker=beartype)
     def sample(self, key, inputs, params, info=None, site_info=None, return_aux=False):
         """
         Executes a single discrete integration step of the physical thermodynamic factor.
@@ -150,7 +154,7 @@ class MarkovBlanketObserver(eqx.Module):
         ebm_depth: int,
         n_steps: int,
         temperature: float,
-        key: jax.random.PRNGKey,
+        key: PRNGKeyArray,
         D_s: jax.Array | None = None,
         epsilon: float = 1e-4,
         use_blanket_topology: bool = True
@@ -197,14 +201,15 @@ class MarkovBlanketObserver(eqx.Module):
             injection_start_idx=self.hull.d_internal
         )
 
-    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float) -> jax.Array:
+    @jaxtyped(typechecker=beartype)
+    def __call__(self, key: PRNGKeyArray, x_init: jax.Array, dt: float) -> jax.Array:
         """
         Executes the unrolled simulation over n_steps.
         """
         factor_params = self.thermalizer.graph.sites[0].factor.base.precompute()
         return self.thermalizer(key, x_init, dt, factor_params=factor_params)
 
-    def forced_unroll(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
+    def forced_unroll(self, key: PRNGKeyArray, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
         """
         Executes the unrolled simulation over an external sequence.
         """

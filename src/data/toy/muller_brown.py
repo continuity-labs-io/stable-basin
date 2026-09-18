@@ -1,3 +1,4 @@
+from jaxtyping import PRNGKeyArray
 import jax
 import jax.numpy as jnp
 from functools import partial
@@ -27,7 +28,7 @@ def muller_brown_potential(state: jax.Array) -> jax.Array:
     return V
 
 @partial(jax.jit, static_argnums=(2,))
-def generate_trajectory(key: jax.random.PRNGKey, state_init: jax.Array, n_steps: int, dt: float, kT: float) -> jax.Array:
+def generate_trajectory(key: PRNGKeyArray, state_init: jax.Array, n_steps: int, dt: float, kT: float) -> jax.Array:
     """
     Unrolls overdamped Langevin dynamics on the Müller-Brown potential using Euler-Maruyama.
     """

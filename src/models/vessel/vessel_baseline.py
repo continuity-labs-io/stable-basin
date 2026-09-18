@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import math
 import torch
 import torch.nn as nn
@@ -98,6 +100,7 @@ class VesselBaseline(nn.Module):
         padded = F.pad(state, (1, 1, 1, 1), mode='replicate')
         return F.conv2d(padded, self.laplacian_kernel)
 
+    @jaxtyped(typechecker=beartype)
     def forward(self) -> tuple[Float[torch.Tensor, "batch channels height width"], Float[torch.Tensor, "batch channels height width"], Float[torch.Tensor, ""]]:
         """
         Executes one continuous-time update step of the FitzHugh-Nagumo RD system.

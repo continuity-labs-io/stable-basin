@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import torch
 import torch.nn as nn
 from src.models.encoders.orthogonal_modality_encoder import OrthogonalModalityEncoder
@@ -85,6 +87,7 @@ class SensorFusionPredictor(nn.Module):
 
         self.readout = nn.Linear(d_model, out_dim)
 
+    @jaxtyped(typechecker=beartype)
     def forward(self, x_raw: torch.Tensor, mask: Optional[torch.Tensor] = None):
         reconstructed_t = None
         if self.ssm_type == "forward_fill_ssm":

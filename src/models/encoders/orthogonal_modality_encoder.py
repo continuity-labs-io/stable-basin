@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import torch
 import torch.nn as nn
 
@@ -56,6 +58,7 @@ class OrthogonalModalityEncoder(nn.Module):
         self.W_gate.weight.requires_grad = False
         self.W_gate.bias.requires_grad = False
 
+    @jaxtyped(typechecker=beartype)
     def forward(self, x_raw: torch.Tensor, mask: torch.Tensor):
         latent_x = self.W_proj(x_raw)
         latent_gate = torch.sigmoid(self.W_gate(mask))

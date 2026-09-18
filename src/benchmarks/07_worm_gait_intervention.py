@@ -1,3 +1,4 @@
+from jaxtyping import PRNGKeyArray
 import os
 import logging
 import argparse
@@ -28,7 +29,7 @@ def simulate_sde(
     lambda_gain: float, 
     N: int, 
     dt: float, 
-    key: jax.random.PRNGKey
+    key: PRNGKeyArray
 ) -> jax.Array:
     """
     Simulates the core Euler-Maruyama SDE rollout with precision injection.

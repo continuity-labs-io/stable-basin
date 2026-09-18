@@ -73,6 +73,8 @@ ALL new PyTorch and JAX mathematical functions (including `__call__`, `forward`,
 1. Use `jaxtyping` type hints (e.g., `Float[Tensor, "batch seq d_model"]` or `Float[Array, "d_state"]`) in their method signatures.
 2. Decorate these methods with `@jaxtyped(typechecker=beartype)` and properly import `from jaxtyping import jaxtyped` and `from beartype import beartype`.
 3. Strictly use `einops` for complex reshapes/rearranges instead of native `.view()` or `.reshape()`.
+4. **PRNGKeys**: Always use `PRNGKeyArray` from `jaxtyping` as the type hint for JAX random keys. NEVER use `jax.random.PRNGKey` (it is a function, not a type, and will crash beartype).
+5. **Torx Factors**: When annotating `sample` methods for Torx factors, optional dictionaries (like `params`, `info`, `site_info`) must be explicitly typed as `dict | None = None` because Torx often passes `None` at runtime.
 
 ### Proper Package Imports
 

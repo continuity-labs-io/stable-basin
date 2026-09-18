@@ -26,6 +26,8 @@ Dynamics & Diagnosis:
   to bind them to the blanket, they continue to drift irreversibly. Diagnosis: Irreversible Collapse.
 """
 
+from jaxtyping import jaxtyped
+from beartype import beartype
 import os
 import jax
 import jax.numpy as jnp
@@ -41,6 +43,7 @@ class QuadraticEBM(eqx.Module):
     d_state: int
     def __init__(self, d_state):
         self.d_state = d_state
+    @jaxtyped(typechecker=beartype)
     def __call__(self, x):
         return 0.5 * jnp.sum(x**2), jnp.eye(self.d_state)
 

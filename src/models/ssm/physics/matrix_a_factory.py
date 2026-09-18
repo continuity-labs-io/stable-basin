@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import math
 import torch
 import torch.nn as nn
@@ -62,6 +64,7 @@ class LogSpacedAInit(nn.Module):
         # A_log initialized as a trainable parameter
         self.A_log = nn.Parameter(expanded_log_f_i)
 
+    @jaxtyped(typechecker=beartype)
     def forward(self) -> torch.Tensor:
         """
         Returns the stable Matrix A.
@@ -80,6 +83,7 @@ class RandomAInit(nn.Module):
         # A_log initialized uniformly
         self.A_log = nn.Parameter(torch.log(torch.clamp(torch.rand(shape), min=1e-4) * a_scale + a_shift))
 
+    @jaxtyped(typechecker=beartype)
     def forward(self) -> torch.Tensor:
         return -torch.exp(self.A_log)
 

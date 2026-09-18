@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import torch
 import torch.nn as nn
 from torchdiffeq import odeint_adjoint as odeint
@@ -11,6 +13,7 @@ class ODEFunc(nn.Module):
             nn.Linear(d_model, d_model)
         )
         
+    @jaxtyped(typechecker=beartype)
     def forward(self, t, h):
         return self.net(h)
 
@@ -30,6 +33,7 @@ class ODERNNModel(nn.Module):
         self.ode_func = ODEFunc(d_model)
         self.gru_cell = nn.GRUCell(d_model, d_model)
         
+    @jaxtyped(typechecker=beartype)
     def forward(self, x: torch.Tensor, delta_t: torch.Tensor):
         """
         Args:

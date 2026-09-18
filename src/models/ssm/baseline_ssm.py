@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import math
 import torch
 import torch.nn as nn
@@ -27,6 +29,7 @@ class BaselineSSM(nn.Module):
         
         self.dt_proj.bias.data.uniform_(math.log(0.001), math.log(0.1))
 
+    @jaxtyped(typechecker=beartype)
     def forward(self, latent_x: torch.Tensor):
         """
         Args:

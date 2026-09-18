@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import torch
 import torch.nn as nn
 from src.config import settings
@@ -24,6 +26,7 @@ class GEVIEncoder(nn.Module):
             stride=self.compression_ratio,
         )
 
+    @jaxtyped(typechecker=beartype)
     def forward(self, x):
         """
         Args:

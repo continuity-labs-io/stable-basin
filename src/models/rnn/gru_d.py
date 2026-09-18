@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import torch
 import torch.nn as nn
 
@@ -16,6 +18,7 @@ class GRUDModel(nn.Module):
         # Standard GRUCell
         self.gru_cell = nn.GRUCell(d_model, d_model)
         
+    @jaxtyped(typechecker=beartype)
     def forward(self, x: torch.Tensor, delta_t: torch.Tensor):
         """
         Args:

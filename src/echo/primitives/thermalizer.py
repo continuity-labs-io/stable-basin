@@ -1,3 +1,6 @@
+from jaxtyping import PRNGKeyArray
+from jaxtyping import jaxtyped
+from beartype import beartype
 import jax
 import jax.numpy as jnp
 import equinox as eqx
@@ -58,27 +61,28 @@ class ThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         }
         self.output_spec = jax.ShapeDtypeStruct((d_state,), jnp.float32)
 
-    def init_params(self, key: jax.random.PRNGKey) -> dict:
+    def init_params(self, key: PRNGKeyArray) -> dict:
         """
         Initializes the Torx factor parameters. Since state is tracked via 
         Equinox modules, this returns an empty dictionary.
         """
         return {}
 
+    @jaxtyped(typechecker=beartype)
     def sample(
         self,
-        key: jax.random.PRNGKey,
+        key: PRNGKeyArray,
         inputs: dict,
-        params: dict,
-        info: dict = None,
-        site_info: dict = None,
+        params: dict | None = None,
+        info: dict | None = None,
+        site_info: dict | None = None,
         return_aux: bool = False
     ):
         """
         Evaluates the SDE using Euler-Maruyama via the underlying physics modules.
         
         Args:
-            key: PRNGKey for generating stochastic noise.
+            key: PRNGKeyArray for generating stochastic noise.
             inputs: Dictionary containing 'x' and 'dt'.
             params: Dictionary of parameters (unused as Equinox handles state).
             info: Optional auxiliary info.
@@ -170,7 +174,8 @@ class TorxThermalizer(eqx.Module):
         )
         
     @eqx.filter_jit
-    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, factor_params: dict | None = None) -> jax.Array:
+    @jaxtyped(typechecker=beartype)
+    def __call__(self, key: PRNGKeyArray, x_init: jax.Array, dt: float, factor_params: dict | None = None) -> jax.Array:
         """
         Executes the unrolled simulation.
         """
@@ -198,7 +203,8 @@ class ForcedTorxThermalizer(eqx.Module):
         self.injection_start_idx = injection_start_idx
 
     @eqx.filter_jit
-    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None, factor_params: dict | None = None) -> jax.Array:
+    @jaxtyped(typechecker=beartype)
+    def __call__(self, key: PRNGKeyArray, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None, factor_params: dict | None = None) -> jax.Array:
         """
         Executes the unrolled simulation with external forcing and closed-loop control.
         """

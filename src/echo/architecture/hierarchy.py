@@ -1,3 +1,6 @@
+from jaxtyping import PRNGKeyArray
+from jaxtyping import jaxtyped
+from beartype import beartype
 import jax
 import jax.numpy as jnp
 import equinox as eqx
@@ -157,6 +160,7 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         F = E_micro + E_macro + penalty
         return F
 
+    @jaxtyped(typechecker=beartype)
     def sample(self, key, inputs, params, info=None, site_info=None, return_aux=False):
         x = inputs["x"]
         dt = inputs["dt"]
@@ -258,6 +262,7 @@ class PredictiveCodingGraph(eqx.Module):
             flow_factor: HierarchicalThermoFlowFactor
             d_micro: int
             
+            @jaxtyped(typechecker=beartype)
             def __call__(self_, x):
                 x_micro = x[:self_.d_micro]
                 x_macro = x[self_.d_micro:]
@@ -266,7 +271,7 @@ class PredictiveCodingGraph(eqx.Module):
                 
         return JointEBM(flow_factor=self.flow_factor, d_micro=self.d_micro)
         
-    def __init__(self, micro_observer: MarkovBlanketObserver, macro_observer: MarkovBlanketObserver, n_steps: int, key: jax.random.PRNGKey):
+    def __init__(self, micro_observer: MarkovBlanketObserver, macro_observer: MarkovBlanketObserver, n_steps: int, key: PRNGKeyArray):
         # We need a hull that represents the concatenated state so apply_sensory_degradation works safely.
         # But EchoRunner's validation also uses model.hull to extract sensory dimensions.
         # We will create a mock hull for the whole graph.
@@ -312,14 +317,15 @@ class PredictiveCodingGraph(eqx.Module):
             injection_start_idx=micro_observer.hull.d_internal
         )
         
-    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float) -> jax.Array:
+    @jaxtyped(typechecker=beartype)
+    def __call__(self, key: PRNGKeyArray, x_init: jax.Array, dt: float) -> jax.Array:
         """
         Executes the unrolled joint simulation over n_steps.
         """
         factor_params = self.thermalizer.graph.sites[0].factor.base.precompute()
         return self.thermalizer(key, x_init, dt, factor_params=factor_params)
 
-    def forced_unroll(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
+    def forced_unroll(self, key: PRNGKeyArray, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
         """
         Executes the unrolled joint simulation over an external sequence.
         """

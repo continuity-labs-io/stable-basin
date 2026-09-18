@@ -35,7 +35,7 @@ class PrecisionWeightedEBM(eqx.Module):
             d_state: Dimensionality of the input state.
             hidden_size: Number of hidden units in the MLP layers.
             depth: Number of hidden layers in the MLP backbone.
-            key: PRNGKey for initialization.
+            key: PRNGKeyArray for initialization.
             epsilon: Diagonal jitter for ensuring the precision matrix is strictly SPD.
         """
         self.d_state = d_state

@@ -5,6 +5,8 @@ Demonstrates extracting a slow, stable macroscopic order parameter from chaotic
 micro-states using a Torx probabilistic Directed Factor Graph (DFG).
 """
 
+from jaxtyping import jaxtyped
+from beartype import beartype
 import os
 os.environ["JAX_PLATFORMS"] = "cpu"
 
@@ -48,6 +50,7 @@ class MacroObserverFactor(AbstractReferenceFactor):
         self.noise_scale = 0.01
         self.alpha = 0.05
 
+    @jaxtyped(typechecker=beartype)
     def sample(self, key, inputs, params, info=None, site_info=None, return_aux=False):
         micro_seq = inputs["micro_state"]
         prev_macro_full = inputs["prev_macro_state"]

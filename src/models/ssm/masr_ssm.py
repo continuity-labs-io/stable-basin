@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import math
 import torch
 import torch.nn as nn
@@ -38,6 +40,7 @@ class MaskAwareSSM(nn.Module):
         B_gated = B_base * g_t
         return dt_gated, B_gated
 
+    @jaxtyped(typechecker=beartype)
     def forward(self, latent_x: torch.Tensor, latent_gate: torch.Tensor):
         """
         Args:

@@ -6,6 +6,8 @@ top-down precision to thermodynamically enslave fast, microscopic variables,
 drastically reducing their entropy/variance via Free Energy minimization.
 """
 
+from jaxtyping import jaxtyped
+from beartype import beartype
 import os
 os.environ["JAX_PLATFORMS"] = "cpu"
 
@@ -67,6 +69,7 @@ class HierarchicalEnslavementFactor(AbstractReferenceFactor):
         
         return E_local + E_prior
 
+    @jaxtyped(typechecker=beartype)
     def sample(self, key, inputs, params, info=None, site_info=None, return_aux=False):
         state = inputs["state"]
         dt = inputs["dt"]

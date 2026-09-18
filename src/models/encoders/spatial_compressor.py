@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -25,6 +27,7 @@ class SpatialCompressor(nn.Module):
 
         self.vit.eval()
 
+    @jaxtyped(typechecker=beartype)
     def forward(self, x):
         """
         Args:

@@ -7,6 +7,8 @@ We embed this factor into a DFG, sample from it, and train it using JAX and Opta
 to learn a non-linear biological state transition.
 """
 
+from jaxtyping import jaxtyped
+from beartype import beartype
 import os
 os.environ["JAX_PLATFORMS"] = "cpu"
 
@@ -64,6 +66,7 @@ class NeuralTransitionFactor(AbstractReferenceFactor):
             key=key
         )
 
+    @jaxtyped(typechecker=beartype)
     def sample(self, key, inputs, params, info=None, site_info=None, return_aux=False):
         """
         The stochastic forward pass.

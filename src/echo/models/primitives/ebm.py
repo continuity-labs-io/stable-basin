@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import logging
 import jax
 import jax.numpy as jnp
@@ -27,6 +29,7 @@ class GaussianEBM(eqx.Module):
         self.mu = jax.random.normal(k1, (dim,))
         self.L = jax.random.normal(k2, (dim, dim)) * 0.1 + jnp.eye(dim)
 
+    @jaxtyped(typechecker=beartype)
     def __call__(self, x: Float[Array, "dim"]) -> Float[Array, ""]:
         """
         Computes the energy of the given state vector.
@@ -65,6 +68,7 @@ class PrecisionWeightedEBM(eqx.Module):
         self.layer1 = eqx.nn.Linear(dim, hidden_dim, key=k1)
         self.layer2 = eqx.nn.Linear(hidden_dim, 1, key=k2)
 
+    @jaxtyped(typechecker=beartype)
     def __call__(self, x: Float[Array, "dim"]) -> Float[Array, ""]:
         """
         Computes the energy of the given state vector.

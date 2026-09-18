@@ -1,3 +1,4 @@
+from jaxtyping import PRNGKeyArray
 import jax
 import jax.numpy as jnp
 import equinox as eqx
@@ -18,7 +19,7 @@ from src.harness.pytorch_jax_bridge import torch_to_jax
 logger = logging.getLogger(__name__)
 
 @eqx.filter_jit
-def compute_validation_loss(model: eqx.Module, s_true_batch: jax.Array, x_init_batch: jax.Array, key: jax.random.PRNGKey, dt: float) -> jax.Array:
+def compute_validation_loss(model: eqx.Module, s_true_batch: jax.Array, x_init_batch: jax.Array, key: PRNGKeyArray, dt: float) -> jax.Array:
     """
     Computes teacher-forced validation MSE loss.
     """
@@ -94,7 +95,7 @@ class EchoRunner:
             self.wandb_run = wandb.init(project=wandb_project, config=self.config)
             logger.info(f"Initialized W&B project: {wandb_project}")
 
-    def train_epoch(self, model: eqx.Module, train_loader, key: jax.random.PRNGKey, dt: float):
+    def train_epoch(self, model: eqx.Module, train_loader, key: PRNGKeyArray, dt: float):
         """
         Executes a single training epoch.
         """
@@ -119,7 +120,7 @@ class EchoRunner:
                 
         return model, sum(epoch_losses) / len(epoch_losses)
 
-    def validate(self, model: eqx.Module, val_loader, key: jax.random.PRNGKey, dt: float):
+    def validate(self, model: eqx.Module, val_loader, key: PRNGKeyArray, dt: float):
         """
         Executes a validation pass, calculating standard MSE loss and Hessian trace curvature.
         """
@@ -150,7 +151,7 @@ class EchoRunner:
         
         return val_loss_scalar, trace_scalar
         
-    def run(self, model: eqx.Module, train_loader, val_loader, key: jax.random.PRNGKey, dt: float):
+    def run(self, model: eqx.Module, train_loader, val_loader, key: PRNGKeyArray, dt: float):
         """
         Executes the full training loop over multiple epochs based on configuration.
         """

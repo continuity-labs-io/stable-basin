@@ -1,3 +1,4 @@
+from jaxtyping import PRNGKeyArray
 import jax
 import jax.numpy as jnp
 import equinox as eqx
@@ -28,7 +29,7 @@ class EchoTrainer(eqx.Module):
         logger.debug("Initialized EchoTrainer with AdamW and global norm clipping.")
 
     @eqx.filter_jit
-    def step(self, model: eqx.Module, batch: dict, key: jax.random.PRNGKey, dt: float):
+    def step(self, model: eqx.Module, batch: dict, key: PRNGKeyArray, dt: float):
         """
         Executes a purely functional JIT-compiled BPTT update step.
         
@@ -36,7 +37,7 @@ class EchoTrainer(eqx.Module):
             model: The Equinox model (e.g., MarkovBlanketObserver).
             batch: Dictionary containing 's_true' (batch, seq_len, d_sensory) 
                    and 'x_init' (batch, d_state).
-            key: PRNGKey for stochastic unrolling.
+            key: PRNGKeyArray for stochastic unrolling.
             dt: Integration time step.
             
         Returns:

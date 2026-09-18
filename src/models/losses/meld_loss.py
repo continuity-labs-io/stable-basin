@@ -1,3 +1,5 @@
+from jaxtyping import jaxtyped
+from beartype import beartype
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -25,6 +27,7 @@ class MeldLoss(nn.Module):
         self.gamma = gamma
         self.L = L
 
+    @jaxtyped(typechecker=beartype)
     def forward(self, state_t, target_t_plus_1, pred_t_plus_1, reconstructed_t, delta_x):
         """
         Calculates the composite loss.
@@ -101,6 +104,7 @@ class TopoContrastiveLoss(nn.Module):
         super().__init__()
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
 
+    @jaxtyped(typechecker=beartype)
     def forward(self, lfp_latents, vision_latents):
         # L2-normalize both sets of latent vectors along the feature dimension
         lfp_latents = F.normalize(lfp_latents, p=2, dim=1)
