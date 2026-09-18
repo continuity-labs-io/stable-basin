@@ -83,7 +83,7 @@ class MultiAgentAuditor:
     def generate_focused_context(self, modified_files: list[str]) -> str:
         os.makedirs("cache", exist_ok=True)
         output_file = "cache/focused_context.xml"
-        cmd = ["repomix", "--output", output_file]
+        cmd = ["repomix", "--output", output_file, "--ignore", "icebox/**"]
         
         if modified_files:
             cmd.extend(["--include", ",".join(modified_files)])

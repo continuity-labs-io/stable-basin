@@ -54,6 +54,23 @@ class FinalSparkDataset(Dataset):
         if self.segment_index['t_start'].dt.tz is None:
             self.segment_index['t_start'] = self.segment_index['t_start'].dt.tz_localize('UTC')
             self.segment_index['t_end'] = self.segment_index['t_end'].dt.tz_localize('UTC')
+            
+        self.store = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['store'] = None
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        
+    def __del__(self):
+        if hasattr(self, 'store') and self.store is not None:
+            try:
+                self.store.close()
+            except Exception:
+                pass
 
     def __len__(self):
         return len(self.events)
@@ -77,9 +94,11 @@ class FinalSparkDataset(Dataset):
             row_start = int(seg['row_start'])
             row_end = int(seg['row_end'])
             
-            # Read only the segment row range using pd.HDFStore to ensure schemas parse correctly
-            with pd.HDFStore(self.raw_path, mode='r') as store:
-                chunk = store.select('fs437_wholelife_raw', start=row_start, stop=row_end+1)
+            # Read only the segment row range using cached pd.HDFStore to prevent I/O thrashing
+            if self.store is None:
+                self.store = pd.HDFStore(self.raw_path, mode='r')
+            
+            chunk = self.store.select('fs437_wholelife_raw', start=row_start, stop=row_end+1)
             
             chunk['time'] = pd.to_datetime(chunk['time'], utc=True)
             

@@ -90,6 +90,11 @@ unnecessary and adds technical debt. Do not use `sys.path.insert` or
   agent to execute will be placed in the `docs/ai/audited/` folder. Only execute
   coding tasks based on these prompts.
 
+### Icebox Guardrail
+
+- **The Icebox (`icebox/`)**: The `icebox/` directory acts as a stack for tasks, features, or bug fixes that have been deemed out of scope or low priority. We push tasks into this directory so that agents do not get distracted by them.
+- **Ignoring the Icebox**: The multi-agent auditor and other exploratory agents must ignore the contents of the `icebox/` directory. Tasks in the icebox should not be executed unless explicitly popped from the stack by the user.
+
 ### Documentation Guardrail
 
 - **Method/Function Documentation**: All public methods and functions must have their arguments (`Args:`) and return values (`Returns:`) explicitly documented in their docstrings.
