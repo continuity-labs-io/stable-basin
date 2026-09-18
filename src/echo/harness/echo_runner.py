@@ -13,7 +13,7 @@ except ImportError:
     RAY_AVAILABLE = False
 
 from src.echo.harness.echo_trainer import EchoTrainer
-from src.echo.harness.pytorch_jax_bridge import torch_to_jax
+from src.harness.pytorch_jax_bridge import torch_to_jax
 
 logger = logging.getLogger(__name__)
 

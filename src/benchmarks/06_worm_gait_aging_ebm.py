@@ -17,7 +17,7 @@ import equinox as eqx
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.hierarchy import PredictiveCodingGraph
-from src.echo.architecture.datasets import JAXDictDataset
+from src.data.datasets import JAXDictDataset
 from src.echo.primitives.ebm import GaussianEBM, PrecisionWeightedEBM
 from src.echo.harness.echo_runner import EchoRunner
 from src.echo.harness.echo_trainer import EchoTrainer

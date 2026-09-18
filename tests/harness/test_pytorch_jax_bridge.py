@@ -3,7 +3,7 @@ import torch
 import jax
 import jax.numpy as jnp
 import numpy as np
-from src.echo.harness.pytorch_jax_bridge import torch_to_jax
+from src.harness.pytorch_jax_bridge import torch_to_jax
 
 def test_torch_to_jax_conversion():
     """
