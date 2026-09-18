@@ -170,17 +170,19 @@ class TorxThermalizer(eqx.Module):
         )
         
     @eqx.filter_jit
-    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float) -> jax.Array:
+    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, factor_params: dict | None = None) -> jax.Array:
         """
         Executes the unrolled simulation.
         """
+        if factor_params is None:
+            factor_params = {}
         inputs = {
             "x_init": x_init,
             "dt_constant": jnp.array(dt, dtype=jnp.float32),
             "omega_ext_constant": jnp.zeros_like(x_init),
             "q_ext_constant": jnp.zeros_like(x_init)
         }
-        return self.graph.sample(key, inputs=inputs, params={})
+        return self.graph.sample(key, inputs=inputs, params={"chain": factor_params})
 
 class ForcedTorxThermalizer(eqx.Module):
     """
@@ -196,10 +198,12 @@ class ForcedTorxThermalizer(eqx.Module):
         self.injection_start_idx = injection_start_idx
 
     @eqx.filter_jit
-    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
+    def __call__(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None, factor_params: dict | None = None) -> jax.Array:
         """
         Executes the unrolled simulation with external forcing and closed-loop control.
         """
+        if factor_params is None:
+            factor_params = {}
         seq_len = None
         for s in (seq, omega_seq):
             if s is not None:
@@ -231,7 +235,7 @@ class ForcedTorxThermalizer(eqx.Module):
                 "omega_ext": omega_frame if omega_seq is not None else jnp.zeros_like(x_init),
                 "q_ext": q_ext
             }
-            next_state = self.flow_factor.sample(step_key, inputs=inputs, params={})
+            next_state = self.flow_factor.sample(step_key, inputs=inputs, params=factor_params)
             return next_state, next_state
 
         keys = jax.random.split(key, seq_len)

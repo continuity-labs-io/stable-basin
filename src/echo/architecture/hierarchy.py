@@ -96,6 +96,27 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
     def init_params(self, key):
         return {}
 
+    def precompute(self) -> dict:
+        """
+        Precomputes and hoists O(D^3) matrix constructions out of the ODE loop.
+        """
+        Q_micro_masked = self.micro_solenoidal.Q
+        Gamma_micro_masked = self.micro_dissipative.Gamma
+        S_micro = jnp.linalg.cholesky(Gamma_micro_masked + self.epsilon * jnp.eye(self.d_micro))
+        
+        Q_macro_masked = self.macro_solenoidal.Q
+        Gamma_macro_masked = self.macro_dissipative.Gamma
+        S_macro = jnp.linalg.cholesky(Gamma_macro_masked + self.epsilon * jnp.eye(self.d_macro))
+        
+        return {
+            "Q_micro_masked": Q_micro_masked,
+            "Gamma_micro_masked": Gamma_micro_masked,
+            "S_micro": S_micro,
+            "Q_macro_masked": Q_macro_masked,
+            "Gamma_macro_masked": Gamma_macro_masked,
+            "S_macro": S_macro
+        }
+
     def joint_energy_fn(self, x_u, x_m):
         """
         Computes the Joint Free Energy (F) of the hierarchical system.
@@ -154,21 +175,28 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         # c) Compute gradients simultaneously
         grad_micro, grad_macro = jax.grad(self.joint_energy_fn, argnums=(0, 1))(x_micro, x_macro)
         
-        # d) The physics primitives natively enforce topological constraints now.
-        Q_micro_masked = self.micro_solenoidal.Q
-        Gamma_micro_masked = self.micro_dissipative.Gamma
+        params = params or {}
+        # d) Get precomputed topologically constrained matrices
+        Q_micro_masked = params.get("Q_micro_masked", self.micro_solenoidal.Q)
+        Gamma_micro_masked = params.get("Gamma_micro_masked", self.micro_dissipative.Gamma)
         
-        Q_macro_masked = self.macro_solenoidal.Q
-        Gamma_macro_masked = self.macro_dissipative.Gamma
+        Q_macro_masked = params.get("Q_macro_masked", self.macro_solenoidal.Q)
+        Gamma_macro_masked = params.get("Gamma_macro_masked", self.macro_dissipative.Gamma)
         
-        # e) Compute safe diffusion matrix S for both
-        evals_u, evecs_u = jnp.linalg.eigh(Gamma_micro_masked + self.epsilon * jnp.eye(self.d_micro))
-        evals_u = jnp.maximum(evals_u, 0.0)
-        S_micro = evecs_u @ jnp.diag(jnp.sqrt(evals_u))
-        
-        evals_m, evecs_m = jnp.linalg.eigh(Gamma_macro_masked + self.epsilon * jnp.eye(self.d_macro))
-        evals_m = jnp.maximum(evals_m, 0.0)
-        S_macro = evecs_m @ jnp.diag(jnp.sqrt(evals_m))
+        # e) Get precomputed safe diffusion matrix S (fallback to slow eigh if not found)
+        if "S_micro" in params:
+            S_micro = params["S_micro"]
+        else:
+            evals_u, evecs_u = jnp.linalg.eigh(Gamma_micro_masked + self.epsilon * jnp.eye(self.d_micro))
+            evals_u = jnp.maximum(evals_u, 0.0)
+            S_micro = evecs_u @ jnp.diag(jnp.sqrt(evals_u))
+            
+        if "S_macro" in params:
+            S_macro = params["S_macro"]
+        else:
+            evals_m, evecs_m = jnp.linalg.eigh(Gamma_macro_masked + self.epsilon * jnp.eye(self.d_macro))
+            evals_m = jnp.maximum(evals_m, 0.0)
+            S_macro = evecs_m @ jnp.diag(jnp.sqrt(evals_m))
         
         # f) Execute Thermostat steps independently
         k_micro, k_macro = jax.random.split(key, 2)
@@ -285,10 +313,12 @@ class PredictiveCodingGraph(eqx.Module):
         """
         Executes the unrolled joint simulation over n_steps.
         """
-        return self.thermalizer(key, x_init, dt)
+        factor_params = self.thermalizer.graph.sites[0].factor.base.precompute()
+        return self.thermalizer(key, x_init, dt, factor_params=factor_params)
 
     def forced_unroll(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
         """
         Executes the unrolled joint simulation over an external sequence.
         """
-        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq, q_gain=q_gain, q_mask=q_mask)
+        factor_params = self.forced_thermalizer.flow_factor.precompute()
+        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq, q_gain=q_gain, q_mask=q_mask, factor_params=factor_params)

@@ -59,6 +59,16 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
     def init_params(self, key):
         # Required by torx.factor.AbstractReferenceFactor interface
         return {}
+        
+    def precompute(self) -> dict:
+        """
+        Precomputes and hoists O(D^3) matrix constructions out of the ODE loop.
+        """
+        return {
+            "Q": self.solenoidal.Q,
+            "L": self.dissipative.L,
+            "Gamma": self.dissipative.Gamma
+        }
 
     def sample(self, key, inputs, params, info=None, site_info=None, return_aux=False):
         """
@@ -92,15 +102,22 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             return e
 
         grad_E = jax.grad(energy_fn)(x)
+        
+        params = params or {}
+        Q = params.get("Q", self.solenoidal.Q)
+        L = params.get("L", self.dissipative.L)
+        Gamma = params.get("Gamma", None)
+        
         x_next = self.thermostat(
             x=x,
             grad_E=grad_E,
-            Q=self.solenoidal.Q,
-            L=self.dissipative.L,
+            Q=Q,
+            L=L,
             dt=dt,
             key=key,
             omega_ext=omega_ext,
-            q_ext=q_ext
+            q_ext=q_ext,
+            Gamma=Gamma
         )
         
         if return_aux:
@@ -184,13 +201,15 @@ class MarkovBlanketObserver(eqx.Module):
         """
         Executes the unrolled simulation over n_steps.
         """
-        return self.thermalizer(key, x_init, dt)
+        factor_params = self.thermalizer.graph.sites[0].factor.base.precompute()
+        return self.thermalizer(key, x_init, dt, factor_params=factor_params)
 
     def forced_unroll(self, key: jax.random.PRNGKey, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
         """
         Executes the unrolled simulation over an external sequence.
         """
-        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq, q_gain=q_gain, q_mask=q_mask)
+        factor_params = self.forced_thermalizer.flow_factor.precompute()
+        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq, q_gain=q_gain, q_mask=q_mask, factor_params=factor_params)
 
     def extract_internal_state(self, x: jax.Array) -> dict:
         """
