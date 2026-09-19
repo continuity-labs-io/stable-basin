@@ -17,8 +17,8 @@ observer:
     d_external: 4
     d_internal: 4
     d_sensory: 4
-    ebm_depth: 3
-    ebm_hidden_size: 64
+    ebm_depth: 2
+    ebm_hidden_size: 128
     n_steps: 1
     temperature: 1.0
   micro:
@@ -26,13 +26,13 @@ observer:
     d_external: 8
     d_internal: 8
     d_sensory: 6
-    ebm_depth: 3
+    ebm_depth: 2
     ebm_hidden_size: 256
     n_steps: 1
     temperature: 1.0
 optimization:
   early_stopping_patience: 4000
   learning_rate: 5.0e-05
-  max_epochs: 4000
+  max_epochs: 100
   max_grad_norm: 0.1
   weight_decay: 0.0
