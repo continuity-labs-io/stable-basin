@@ -15,36 +15,44 @@ from src.data.ephys.uhd_lfp_dataset import ContinuousLFPDataset
 
 def test_finalspark_dataset(tmp_path):
     import pandas as pd
-    
+
     # 1. Package HDF5
     package_path = tmp_path / "fs437_package.hdf5"
-    events = pd.DataFrame({"time_of_event": ["2023-01-01T00:00:00Z", "2023-01-01T00:01:00Z"], "electrode": [0, 1]})
+    events = pd.DataFrame(
+        {"time_of_event": ["2023-01-01T00:00:00Z", "2023-01-01T00:01:00Z"], "electrode": [0, 1]}
+    )
     events.to_hdf(package_path, key="fs437_wholelife_events")
-    door = pd.DataFrame({"time": ["2023-01-01T00:00:00Z"], "fs437_wholelife_incubator_door_opening": [1.0]})
+    door = pd.DataFrame(
+        {"time": ["2023-01-01T00:00:00Z"], "fs437_wholelife_incubator_door_opening": [1.0]}
+    )
     door.to_hdf(package_path, key="fs437_wholelife_incubator_door_opening")
-    
+
     # 2. Raw HDF5
     raw_path = tmp_path / "fs437_raw.hdf5"
     times_0 = pd.date_range("2023-01-01T00:00:00Z", periods=1024, freq="ms")
     times_1 = pd.date_range("2023-01-01T00:01:00Z", periods=1024, freq="ms")
-    raw_df = pd.DataFrame({
-        "time": times_0.append(times_1),
-        "electrode": [0]*1024 + [1]*1024,
-        "voltage_uv": np.random.randn(2048).astype(np.float32)
-    })
+    raw_df = pd.DataFrame(
+        {
+            "time": times_0.append(times_1),
+            "electrode": [0] * 1024 + [1] * 1024,
+            "voltage_uv": np.random.randn(2048).astype(np.float32),
+        }
+    )
     raw_df.to_hdf(raw_path, key="fs437_wholelife_raw", format="table", data_columns=True)
-    
+
     # 3. Segment Index
     idx_path = tmp_path / "fs437_segment_index.parquet"
-    seg = pd.DataFrame({
-        "electrode": [0, 1],
-        "t_start": [times_0[0], times_1[0]],
-        "t_end": [times_0[-1], times_1[-1]],
-        "row_start": [0, 1024],
-        "row_end": [1023, 2047]
-    })
+    seg = pd.DataFrame(
+        {
+            "electrode": [0, 1],
+            "t_start": [times_0[0], times_1[0]],
+            "t_end": [times_0[-1], times_1[-1]],
+            "row_start": [0, 1024],
+            "row_end": [1023, 2047],
+        }
+    )
     seg.to_parquet(idx_path)
-    
+
     ds = FinalSparkDataset(export_dir=str(tmp_path), seq_len=1024)
     assert len(ds) == 2
     batch = ds[0]
@@ -53,13 +61,14 @@ def test_finalspark_dataset(tmp_path):
     assert batch["env_door"].shape == (1,)
     assert batch["electrode"].shape == (1,)
 
+
 def test_pharma_shock_dataset(tmp_path):
     base_path = tmp_path
     h5_path = base_path / "Drug_2953_control.raw.h5"
-    with h5py.File(h5_path, 'w') as f:
+    with h5py.File(h5_path, "w") as f:
         # 1028 channels, 2048 time steps
         f.create_dataset("sig", data=np.zeros((1028, 2048), dtype=np.uint16))
-        
+
     ds = PharmacologicalShockDataset(condition="control", base_path=str(base_path), seq_len=1024)
     assert len(ds) == 2
     batch = ds[0]
@@ -67,25 +76,27 @@ def test_pharma_shock_dataset(tmp_path):
     assert batch.shape == (1024, 1024)
     assert batch.dtype == torch.float32
 
+
 def test_hdmea_dataset(tmp_path):
     brw_path = tmp_path / "hdmea_neuropulse.brw"
-    with h5py.File(brw_path, 'w') as f:
+    with h5py.File(brw_path, "w") as f:
         grp = f.create_group("3BData")
         # 4096 channels * 2048 frames = 8388608 elements
         grp.create_dataset("Raw", data=np.zeros(8388608, dtype=np.uint16))
-        
+
     ds = HDMEADataset(data_path=str(brw_path), seq_len=1024)
     assert len(ds) == 2
     batch = ds[0]
     assert batch.shape == (1024, 4096)
     assert batch.dtype == torch.float32
 
+
 def test_maxwell_dataset(tmp_path):
     h5_path = tmp_path / "test.raw.h5"
-    with h5py.File(h5_path, 'w') as f:
+    with h5py.File(h5_path, "w") as f:
         # 1028 channels, 2048 time steps
         f.create_dataset("sig", data=np.zeros((1028, 2048), dtype=np.uint16))
-        
+
     ds = MaxWellHDMEADataset(file_path=str(h5_path), sequence_length=1024, target_channels=512)
     # The maxwell dataloader likely uses standard Dataset properties
     assert len(ds) == 2
@@ -93,21 +104,30 @@ def test_maxwell_dataset(tmp_path):
     assert batch.shape == (1024, 512)
     assert batch.dtype == torch.float32
 
+
 def test_spike_prophecy_dataset(tmp_path):
     meta_path = tmp_path / "metadata.json"
     with open(meta_path, "w") as f:
-        json.dump({
-            "m_max": 100,
-            "num_sessions": 1,
-            "sessions": {"0": {"num_trials": 1, "split_boundaries": {"train_end": 100, "val_end": 150}}}
-        }, f)
-        
-    np.save(tmp_path / "session_000.npy", np.zeros((100, 200), dtype=np.float32)) # (n_units, total_bins)
-    
+        json.dump(
+            {
+                "m_max": 100,
+                "num_sessions": 1,
+                "sessions": {
+                    "0": {"num_trials": 1, "split_boundaries": {"train_end": 100, "val_end": 150}}
+                },
+            },
+            f,
+        )
+
+    np.save(
+        tmp_path / "session_000.npy", np.zeros((100, 200), dtype=np.float32)
+    )  # (n_units, total_bins)
+
     ds = SpikeProphecyDataset(time_steps=50, split="train", data_dir=str(tmp_path))
     iterator = iter(ds)
     tensor_window = next(iterator)
-    assert tensor_window.shape == (50, 100) # time_steps, m_max
+    assert tensor_window.shape == (50, 100)  # time_steps, m_max
+
 
 def test_continuous_lfp_dataset():
     ds = ContinuousLFPDataset(time_steps=50, grid_size=32)

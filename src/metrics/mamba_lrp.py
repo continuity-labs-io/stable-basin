@@ -1,8 +1,13 @@
 """
 [ICEBOXED] - Architectural Pivot
 
-These modules represent an attempt to force classical, deterministic architectures to handle continuous-time biological realities (e.g., Latent Stasis, Triton kernel optimizations, and deterministic LRP). Moving forward, Stable Basin relies on natively probabilistic, energy-based thermodynamic frameworks where missing data is naturally imputed and physics-based hardware minimization renders these hacks obsolete.
+These modules represent an attempt to force classical, deterministic architectures to handle
+continuous-time biological realities (e.g., Latent Stasis, Triton kernel optimizations, and
+deterministic LRP). Moving forward, Stable Basin relies on natively probabilistic, energy-based
+thermodynamic frameworks where missing data is naturally imputed and physics-based hardware
+minimization renders these hacks obsolete.
 """
+
 import torch
 import torch.nn.functional as F
 import logging
@@ -53,7 +58,11 @@ class MambaLRPEpsilon:
 
         # Extract weights from the SensorFusionPredictor projections
         W_in = self.model.fusion.W_proj.weight.data
-        b_in = self.model.fusion.W_proj.bias.data if self.model.fusion.W_proj.bias is not None else None
+        b_in = (
+            self.model.fusion.W_proj.bias.data
+            if self.model.fusion.W_proj.bias is not None
+            else None
+        )
 
         W_out = self.model.readout.weight.data
         b_out = self.model.readout.bias.data if self.model.readout.bias is not None else None
@@ -91,7 +100,8 @@ class MambaLRPEpsilon:
         retention_factor = 0.98
 
         for t in range(x.shape[1] - 1, -1, -1):
-            # Total relevance at time t = Relevance from output + Relevance passed back from future memory
+            # Total relevance at time t = Relevance from output + Relevance passed back from future
+            # memory
             R_total_t = R_hidden[:, t, :] + R_memory
 
             # The pre-activations that created hidden_states[:, t, :]

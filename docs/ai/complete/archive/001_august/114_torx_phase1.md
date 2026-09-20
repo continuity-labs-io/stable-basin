@@ -66,14 +66,17 @@ from src.utils.device import get_optimal_device
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("TorxSandbox")
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--backend", type=str, default="jax", help="Backend to use (pytorch or jax)")
+    parser.add_argument(
+        "--backend", type=str, default="jax", help="Backend to use (pytorch or jax)"
+    )
     args = parser.parse_args()
 
-    logger.info("\n" + "="*60)
+    logger.info("\n" + "=" * 60)
     logger.info(" STABLE BASIN 2.0: TORX DFG & CHAINFACTOR SANDBOX")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     # 1. Initialize Substrate & PRNG
     device = get_optimal_device(verbose=True, backend=args.backend)
@@ -91,14 +94,14 @@ def main():
     sensor_factor = DeterministicFactor(
         fn=lambda inputs, site_info: inputs["raw_signal"] * 2.0,
         input_ports={"raw_signal": port_spec},
-        output_spec=port_spec
+        output_spec=port_spec,
     )
 
     # Define Node 2: A biological response that adds a base metabolic rate
     metabolism_factor = DeterministicFactor(
         fn=lambda inputs, site_info: inputs["amplified_signal"] + 5.0,
         input_ports={"amplified_signal": port_spec},
-        output_spec=port_spec
+        output_spec=port_spec,
     )
 
     # Wire them into a DFG
@@ -109,18 +112,22 @@ def main():
                 factor=sensor_factor,
                 parents=("in_signal",),
                 porting_fn=("raw_signal",),
-                param_key=None, info_key=None, site_info=None
+                param_key=None,
+                info_key=None,
+                site_info=None,
             ),
             Site(
                 name="metabolism",
                 factor=metabolism_factor,
                 parents=("sensor",),  # Takes input directly from the sensor node
                 porting_fn=("amplified_signal",),
-                param_key=None, info_key=None, site_info=None
+                param_key=None,
+                info_key=None,
+                site_info=None,
             ),
         ),
         input_ports={"in_signal": port_spec},
-        output_name="metabolism" # The final output we care about
+        output_name="metabolism",  # The final output we care about
     )
 
     # Execute the DFG
@@ -142,7 +149,7 @@ def main():
     decay_factor = DeterministicFactor(
         fn=lambda inputs, site_info: inputs["h"] * 0.9 + 0.1,
         input_ports={"h": port_spec},
-        output_spec=port_spec
+        output_spec=port_spec,
     )
 
     # Wrap it in a ChainFactor to run sequentially for 5 time steps.
@@ -151,7 +158,7 @@ def main():
         base=decay_factor,
         n_steps=5,
         feedback_porting_fn="h",  # The output feeds back into the "h" port
-        weight_tied=True
+        weight_tied=True,
     )
 
     initial_state = {"h": jnp.array([10.0], dtype=jnp.float32)}
@@ -162,7 +169,8 @@ def main():
     logger.info(f"    -> Final State after 5 steps: {final_state.item():.2f}")
 
     logger.info("\n[SUCCESS] Torx/JAX substrate and DFG primitives verified.")
-    logger.info("="*60 + "\n")
+    logger.info("=" * 60 + "\n")
+
 
 if __name__ == "__main__":
     main()

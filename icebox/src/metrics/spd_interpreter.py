@@ -4,25 +4,34 @@ SPD Interpreter for Mamba / H-SSM
 
 OVERVIEW & SUPPORT:
 This script monkey-patches the Goodfire `spd` (Stochastic Parameter Decomposition) library
-so that it can execute on non-Transformer architectures, specifically `Mamba` and `StateSpaceEngine`.
+so that it can execute on non-Transformer architectures, specifically `Mamba` and
+`StateSpaceEngine`.
 It successfully intercepts the internal optimization loops, overrides HF-specific assertions,
 dynamically unfolds 1D continuous convolutions (like Mamba's `conv1d`) into pseudo-linear layers,
-and permits the SPD pipeline to run end-to-end (reaching Step 0) without crashing due to architecture mismatches.
+and permits the SPD pipeline to run end-to-end (reaching Step 0) without crashing due to
+architecture mismatches.
 
 LIMITATIONS:
 1. `Total Loss: nan` at Step 0: The mask generation relies on Singular Value Decomposition (SVD).
-   When initializing the `A` and `B` basis matrices for `Conv1d` weights, SVD currently produces `nan`s
-   (likely due to numerical instability with grouped depthwise convolution dimensions or empty weights),
+When initializing the `A` and `B` basis matrices for `Conv1d` weights, SVD currently produces
+   `nan`s
+(likely due to numerical instability with grouped depthwise convolution dimensions or empty
+   weights),
    which subsequently poisons the masks and the faithfulness loss.
-2. Brittle Patching: The Goodfire library heavily hardcodes variables such as `d_in`, expects HF Tokenizers,
-   and enforces strict output shapes from standard transformers. The deep runtime monkey-patching used here
+2. Brittle Patching: The Goodfire library heavily hardcodes variables such as `d_in`, expects HF
+Tokenizers,
+and enforces strict output shapes from standard transformers. The deep runtime monkey-patching
+   used here
    is extremely fragile and tightly coupled to the specific version of `spd`.
 
 NEXT STEPS FOR H-SSM INTERPRETABILITY:
-- Transition away from trying to force Mamba/H-SSM through the Goodfire LLM-centric experimental pipeline.
+- Transition away from trying to force Mamba/H-SSM through the Goodfire LLM-centric experimental
+pipeline.
 - Develop a clean, standalone minimal script that natively implements the SPD mathematical objective
-  (sparse dictionary learning / mask optimization) directly on the specific `Conv1d` and `Linear` layers of our H-SSM.
-- Isolate the `calc_causal_importances` and `calc_faithfulness_loss` logic so they natively handle 3D sequence
+(sparse dictionary learning / mask optimization) directly on the specific `Conv1d` and `Linear`
+  layers of our H-SSM.
+- Isolate the `calc_causal_importances` and `calc_faithfulness_loss` logic so they natively handle
+3D sequence
   tensors without relying on PyTorch's `F.unfold` hacks or bypassing Hugging Face assertions.
 """
 
@@ -249,7 +258,8 @@ def _patched_init_As_and_Bs_(model, components) -> None:
         if isinstance(component, EmbeddingComponent):
             target_weight = target_weight.T  # (d_out d_in)
         elif isinstance(component, Conv1dComponent):
-            # Flatten Conv1d weight (out_channels, in_channels//groups, kernel_size) to (d_out, d_in)
+            # Flatten Conv1d weight (out_channels, in_channels//groups, kernel_size) to (d_out,
+            # d_in)
             target_weight = target_weight.reshape(component.out_channels, -1)
 
         # Make A and B have unit norm in the d_in and d_out dimensions

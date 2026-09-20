@@ -6,17 +6,23 @@ import equinox as eqx
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 
+
 def _create_graph(key):
     k1, k2, k3 = jax.random.split(key, 3)
-    
+
     # Micro observer (d_state=4) -> d_internal=1, d_sensory=1, d_active=1, d_external=1
-    micro = MarkovBlanketObserver(1, 1, 1, 1, ebm_hidden_size=8, ebm_depth=2, n_steps=3, temperature=1.0, key=k1)
-    
+    micro = MarkovBlanketObserver(
+        1, 1, 1, 1, ebm_hidden_size=8, ebm_depth=2, n_steps=3, temperature=1.0, key=k1
+    )
+
     # Macro observer (d_state=6) -> d_internal=2, d_sensory=1, d_active=1, d_external=2
-    macro = MarkovBlanketObserver(2, 1, 1, 2, ebm_hidden_size=8, ebm_depth=2, n_steps=3, temperature=1.0, key=k2)
-    
+    macro = MarkovBlanketObserver(
+        2, 1, 1, 2, ebm_hidden_size=8, ebm_depth=2, n_steps=3, temperature=1.0, key=k2
+    )
+
     graph = PredictiveCodingGraph(micro, macro, n_steps=3, key=k3)
     return graph
+
 
 def test_hierarchy_execution():
     """
@@ -24,23 +30,24 @@ def test_hierarchy_execution():
     """
     key = jax.random.PRNGKey(42)
     k_init, k_run, k_x1, k_x2 = jax.random.split(key, 4)
-    
+
     graph = _create_graph(k_init)
-    
+
     x_micro = jax.random.normal(k_x1, (4,), dtype=jnp.float32)
     x_macro = jax.random.normal(k_x2, (6,), dtype=jnp.float32)
     x_init = jnp.concatenate([x_micro, x_macro])
-    
+
     out = graph(k_run, x_init, dt=0.01)
-    
+
     # Out may be a trajectory of (3, 10) or just final state (10,) depending on feedback_porting
     # But TorxThermalizer in the previous tests outputted either. We just assert no NaNs.
     assert not jnp.any(jnp.isnan(out))
-    
+
     if out.ndim > 1:
         assert out.shape == (3, 10)
     else:
         assert out.shape == (10,)
+
 
 def test_hierarchy_cross_talk_acid_test():
     """
@@ -49,14 +56,14 @@ def test_hierarchy_cross_talk_acid_test():
     """
     key = jax.random.PRNGKey(123)
     k_init, k_run, k_x1, k_x2 = jax.random.split(key, 4)
-    
+
     graph = _create_graph(k_init)
-    
+
     x_micro = jax.random.normal(k_x1, (4,), dtype=jnp.float32)
     x_macro = jax.random.normal(k_x2, (6,), dtype=jnp.float32)
-    
+
     dt = 0.01
-    
+
     # Test 1: Bottom-Up Surprisal
     @eqx.filter_value_and_grad
     def macro_loss_fn(x_u):
@@ -66,13 +73,15 @@ def test_hierarchy_cross_talk_acid_test():
             out = out[-1]
         macro_out = out[4:]
         return jnp.sum(macro_out)
-        
+
     loss_m, grad_micro = macro_loss_fn(x_micro)
-    
+
     assert not jnp.isnan(loss_m)
     assert not jnp.any(jnp.isnan(grad_micro))
-    assert jnp.linalg.norm(grad_micro) > 0.0, "Bottom-Up Surprisal failed! Micro state did not perturb future Macro state."
-    
+    assert jnp.linalg.norm(grad_micro) > 0.0, (
+        "Bottom-Up Surprisal failed! Micro state did not perturb future Macro state."
+    )
+
     # Test 2: Top-Down Enslavement
     @eqx.filter_value_and_grad
     def micro_loss_fn(x_m):
@@ -82,12 +91,15 @@ def test_hierarchy_cross_talk_acid_test():
             out = out[-1]
         micro_out = out[:4]
         return jnp.sum(micro_out)
-        
+
     loss_u, grad_macro = micro_loss_fn(x_macro)
-    
+
     assert not jnp.isnan(loss_u)
     assert not jnp.any(jnp.isnan(grad_macro))
-    assert jnp.linalg.norm(grad_macro) > 0.0, "Top-Down Enslavement failed! Macro belief did not alter Micro trajectory."
+    assert jnp.linalg.norm(grad_macro) > 0.0, (
+        "Top-Down Enslavement failed! Macro belief did not alter Micro trajectory."
+    )
+
 
 def test_hierarchy_jit():
     """
@@ -95,27 +107,28 @@ def test_hierarchy_jit():
     """
     key = jax.random.PRNGKey(999)
     k_init, k_run, k_x1, k_x2 = jax.random.split(key, 4)
-    
+
     graph = _create_graph(k_init)
-    
+
     x_micro = jax.random.normal(k_x1, (4,), dtype=jnp.float32)
     x_macro = jax.random.normal(k_x2, (6,), dtype=jnp.float32)
-    
+
     @eqx.filter_jit
     def jitted_call(g, k, xu, xm):
         x_init = jnp.concatenate([xu, xm])
         return g(k, x_init, 0.01)
-        
+
     out = jitted_call(graph, k_run, x_micro, x_macro)
     assert not jnp.any(jnp.isnan(out))
+
 
 def test_hierarchical_surprisal_blindness():
     key = jax.random.PRNGKey(0)
     k1, k2, k3 = jax.random.split(key, 3)
-    
+
     d_i, d_s, d_a, d_e = 4, 3, 2, 1
     D_s_zero = jnp.zeros((d_s, d_s))
-    
+
     micro = MarkovBlanketObserver(
         d_internal=d_i,
         d_sensory=d_s,
@@ -126,9 +139,9 @@ def test_hierarchical_surprisal_blindness():
         n_steps=1,
         temperature=1.0,
         key=k1,
-        D_s=D_s_zero
+        D_s=D_s_zero,
     )
-    
+
     macro = MarkovBlanketObserver(
         d_internal=d_i,
         d_sensory=d_s,
@@ -138,31 +151,31 @@ def test_hierarchical_surprisal_blindness():
         ebm_depth=1,
         n_steps=1,
         temperature=1.0,
-        key=k2
+        key=k2,
     )
-    
+
     graph = PredictiveCodingGraph(micro, macro, n_steps=1, key=k3)
     factor = graph.forced_thermalizer.flow_factor
-    
+
     x_u = jax.random.normal(k1, (micro.hull.d_state,))
     x_m = jax.random.normal(k2, (macro.hull.d_state,))
-    
+
     def joint_energy_fn(x_u_val, x_m_val):
         x_u_obs = factor.micro_hull.apply_sensory_degradation(x_u_val)
         x_m_obs = factor.macro_hull.apply_sensory_degradation(x_m_val)
-        
+
         E_micro, _ = factor.micro_ebm(x_u_obs)
         E_macro, Pi_macro = factor.macro_ebm(x_m_obs)
-        
+
         belief = factor.W_down(x_m_obs)
         diff = x_u_obs - belief
-        
+
         diff_proj = factor.W_down.weight.T @ diff
         penalty = 0.5 * diff_proj.T @ Pi_macro @ diff_proj
-        
+
         return E_micro + E_macro + penalty
-        
+
     grad_u = jax.grad(joint_energy_fn, argnums=0)(x_u, x_m)
     grad_u_part = factor.micro_hull.partition(grad_u)
-    
+
     assert jnp.allclose(grad_u_part["sensory"], jnp.zeros(d_s))

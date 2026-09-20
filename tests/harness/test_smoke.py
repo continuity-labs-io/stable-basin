@@ -7,9 +7,16 @@ from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
+
 @pytest.mark.integration
 def test_smoke():
-    device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+    device = torch.device(
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
+    )
     logger.info(f"Device: {device}")
 
     # The Frozen Registry
@@ -21,7 +28,7 @@ def test_smoke():
         SSMType.MASR_SSM,
         SSMType.MASR_MAMBA,
         SSMType.GRU_D,
-        SSMType.ODE_RNN
+        SSMType.ODE_RNN,
     ]
 
     batch_size = 2
@@ -46,17 +53,18 @@ def test_smoke():
 
             # 1. Initialization
             model = SensorFusionPredictor(
-                ssm_type=ssm_type,
-                modality_dims=modality_dims,
-                d_model=d_model,
-                out_dim=out_dim
+                ssm_type=ssm_type, modality_dims=modality_dims, d_model=d_model, out_dim=out_dim
             ).to(device)
 
             # 2. Forward Pass
             preds, hidden, reconstructed_t = model(x_raw, mask)
 
             assert preds.shape == (batch_size, seq_len, out_dim), f"Bad preds shape: {preds.shape}"
-            assert hidden.shape == (batch_size, seq_len, d_model), f"Bad hidden shape: {hidden.shape}"
+            assert hidden.shape == (
+                batch_size,
+                seq_len,
+                d_model,
+            ), f"Bad hidden shape: {hidden.shape}"
             assert not torch.isnan(preds).any(), "NaNs in predictions"
             assert not torch.isnan(hidden).any(), "NaNs in hidden states"
 
@@ -85,4 +93,3 @@ def test_smoke():
     else:
         logger.error("Smoke test failed.")
         assert all_passed, "Smoke test failed for one or more models."
-

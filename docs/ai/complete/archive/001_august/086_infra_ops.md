@@ -16,6 +16,7 @@ Please execute the following steps carefully:
 ```python
 if use_wandb:
     import wandb
+
     if wandb.run is not None:
         wandb.log({"train_loss": avg_loss, "epoch": epoch, "epoch_time": epoch_time})
 ```
@@ -46,7 +47,7 @@ if use_wandb:
       project="stable-basin",
       name=f"diagnostic_{model_type}",
       config={"model_type": model_type, **config},
-      reinit=True
+      reinit=True,
   )
   ```
   - Run the dataset loading, model initialization, training
@@ -97,11 +98,10 @@ if use_wandb:
     tuner = tune.Tuner(
         # Wrap the function to specify resources (e.g., 1 CPU or 1 GPU per model)
         tune.with_resources(
-            evaluate_model,
-            resources={"cpu": 1, "gpu": 1 if torch.cuda.is_available() else 0}
+            evaluate_model, resources={"cpu": 1, "gpu": 1 if torch.cuda.is_available() else 0}
         ),
         param_space=search_space,
-        run_config=train.RunConfig(name="clinical_diagnostic_sweep")
+        run_config=train.RunConfig(name="clinical_diagnostic_sweep"),
     )
 
     results = tuner.fit()

@@ -2,12 +2,13 @@ import rerun as rr
 import torch
 import numpy as np
 
+
 class TelemetryLogger:
     """
     Asynchronous bridge between the continuous-time physics engine and the Rerun viewer.
     Logs macroscopic variables and high-dimensional phase space without blocking inference.
     """
-    
+
     def __init__(self, mode: str = "connect", save_path: str = "flight_recorder.rrd"):
         """
         Initializes the Rerun session.
@@ -16,7 +17,7 @@ class TelemetryLogger:
             save_path: The file path to save the recording if mode is "save".
         """
         rr.init("stable_basin_telemetry", spawn=False)
-        
+
         if mode == "connect":
             rr.connect()
         elif mode == "save":
@@ -32,11 +33,7 @@ class TelemetryLogger:
         rr.set_time("time_sec", duration=time_sec)
 
     def log_fedichev_macrostates(
-        self, 
-        z0_volatility: float, 
-        Z_entropic_damage: float, 
-        epsilon_0_ksm: float, 
-        lle_chaos: float
+        self, z0_volatility: float, Z_entropic_damage: float, epsilon_0_ksm: float, lle_chaos: float
     ) -> None:
         """
         Logs the macroscopic variables defined by the Fedichev-Gruber minimal model.
@@ -55,10 +52,10 @@ class TelemetryLogger:
             points = latent_tensor.detach().cpu().numpy()
         else:
             points = np.asarray(latent_tensor)
-            
+
         if points.ndim != 2 or points.shape[1] != 3:
             raise ValueError(f"Expected shape [Num_Points, 3], got {points.shape}")
-            
+
         rr.log("consciousness_manifold/attractor_basin", rr.Points3D(points))
 
     def log_infrastructure(self, vram_mb: float, perfusion_rate: float) -> None:

@@ -87,6 +87,7 @@ drastically reducing their entropy/variance via Free Energy minimization.
 """
 
 import os
+
 os.environ["JAX_PLATFORMS"] = "cpu"
 
 import sys
@@ -96,6 +97,7 @@ import jax
 import jax.numpy as jnp
 import equinox as eqx
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -110,7 +112,6 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("TorxHierarchicalEnslavement")
 
 # ... (Implementation of HierarchicalEnslavementFactor, Simulation Loop, and Plotting) ...
-
 ```
 
 ## ✅ 4. Definition of Done

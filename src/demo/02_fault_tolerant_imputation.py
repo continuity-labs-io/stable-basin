@@ -139,7 +139,8 @@ def plot_indestructible_dashboard(corrupt_seq, true_seq, pred_seq, drop_frame, o
 
 def main():
     device = get_optimal_device(allow_mps=False, verbose=True)
-    # MPS can sometimes have issues with NaNs/backward in these specific ops. Safer on CPU if forced.
+    # MPS can sometimes have issues with NaNs/backward in these specific ops. Safer on CPU if
+    # forced.
     device = torch.device("cpu") if device.type == "mps" else device
 
     print("\n[*] BOOTING DEMO 2: THE INDESTRUCTIBLE EDGE")

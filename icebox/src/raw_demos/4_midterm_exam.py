@@ -278,7 +278,8 @@ def main():
             time_axis, csd_scores, ksm_scores, lle_scores, event_frame=EVENT_FRAME
         )
         print(
-            "\n[+] ROUTE 3: THE WOBBLE (CRITICAL SLOWING DOWN) PASSED: Substrate Independence Validated on True Electrophysiology."
+            "\n[+] ROUTE 3: THE WOBBLE (CRITICAL SLOWING DOWN) PASSED: Substrate Independence "
+            "Validated on True Electrophysiology."
         )
 
     except StopIteration:

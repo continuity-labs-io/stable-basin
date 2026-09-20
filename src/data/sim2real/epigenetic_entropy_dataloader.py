@@ -1,27 +1,36 @@
 import torch
 from torch.utils.data import Dataset
 
+
 class EpigeneticEntropyLoader(Dataset):
     """
     Epigenetic Entropy Dataloader for the Fedichev framework.
     Mocks CpG methylation arrays across thousands of cells.
     To avoid VRAM explosions, massive tensors are generated dynamically per batch.
     """
-    def __init__(self, biological_age: int, size: int = 100, seq_len: int = 50, n_cells: int = 1000, n_cpgs: int = 10000):
+
+    def __init__(
+        self,
+        biological_age: int,
+        size: int = 100,
+        seq_len: int = 50,
+        n_cells: int = 1000,
+        n_cpgs: int = 10000,
+    ):
         super().__init__()
         self.biological_age = biological_age
         self.size = size
         self.seq_len = seq_len
         self.n_cells = n_cells
         self.n_cpgs = n_cpgs
-        
+
     def __len__(self):
         return self.size
-        
+
     def __getitem__(self, idx):
         # Shape: [Time, Cells, CpGs]
         shape = (self.seq_len, self.n_cells, self.n_cpgs)
-        
+
         if self.biological_age <= 45:
             # Low Z (Low Entropy): Tightly clustered bimodal distribution (0.0 or 1.0)
             # Pristine epigenetic landscape where cells are strongly committed to their states.
@@ -37,7 +46,5 @@ class EpigeneticEntropyLoader(Dataset):
             noise_scale = 0.3 if self.biological_age >= 50 else 0.15
             cpg_tensor = torch.randn(shape) * noise_scale + 0.5
             cpg_tensor = torch.clamp(cpg_tensor, 0.0, 1.0)
-            
+
         return {"cpg_tensor": cpg_tensor, "biological_age": self.biological_age}
-
-

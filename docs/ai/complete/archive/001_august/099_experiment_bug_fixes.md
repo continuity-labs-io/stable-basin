@@ -37,9 +37,11 @@ self.A_log = nn.Parameter(torch.log(torch.clamp(torch.rand(shape), min=1e-4) * a
 
 ```Python
 encoder_layer = nn.TransformerEncoderLayer(
-    d_model=d_model, nhead=nhead, batch_first=True,
+    d_model=d_model,
+    nhead=nhead,
+    batch_first=True,
     dim_feedforward=d_model * ff_expansion_factor,
-    norm_first=True  # <--- ADD THIS
+    norm_first=True,  # <--- ADD THIS
 )
 ```
 

@@ -5,20 +5,24 @@ import equinox as eqx
 from jaxtyping import Float, Array, PRNGKeyArray, jaxtyped
 from beartype import beartype
 
+
 class Thermostat(eqx.Module):
     """
-    Enforces the Fluctuation-Dissipation Theorem by integrating deterministic
-    physics with stochastic environmental noise over a continuous time step (dt)
-    using the Euler-Maruyama method.
+    A control structure that maintains a target temperature for a physical system.
+
+    It enforces the Fluctuation-Dissipation Theorem by balancing frictional cooling
+    (dissipation) with stochastic environmental heating (fluctuation) over a
+    continuous time step (dt) using the Euler-Maruyama method.
     """
+
     temperature: float = eqx.field(static=True)
 
     def __init__(self, temperature: float = 1.0):
         """
         Initializes the Thermostat module.
-        
+
         Args:
-            temperature: Scalar temperature T. Default is 1.0.
+            temperature: Scalar target temperature T to enforce on the system. Default is 1.0.
         """
         self.temperature = float(temperature)
 
@@ -33,23 +37,26 @@ class Thermostat(eqx.Module):
         key: PRNGKeyArray,
         omega_ext: Float[Array, "d_state"] | None = None,
         q_ext: Float[Array, "d_state"] | None = None,
-        Gamma: Float[Array, "d_state d_state"] | None = None
+        Gamma: Float[Array, "d_state d_state"] | None = None,
     ) -> Float[Array, "d_state"]:
         """
-        Computes the next state using the Euler-Maruyama method.
-        
-        Args:
-            x: The current biological state vector.
-            grad_E: The pre-computed gradient vector of the energy landscape at x.
-            Q: Skew-symmetric matrix from the SolenoidalFlow module.
-            L: Lower-triangular Cholesky factor from the DissipativeFriction module.
-            dt: Scalar continuous time step.
-            key: PRNG key for generating Wiener process noise.
-            omega_ext: Optional external thermodynamic force vector to apply as an explicit perturbation to the deterministic drift.
-            q_ext: Optional exogenous actuation signal to apply to the deterministic drift.
-            
-        Returns:
-            The next state vector of shape (d_state,).
+                Computes the next state using the Euler-Maruyama method.
+
+                Args:
+                    x: The current biological state vector.
+                    grad_E: The pre-computed gradient vector of the energy landscape at x.
+                    Q: Skew-symmetric matrix from the SolenoidalFlow module.
+                    L: Lower-triangular Cholesky factor from the DissipativeFriction module.
+                    dt: Scalar continuous time step.
+                    key: PRNG key for generating Wiener process noise.
+        omega_ext: Optional external thermodynamic force vector to apply as an explicit
+                    perturbation to the deterministic drift.
+                    q_ext: Optional exogenous actuation signal to apply to the deterministic drift.
+        Gamma: Optional pre-computed symmetric positive-definite friction matrix. If None, it is
+                    computed as (L @ L.T).
+
+                Returns:
+                    The next state vector of shape (d_state,).
         """
         # Ensure floating point type for safety
         dt_jnp = jnp.array(dt, dtype=jnp.float32)
@@ -58,30 +65,40 @@ class Thermostat(eqx.Module):
         # 1. Compute Gamma
         if Gamma is None:
             Gamma = L @ L.T
-        
+
         # 2. Deterministic drift: -(Q + Gamma) @ grad_E
-        # This equation decomposes the physical flow on the energy landscape into two orthogonal components:
+        # This equation decomposes the physical flow on the energy landscape into two orthogonal
+        # components:
         #
-        # A) -(Gamma) @ grad_E [Dissipative / Frictional Flow]: 
-        #    Gamma is a symmetric positive-definite matrix. This term performs gradient descent, acting as 
-        #    a mechanical brake that drags the system down into the minimum of the energy basin (homeostasis).
+        # A) -(Gamma) @ grad_E [Dissipative / Frictional Flow]:
+        # Gamma is a symmetric positive-definite matrix. This term performs gradient descent, acting
+        # as
+        # a mechanical brake that drags the system down into the minimum of the energy basin
+        # (homeostasis).
         #
         # B) -(Q) @ grad_E [Solenoidal / Rotational Flow]:
-        #    Q is an anti-symmetric matrix. This term pushes the state orthogonally to the energy gradient, 
-        #    creating divergence-free orbits along the equipotential contour lines without changing the total energy. 
-        #    This allows the system to maintain active, non-equilibrium steady states (NESS) rather than just freezing.
+        # Q is an anti-symmetric matrix. This term pushes the state orthogonally to the energy
+        # gradient,
+        # creating divergence-free orbits along the equipotential contour lines without changing the
+        # total energy.
+        # This allows the system to maintain active, non-equilibrium steady states (NESS) rather
+        # than just freezing.
         drift = -(Q + Gamma) @ grad_E
-        
-        drift_total = drift + (omega_ext if omega_ext is not None else 0.0) + (q_ext if q_ext is not None else 0.0)
-        
+
+        drift_total = (
+            drift
+            + (omega_ext if omega_ext is not None else 0.0)
+            + (q_ext if q_ext is not None else 0.0)
+        )
+
         # Clip the drift to guarantee explicit Euler stability during chaotic BPTT exploration
         drift_total = jnp.clip(drift_total, -100.0, 100.0)
-        
+
         # 3. Stochastic diffusion (noise): sqrt(2 * T * dt) * (L @ dW)
         dW = jax.random.normal(key, shape=x.shape, dtype=jnp.float32)
         diffusion = jnp.sqrt(2.0 * T * dt_jnp) * (L @ dW)
-        
+
         # 4. Final Euler-Maruyama update
         x_next = x + (drift_total * dt_jnp) + diffusion
-        
+
         return x_next

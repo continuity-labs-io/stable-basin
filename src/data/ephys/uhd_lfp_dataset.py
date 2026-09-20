@@ -8,7 +8,14 @@ class ContinuousLFPDataset(IterableDataset):
     of a 2D UHD-CMOS microelectrode array.
     """
 
-    def __init__(self, time_steps: int = 500, grid_size: int = 64, encoder=None, return_hidden: bool = True, device=None):
+    def __init__(
+        self,
+        time_steps: int = 500,
+        grid_size: int = 64,
+        encoder=None,
+        return_hidden: bool = True,
+        device=None,
+    ):
         super().__init__()
         self.time_steps = time_steps
         self.grid_size = grid_size

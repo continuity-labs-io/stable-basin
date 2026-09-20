@@ -5,28 +5,31 @@ import numpy as np
 
 class HierarchicalSSM(nn.Module):
     """
-    Core Temporal Scaffold: 2-Tier Hierarchical Continuous-Time State Space Model (H-SSM).
-    
-    This architecture explicitly defines a two-tier cascade to overcome Shannon's Limit 
-    and catastrophic forgetting over long sequence lengths:
-    - Layer 1 (Fast-Mamba): Ingests high-frequency (e.g. 20kHz) HD-MEA data and outputs 
-      low-frequency (e.g. 1Hz) Macroscopic Kinetic Tokens.
-    - Layer 2 (Slow-Mamba): Operates entirely on the 1Hz Macroscopic tokens, efficiently 
-      compressing months of continuous recording into a finite state vector without violating 
-      Shannon's limit.
-      
-    Demonstrates a standing wave phase transition driven by delayed recurrent feedback.
+        Core Temporal Scaffold: 2-Tier Hierarchical Continuous-Time State Space Model (H-SSM).
 
-    Scenario A (Low K): The "Driven Mode." The feedback parameter (K) is turned down.
-    The simulated biological network is passive.
-    It has no internal memory or momentum; it is merely reacting to external noise (the vat).
+        This architecture explicitly defines a two-tier cascade to overcome Shannon's Limit
+        and catastrophic forgetting over long sequence lengths:
+        - Layer 1 (Fast-Mamba): Ingests high-frequency (e.g. 20kHz) HD-MEA data and outputs
+          low-frequency (e.g. 1Hz) Macroscopic Kinetic Tokens.
+        - Layer 2 (Slow-Mamba): Operates entirely on the 1Hz Macroscopic tokens, efficiently
+          compressing months of continuous recording into a finite state vector without violating
+          Shannon's limit.
 
-    Scenario B (High K): The "Standing Wave Mode." The feedback parameter (K) crosses the critical threshold.
-    The internal recursive loops dominate, and the network begins to predict and reinforce its own state.
-    State x1_0 and x1_1: These are two orthogonal dimensions of Layer 1's hidden state vector.
-    Think of them as two coupled biological variables driving an oscillation—for example, x1_0 is
-    the average electrical voltage of the neural population, and x1_1 is the metabolic recovery rate.
-    You need at least two interacting dimensions to create a wave.
+        Demonstrates a standing wave phase transition driven by delayed recurrent feedback.
+
+        Scenario A (Low K): The "Driven Mode." The feedback parameter (K) is turned down.
+        The simulated biological network is passive.
+        It has no internal memory or momentum; it is merely reacting to external noise (the vat).
+
+    Scenario B (High K): The "Standing Wave Mode." The feedback parameter (K) crosses the critical
+        threshold.
+    The internal recursive loops dominate, and the network begins to predict and reinforce its own
+        state.
+        State x1_0 and x1_1: These are two orthogonal dimensions of Layer 1's hidden state vector.
+        Think of them as two coupled biological variables driving an oscillation—for example, x1_0 is
+    the average electrical voltage of the neural population, and x1_1 is the metabolic recovery
+        rate.
+        You need at least two interacting dimensions to create a wave.
     """
 
     def __init__(self, d1=16, d2=4, dt=0.005, tau_delay_steps=50, gamma=0.1):

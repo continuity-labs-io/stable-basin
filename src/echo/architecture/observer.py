@@ -15,21 +15,23 @@ from src.echo.physics.dissipative import DissipativeFriction
 from src.echo.physics.thermostat import Thermostat
 from src.echo.primitives.thermalizer import TorxThermalizer, ForcedTorxThermalizer
 
+
 class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
     """
     Custom Torx factor that applies the Markov Blanket topological mask to the
     underlying physical matrices to enforce conditional independence.
-    
+
     A Note on Factor Graphs: In traditional computer science graph theory, a
     "Factor Graph" is a bipartite graph with two types of nodes: "Variable
     Nodes" (representing state/data) and "Factor Nodes" (representing
     computations or constraints applied to that data).
-    
+
     By inheriting from `AbstractReferenceFactor`, this class defines a single
     computational "Factor Node". In our simulation, it takes in the current
     state variables (`x` and `dt`), computes the physical thermodynamic step,
     and outputs the resulting next state variable.
     """
+
     ebm: PrecisionWeightedEBM
     solenoidal: SolenoidalFlow
     dissipative: DissipativeFriction
@@ -41,7 +43,9 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
     input_ports: dict = eqx.field(static=True)
     output_spec: jax.ShapeDtypeStruct = eqx.field(static=True)
 
-    def __init__(self, ebm, solenoidal, dissipative, thermostat, hull, d_state, epsilon, use_blanket_topology):
+    def __init__(
+        self, ebm, solenoidal, dissipative, thermostat, hull, d_state, epsilon, use_blanket_topology
+    ):
         self.ebm = ebm
         self.solenoidal = solenoidal
         self.dissipative = dissipative
@@ -50,35 +54,31 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         self.d_state = d_state
         self.epsilon = epsilon
         self.use_blanket_topology = use_blanket_topology
-        
+
         self.input_ports = {
             "x": jax.ShapeDtypeStruct((d_state,), jnp.float32),
             "dt": jax.ShapeDtypeStruct((), jnp.float32),
             "omega_ext": jax.ShapeDtypeStruct((d_state,), jnp.float32),
-            "q_ext": jax.ShapeDtypeStruct((d_state,), jnp.float32)
+            "q_ext": jax.ShapeDtypeStruct((d_state,), jnp.float32),
         }
         self.output_spec = jax.ShapeDtypeStruct((d_state,), jnp.float32)
 
     def init_params(self, key):
         # Required by torx.factor.AbstractReferenceFactor interface
         return {}
-        
+
     def precompute(self) -> dict:
         """
         Precomputes and hoists O(D^3) matrix constructions out of the ODE loop.
         """
         Gamma = self.dissipative.Gamma
-        return {
-            "Q": self.solenoidal.Q,
-            "L": jnp.linalg.cholesky(Gamma),
-            "Gamma": Gamma
-        }
+        return {"Q": self.solenoidal.Q, "L": jnp.linalg.cholesky(Gamma), "Gamma": Gamma}
 
     @jaxtyped(typechecker=beartype)
     def sample(self, key, inputs, params, info=None, site_info=None, return_aux=False):
         """
         Executes a single discrete integration step of the physical thermodynamic factor.
-        
+
         Args:
             key: JAX PRNG key for stochastic sampling (e.g., Langevin noise).
             inputs: Dictionary containing the necessary state variables:
@@ -91,9 +91,9 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             site_info: Optional site info (unused, required by torx interface).
             return_aux: If True, returns a tuple of (next_state, auxiliary_data).
                 Required by the torx AbstractReferenceFactor signature.
-                
+
         Returns:
-            x_next: The integrated state vector for the next time step. If 
+            x_next: The integrated state vector for the next time step. If
                 return_aux is True, returns (x_next, None).
         """
         x = inputs["x"]
@@ -107,12 +107,12 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             return e
 
         grad_E = jax.grad(energy_fn)(x)
-        
+
         params = params or {}
         Q = params.get("Q", self.solenoidal.Q)
         Gamma = params.get("Gamma", self.dissipative.Gamma)
         L = params.get("L", jnp.linalg.cholesky(Gamma))
-        
+
         x_next = self.thermostat(
             x=x,
             grad_E=grad_E,
@@ -122,9 +122,9 @@ class MaskedThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             key=key,
             omega_ext=omega_ext,
             q_ext=q_ext,
-            Gamma=Gamma
+            Gamma=Gamma,
         )
-        
+
         if return_aux:
             return x_next, None
 
@@ -136,6 +136,7 @@ class MarkovBlanketObserver(eqx.Module):
     Fuses physical boundaries, energy-based learning, and stochastic unrolling
     into a single localized self-evidencing entity.
     """
+
     hull: MarkovHull
     ebm: PrecisionWeightedEBM
     solenoidal: SolenoidalFlow
@@ -158,28 +159,34 @@ class MarkovBlanketObserver(eqx.Module):
         key: PRNGKeyArray,
         D_s: jax.Array | None = None,
         epsilon: float = 1e-4,
-        use_blanket_topology: bool = True
+        use_blanket_topology: bool = True,
     ):
         self.hull = MarkovHull(d_internal, d_sensory, d_active, d_external, D_s=D_s)
         d_state = self.hull.d_state
         self.use_blanket_topology = use_blanket_topology
-        
+
         if use_blanket_topology:
-            logging.info("Initializing MarkovBlanketObserver with strictly positive-definite partitioned topology.")
+            logging.info(
+                "Initializing MarkovBlanketObserver with strictly positive-definite partitioned "
+                "topology."
+            )
         else:
-            logging.info("Initializing MarkovBlanketObserver with unpartitioned full-rank dense topology.")
-        
+            logging.info(
+                "Initializing MarkovBlanketObserver with unpartitioned full-rank dense topology."
+            )
+
         k1, k2, k3 = jax.random.split(key, 3)
         self.ebm = PrecisionWeightedEBM(
-            d_state=d_state,
-            hidden_size=ebm_hidden_size,
-            depth=ebm_depth,
-            key=k1
+            d_state=d_state, hidden_size=ebm_hidden_size, depth=ebm_depth, key=k1
         )
-        self.solenoidal = SolenoidalFlow(d_state=d_state, key=k2, hull=self.hull if use_blanket_topology else None)
-        self.dissipative = DissipativeFriction(d_state=d_state, key=k3, hull=self.hull if use_blanket_topology else None)
+        self.solenoidal = SolenoidalFlow(
+            d_state=d_state, key=k2, hull=self.hull if use_blanket_topology else None
+        )
+        self.dissipative = DissipativeFriction(
+            d_state=d_state, key=k3, hull=self.hull if use_blanket_topology else None
+        )
         self.thermostat = Thermostat(temperature=temperature)
-        
+
         masked_factor = MaskedThermoFlowFactor(
             ebm=self.ebm,
             solenoidal=self.solenoidal,
@@ -188,18 +195,14 @@ class MarkovBlanketObserver(eqx.Module):
             hull=self.hull,
             d_state=d_state,
             epsilon=epsilon,
-            use_blanket_topology=use_blanket_topology
+            use_blanket_topology=use_blanket_topology,
         )
-        
+
         self.thermalizer = TorxThermalizer(
-            flow_factor=masked_factor, 
-            n_steps=n_steps, 
-            d_state=d_state
+            flow_factor=masked_factor, n_steps=n_steps, d_state=d_state
         )
         self.forced_thermalizer = ForcedTorxThermalizer(
-            flow_factor=masked_factor,
-            d_state=d_state,
-            injection_start_idx=self.hull.d_internal
+            flow_factor=masked_factor, d_state=d_state, injection_start_idx=self.hull.d_internal
         )
 
     @jaxtyped(typechecker=beartype)
@@ -210,12 +213,30 @@ class MarkovBlanketObserver(eqx.Module):
         factor_params = self.thermalizer.graph.sites[0].factor.base.precompute()
         return self.thermalizer(key, x_init, dt, factor_params=factor_params)
 
-    def forced_unroll(self, key: PRNGKeyArray, x_init: jax.Array, dt: float, seq: jax.Array | None = None, omega_seq: jax.Array | None = None, q_gain: float = 0.0, q_mask: jax.Array | None = None) -> jax.Array:
+    def forced_unroll(
+        self,
+        key: PRNGKeyArray,
+        x_init: jax.Array,
+        dt: float,
+        seq: jax.Array | None = None,
+        omega_seq: jax.Array | None = None,
+        q_gain: float = 0.0,
+        q_mask: jax.Array | None = None,
+    ) -> jax.Array:
         """
         Executes the unrolled simulation over an external sequence.
         """
         factor_params = self.forced_thermalizer.flow_factor.precompute()
-        return self.forced_thermalizer(key, x_init, dt, seq=seq, omega_seq=omega_seq, q_gain=q_gain, q_mask=q_mask, factor_params=factor_params)
+        return self.forced_thermalizer(
+            key,
+            x_init,
+            dt,
+            seq=seq,
+            omega_seq=omega_seq,
+            q_gain=q_gain,
+            q_mask=q_mask,
+            factor_params=factor_params,
+        )
 
     def extract_internal_state(self, x: jax.Array) -> dict:
         """

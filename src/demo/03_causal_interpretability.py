@@ -117,6 +117,7 @@ def main():
 
     # Register LRP strategy with the AttributionEngine
     from src.metrics.attribution_engine import AttributionEngine
+
     AttributionEngine.get_instance().set_strategy(lambda m, x, t: relevance_tensor)
 
     logger.info("[*] Generating Thermodynamic Diagnostic...")

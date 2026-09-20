@@ -12,13 +12,15 @@ logger = logging.getLogger(__name__)
 
 class SpatialCompressor(nn.Module):
     """
-    SpatialCompressor serves as the bridge between raw biological voxels and the temporal latent space.
+    SpatialCompressor serves as the bridge between raw biological voxels and the temporal latent
+        space.
     """
 
     def __init__(self, model_name="vit_base_patch16_224"):
         super().__init__()
 
-        # 5. Load pre-trained ViT without the classification head (num_classes=0 outputs pooled features)
+        # 5. Load pre-trained ViT without the classification head (num_classes=0 outputs pooled
+        # features)
         self.vit = timm.create_model(model_name, pretrained=True, num_classes=0)
 
         # Ensure gradient calculation is disabled for the ViT to prevent memory exhaustion
@@ -57,11 +59,11 @@ class SpatialCompressor(nn.Module):
         with torch.no_grad():
             for t in range(T):
                 x_t = x_padded[:, t]  # Shape: [Batch, 3, Height, Width]
-                
+
                 # Interpolate to 224x224 since the vit_base_patch16_224 requires 224x224 geometry
                 if H != 224 or W != 224:
                     x_t = F.interpolate(x_t, size=(224, 224), mode="bilinear", align_corners=False)
-                    
+
                 # 5. Pass the batch of frames through the frozen ViT-Base model
                 feat_t = self.vit(x_t)  # Shape: [Batch, 768]
                 features.append(feat_t)

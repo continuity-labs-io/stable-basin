@@ -130,7 +130,10 @@ def run_benchmark(batch_size=32, time_steps=100, num_batches=10):
     print(f"Average Peak VRAM         : {format_bytes(avg_vram) if avg_vram > 0 else 'N/A (CPU)'}")
     print(f"Average Local Throughput  : {avg_throughput:.2f} frames/sec")
     print(f"Interrupts Bypassed       : {avg_iops}")
-    print("\nCONCLUSION: Performing this inference at the edge avoids kernel panic from context-switching,")
+    print(
+        "\nCONCLUSION: Performing this inference at the edge avoids kernel panic from context- "
+        "switching,"
+    )
     print("bypassing millions of IOPS compared to traditional interrupt-driven architectures.")
 
 

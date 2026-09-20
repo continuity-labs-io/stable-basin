@@ -356,8 +356,10 @@ def main():
         gevi_anomalous_raw = gevi_dataloader.generate_synthetic_gevi(
             experimental_batch.size(0), experimental_batch.size(1), device, is_healthy=False
         )
-        gevi_healthy_raw = gevi_dataloader.generate_synthetic_gevi(raw_batch.size(0), raw_batch.size(1), device, is_healthy=True)
-        
+        gevi_healthy_raw = gevi_dataloader.generate_synthetic_gevi(
+            raw_batch.size(0), raw_batch.size(1), device, is_healthy=True
+        )
+
         gevi_anomalous = gevi_encoder(gevi_anomalous_raw)
         gevi_healthy = gevi_encoder(gevi_healthy_raw)
 

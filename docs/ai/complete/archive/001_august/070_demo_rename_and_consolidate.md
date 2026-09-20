@@ -24,29 +24,38 @@ src/models/ssm/meld_engine.py:
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 try:
     from mamba_ssm import Mamba2
 except ImportError:
     Mamba2 = None
+
 
 class MeldEngine(nn.Module):
     """
     Unified Continuous-Time State Space Engine for MELD Demos.
     Handles standard forecasting, reverse time reconstruction, and mask-aware routing.
     """
-    def __init__(self, input_dim: int, d_model: int = 256, d_state: int = 64, mask_aware: bool = False):
+
+    def __init__(
+        self, input_dim: int, d_model: int = 256, d_state: int = 64, mask_aware: bool = False
+    ):
         super().__init__()
         self.mask_aware = mask_aware
 
         # If mask_aware is True, we double the input dim to concatenate the sensor failure mask
         in_features = input_dim * 2 if mask_aware else input_dim
 
-        self.input_proj = nn.Sequential(
-            nn.Linear(in_features, d_model),
-            nn.LayerNorm(d_model),
-            nn.GELU(),
-            nn.Linear(d_model, d_model),
-        ) if mask_aware else nn.Linear(input_dim, d_model)
+        self.input_proj = (
+            nn.Sequential(
+                nn.Linear(in_features, d_model),
+                nn.LayerNorm(d_model),
+                nn.GELU(),
+                nn.Linear(d_model, d_model),
+            )
+            if mask_aware
+            else nn.Linear(input_dim, d_model)
+        )
 
         # Core SSM Backbone
         if Mamba2 is not None:

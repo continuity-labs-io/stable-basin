@@ -82,11 +82,12 @@ Ensure the file follows the standard Stable Basin 2.0 structure:
 """
 Phase 3: Torx Observer Zero Port (Macro-State Extraction)
 
-Demonstrates extracting a slow, stable macroscopic order parameter from chaotic 
+Demonstrates extracting a slow, stable macroscopic order parameter from chaotic
 micro-states using a Torx probabilistic Directed Factor Graph (DFG).
 """
 
 import os
+
 os.environ["JAX_PLATFORMS"] = "cpu"
 
 import sys
@@ -97,6 +98,7 @@ import jax.numpy as jnp
 import equinox as eqx
 import optax
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -111,7 +113,6 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("TorxObserverZero")
 
 # ... (Implementation of MacroObserverFactor, Data Generator, and Training Loop) ...
-
 ```
 
 ## ✅ 4. Definition of Done

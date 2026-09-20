@@ -14,12 +14,14 @@ logger = logging.getLogger(__name__)
 class SpikeProphecyDataset(IterableDataset):
     def __init__(self, time_steps: int, split: str = "train", data_dir: str = None):
         """
-        IterableDataset for the SpikeProphecy Steinmetz dataset.
+                IterableDataset for the SpikeProphecy Steinmetz dataset.
 
-        Args:
-            time_steps (int): The required number of time steps (history bins) for the sliding window.
-            split (str): One of 'train', 'val', or 'test'.
-            data_dir (str): Optional path to local dataset cache. If None, it will download via huggingface_hub.
+                Args:
+        time_steps (int): The required number of time steps (history bins) for the sliding
+                    window.
+                    split (str): One of 'train', 'val', or 'test'.
+        data_dir (str): Optional path to local dataset cache. If None, it will download via
+                    huggingface_hub.
         """
         super().__init__()
         if split not in ("train", "val", "test"):
@@ -139,6 +141,3 @@ class SpikeProphecyDataset(IterableDataset):
                 # Convert to torch tensor (float32 for model consumption)
                 tensor_window = torch.from_numpy(padded_window.copy()).float()
                 yield tensor_window
-
-
-

@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 # Suppress MNE INFO logs globally
 mne.set_log_level("WARNING")
 
+
 class LemonEEGDataset(Dataset):
     """
     LEMON EEG Dataloader.
@@ -18,18 +19,25 @@ class LemonEEGDataset(Dataset):
     to manage dimensionality, and yields fixed-length crops. Features a synthetic
     fallback mechanism for CI testing.
     """
-    def __init__(self, data_path: str = "data/lemon/", size: int = 100, seq_len: int = 3000, n_components: int = 5):
+
+    def __init__(
+        self,
+        data_path: str = "data/lemon/",
+        size: int = 100,
+        seq_len: int = 3000,
+        n_components: int = 5,
+    ):
         super().__init__()
         self.data_path = data_path
         self.size = size
         self.seq_len = seq_len
         self.n_components = n_components
-        
+
         self.use_synthetic = True
         self.data = None
-        
+
         if os.path.exists(data_path):
-            set_files = [f for f in os.listdir(data_path) if f.endswith('.set')]
+            set_files = [f for f in os.listdir(data_path) if f.endswith(".set")]
             if len(set_files) > 0:
                 self.use_synthetic = False
                 logger.info(f"Loading real LEMON data from {data_path}")
@@ -39,21 +47,30 @@ class LemonEEGDataset(Dataset):
                     # Load and get data
                     raw = mne.io.read_raw_eeglab(raw_file, preload=True, verbose="WARNING")
                     data = raw.get_data().T  # Shape: [time, channels]
-                    
+
                     # PCA Reduction
                     pca = PCA(n_components=self.n_components)
                     self.data = torch.tensor(pca.fit_transform(data), dtype=torch.float32)
                 except Exception as e:
                     logger.warning(f"Failed to load real LEMON data: {e}.")
-                    logger.info("Local biological data not found. Falling back to deterministic synthetic generation for CI.")
+                    logger.info(
+                        "Local biological data not found. Falling back to deterministic synthetic "
+                        "generation for CI."
+                    )
                     self.use_synthetic = True
             else:
-                logger.info("Local biological data not found. Falling back to deterministic synthetic generation for CI.")
+                logger.info(
+                    "Local biological data not found. Falling back to deterministic synthetic "
+                    "generation for CI."
+                )
                 self.use_synthetic = True
         else:
-            logger.info("Local biological data not found. Falling back to deterministic synthetic generation for CI.")
+            logger.info(
+                "Local biological data not found. Falling back to deterministic synthetic "
+                "generation for CI."
+            )
             self.use_synthetic = True
-            
+
         if self.use_synthetic:
             self.synthetic_data = [
                 self.generate_synthetic_data(self.seq_len, self.n_components, seed=42 + i)
@@ -62,7 +79,7 @@ class LemonEEGDataset(Dataset):
 
     def __len__(self):
         return self.size
-        
+
     def __getitem__(self, idx):
         if self.use_synthetic:
             x_raw = self.synthetic_data[idx]
@@ -74,10 +91,10 @@ class LemonEEGDataset(Dataset):
             if len(x_raw) < self.seq_len:
                 pad = torch.zeros(self.seq_len - len(x_raw), self.n_components)
                 x_raw = torch.cat([x_raw, pad], dim=0)
-                
+
         mask = torch.ones_like(x_raw)
-        y_true = x_raw[:, 0:1] # Dummy target for autoregression compatibility
-        
+        y_true = x_raw[:, 0:1]  # Dummy target for autoregression compatibility
+
         return {"x_raw": x_raw, "mask": mask, "y_true": y_true}
 
     @staticmethod
@@ -91,5 +108,5 @@ class LemonEEGDataset(Dataset):
         x_raw[0] = noise[0]
         alpha = 0.95
         for t in range(1, seq_len):
-            x_raw[t] = alpha * x_raw[t-1] + (1 - alpha) * noise[t]
+            x_raw[t] = alpha * x_raw[t - 1] + (1 - alpha) * noise[t]
         return x_raw

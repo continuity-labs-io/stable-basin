@@ -258,7 +258,8 @@ def main():
     model.eval()
     val_seq = batch.clone()
 
-    # Simulate true biological flatline: drive voltage to near 0 to force DMD eigenvalues to collapse
+    # Simulate true biological flatline: drive voltage to near 0 to force DMD eigenvalues to
+    # collapse
     val_seq[:, EVENT_FRAME:, :] = 0.0
 
     before_crash = val_seq[:, EVENT_FRAME - 1000 : EVENT_FRAME, :]

@@ -41,8 +41,15 @@ from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
+
 def run_smoke_test():
-    device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+    device = torch.device(
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
+    )
     logger.info(f"Running smoke tests on: {device}")
 
     # The Frozen Registry
@@ -54,7 +61,7 @@ def run_smoke_test():
         SSMType.MASK_AWARE,
         SSMType.MASK_AWARE_MAMBA,
         SSMType.GRU_D,
-        SSMType.ODE_RNN
+        SSMType.ODE_RNN,
     ]
 
     batch_size = 2
@@ -79,17 +86,16 @@ def run_smoke_test():
 
             # 1. Initialization
             model = SensorFusionPredictor(
-                ssm_type=ssm_type,
-                modality_dims=modality_dims,
-                d_model=d_model,
-                out_dim=out_dim
+                ssm_type=ssm_type, modality_dims=modality_dims, d_model=d_model, out_dim=out_dim
             ).to(device)
 
             # 2. Forward Pass
             preds, hidden = model(x_raw, mask)
 
             assert preds.shape == (batch_size, seq_len, out_dim), f"Bad preds shape: {preds.shape}"
-            assert hidden.shape == (batch_size, seq_len, d_model), f"Bad hidden shape: {hidden.shape}"
+            assert hidden.shape == (batch_size, seq_len, d_model), (
+                f"Bad hidden shape: {hidden.shape}"
+            )
             assert not torch.isnan(preds).any(), "NaNs in predictions"
             assert not torch.isnan(hidden).any(), "NaNs in hidden states"
 
@@ -117,6 +123,7 @@ def run_smoke_test():
         logger.info("ALL MODELS PASSED SMOKE TEST. The registry is frozen and stable.")
     else:
         logger.error("SOME MODELS FAILED. Do not proceed to Phase 2 until fixed.")
+
 
 if __name__ == "__main__":
     run_smoke_test()

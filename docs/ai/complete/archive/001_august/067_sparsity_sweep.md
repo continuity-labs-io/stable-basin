@@ -44,32 +44,45 @@ Sparsity with 5-Seed Variance shading.
 Example Plotting Logic:
 
 ```python
-    # Plotting Statistical Rigor
-    plt.style.use('dark_background')
-    fig, ax = plt.subplots(figsize=(12, 8))
+# Plotting Statistical Rigor
+plt.style.use("dark_background")
+fig, ax = plt.subplots(figsize=(12, 8))
 
-    colors = {"baseline": "red", "forward_fill": "magenta", "mask_concat": "yellow",
-              "gru_d": "cyan", "ode_rnn": "orange", "mask_aware": "lime"}
+colors = {
+    "baseline": "red",
+    "forward_fill": "magenta",
+    "mask_concat": "yellow",
+    "gru_d": "cyan",
+    "ode_rnn": "orange",
+    "mask_aware": "lime",
+}
 
-    for m in models:
-        means = [np.mean(results[m][s]) for s in sparsities]
-        stds = [np.std(results[m][s]) for s in sparsities]
+for m in models:
+    means = [np.mean(results[m][s]) for s in sparsities]
+    stds = [np.std(results[m][s]) for s in sparsities]
 
-        ax.plot(sparsities, means, marker='o', color=colors[m], linewidth=2.5, label=m.upper())
-        ax.fill_between(sparsities, np.array(means) - np.array(stds), np.array(means) + np.array(stds),
-                        color=colors[m], alpha=0.15)
+    ax.plot(sparsities, means, marker="o", color=colors[m], linewidth=2.5, label=m.upper())
+    ax.fill_between(
+        sparsities,
+        np.array(means) - np.array(stds),
+        np.array(means) + np.array(stds),
+        color=colors[m],
+        alpha=0.15,
+    )
 
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    ax.invert_xaxis()  # 10% on left down to 0.1% on right
+ax.set_xscale("log")
+ax.set_yscale("log")
+ax.invert_xaxis()  # 10% on left down to 0.1% on right
 
-    ax.set_title("OOD Generalization vs. Sensor Sparsity (5-Seed Variance)", color='white', fontweight='bold')
-    ax.set_xlabel("Sensor Sparsity (Log Scale -> Lower is Sparser)", color='white')
-    ax.set_ylabel("Out-of-Distribution MSE (Log Scale)", color='white')
-    ax.legend()
-    ax.grid(True, alpha=0.2)
+ax.set_title(
+    "OOD Generalization vs. Sensor Sparsity (5-Seed Variance)", color="white", fontweight="bold"
+)
+ax.set_xlabel("Sensor Sparsity (Log Scale -> Lower is Sparser)", color="white")
+ax.set_ylabel("Out-of-Distribution MSE (Log Scale)", color="white")
+ax.legend()
+ax.grid(True, alpha=0.2)
 
-    os.makedirs("output/data", exist_ok=True)
-    plt.savefig("output/data/05_sparsity_sweep.png", dpi=300)
-    print("\n[+] Dashboard saved to output/data/05_sparsity_sweep.png")
+os.makedirs("output/data", exist_ok=True)
+plt.savefig("output/data/05_sparsity_sweep.png", dpi=300)
+print("\n[+] Dashboard saved to output/data/05_sparsity_sweep.png")
 ```

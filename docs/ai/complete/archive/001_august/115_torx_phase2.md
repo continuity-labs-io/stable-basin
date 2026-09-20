@@ -46,6 +46,7 @@ logger = logging.getLogger("TorxNeuralNet")
 # This means we can embed standard neural network layers inside them,
 # and JAX will track their parameters natively across the DFG.
 
+
 class NeuralTransitionFactor(AbstractReferenceFactor):
     """A factor that uses an MLP to predict the next biological state."""
 
@@ -69,7 +70,7 @@ class NeuralTransitionFactor(AbstractReferenceFactor):
             width_size=16,
             depth=1,
             activation=jax.nn.gelu,
-            key=key
+            key=key,
         )
 
     def sample(self, key, inputs, params, info=None, site_info=None, return_aux=False):
@@ -92,14 +93,15 @@ class NeuralTransitionFactor(AbstractReferenceFactor):
         # We don't need explicit external params because Equinox tracks self.mlp
         return None
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--backend", type=str, default="jax", help="Backend to use")
     args = parser.parse_args()
 
-    logger.info("\n" + "="*60)
+    logger.info("\n" + "=" * 60)
     logger.info(" STABLE BASIN 2.0: TORX NEURAL NETWORK TRAINING")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     device = get_optimal_device(verbose=True, backend=args.backend)
     key = jax.random.key(42)
@@ -119,11 +121,13 @@ def main():
                 factor=neural_factor,
                 parents=("env_input",),
                 porting_fn=("current_state",),
-                param_key=None, info_key=None, site_info=None
+                param_key=None,
+                info_key=None,
+                site_info=None,
             ),
         ),
         input_ports={"env_input": jax.ShapeDtypeStruct((in_dim,), jnp.float32)},
-        output_name="state_transition"
+        output_name="state_transition",
     )
 
     # =====================================================================
@@ -198,7 +202,8 @@ def main():
     logger.info(f"    Expected Y:   {expected_y[0].tolist()}")
     logger.info(f"    Predicted Y:  {pred_y.tolist()}")
     logger.info("\n[SUCCESS] Torx Stochastic Differentiable Programming verified.")
-    logger.info("="*60 + "\n")
+    logger.info("=" * 60 + "\n")
+
 
 if __name__ == "__main__":
     main()

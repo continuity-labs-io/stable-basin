@@ -12,9 +12,7 @@ class TopoEncoder(nn.Module):
     macroscopic geometric shape (Dynamic Attractor Basin) into a fixed latent vector.
     """
 
-    def __init__(
-        self, ssm: nn.Module, d_model=settings.MAMBA_D_MODEL
-    ):
+    def __init__(self, ssm: nn.Module, d_model=settings.MAMBA_D_MODEL):
         super().__init__()
 
         # 2D Convolutional frontend to compress 64x64 spatial dimensions to d_model
@@ -38,11 +36,7 @@ class TopoEncoder(nn.Module):
         )
 
     @jaxtyped(typechecker=beartype)
-    def forward(
-        self,
-        x: Float[Tensor, "batch time 2 64 64"],
-        return_hidden: bool = False
-    ):
+    def forward(self, x: Float[Tensor, "batch time 2 64 64"], return_hidden: bool = False):
         """
         Args:
             x: Tensor of shape [Batch, Time, 2, 64, 64] representing the E-field flow
@@ -58,7 +52,7 @@ class TopoEncoder(nn.Module):
         # to process through the CNN in a single vectorized pass.
         x_flat = x.view(B * T, C, H, W)
         feat_flat = self.spatial_encoder(x_flat)  # Shape: [B * T, d_model]
-        
+
         # Unfold back to sequence format
         sequence = feat_flat.view(B, T, -1)  # Shape: [B, Time, d_model]
 

@@ -16,18 +16,19 @@ class SyntheticWaddingtonDataset(Dataset):
       - Modality 0 (20D): Continuous projection of the slow recovery variable w.
       - Modality 1 (10D): Sparse projection of the fast spiking variable v (masked 95% of the time).
     - mask: A 2-dimensional tensor representing the observability of the two modalities.
-    
+
     Parameters:
     - size (int): The total number of unique sequences generated per epoch.
-    - seq_len (int): The total time steps (length) of each sequence generated. 
-    - density (float): The probability (0.0 to 1.0) that a Modality 1 sensor is active at any given step.
-    
+    - seq_len (int): The total time steps (length) of each sequence generated.
+    - density (float): The probability (0.0 to 1.0) that a Modality 1 sensor is active at any given
+        step.
+
     Mathematics (FitzHugh-Nagumo Model):
     The data is generated dynamically on-the-fly using the FitzHugh-Nagumo oscillator equations.
     It is a 2D simplification of the Hodgkin-Huxley model of neural spiking:
-      dv/dt = v - (v^3) / 3 - w + I_ext
-      dw/dt = (v + a - b * w) / tau
-      
+        dv/dt = v - (v^3) / 3 - w + I_ext
+        dw/dt = (v + a - b * w) / tau
+
     Where:
     - v (fast variable): Represents membrane voltage (action potentials).
     - w (slow variable): Represents recovery / gating kinetics.
@@ -36,16 +37,26 @@ class SyntheticWaddingtonDataset(Dataset):
     - tau (10000.0): The time-scale separation parameter making 'w' much slower than 'v'.
     """
 
-    def __init__(self, size: int = 100, seq_len: int = 500, density: float = 0.05,
-                 dim_slow: int = 20, dim_fast: int = 10, noise_std: float = 0.05,
-                 tau: float = 10000.0, a: float = 0.7, b: float = 0.8, I_ext: float = 0.5):
+    def __init__(
+        self,
+        size: int = 100,
+        seq_len: int = 500,
+        density: float = 0.05,
+        dim_slow: int = 20,
+        dim_fast: int = 10,
+        noise_std: float = 0.05,
+        tau: float = 10000.0,
+        a: float = 0.7,
+        b: float = 0.8,
+        I_ext: float = 0.5,
+    ):
         self.size = size
         self.seq_len = seq_len
         self.density = density
         self.dim_slow = dim_slow
         self.dim_fast = dim_fast
         self.noise_std = noise_std
-        
+
         # FHN Parameters
         self.tau = tau
         self.a = a
@@ -59,18 +70,19 @@ class SyntheticWaddingtonDataset(Dataset):
         # We must ensure that the "biological layout" (the W_0 and W_1 sensor projections)
         # is absolutely identical across all test runs and seeds. However, we don't want
         # to ruin the global random seed used for generating the actual stochastic simulation data.
-        # Solution: Capture the global state, force a hardcoded biological seed, then perfectly restore.
+        # Solution: Capture the global state, force a hardcoded biological seed, then perfectly
+        # restore.
         global_rng_state = torch.get_rng_state()
-        
+
         biological_mapping_seed = 42
         torch.manual_seed(biological_mapping_seed)
-        
+
         self.W_0 = torch.randn(1, self.dim_slow)
         self.W_1 = torch.randn(1, self.dim_fast)
-        
+
         # Restore the global state so __getitem__ still respects the external runner's seed
         torch.set_rng_state(global_rng_state)
-        
+
         self._pregenerate_data()
 
     def _pregenerate_data(self):
@@ -89,7 +101,7 @@ class SyntheticWaddingtonDataset(Dataset):
                 w_curr += dw * self.dt
             v[i] = v_curr
             w[i] = w_curr
-            
+
         # Store as [size, seq_len, 1]
         self.v_all = v.transpose(0, 1)
         self.w_all = w.transpose(0, 1)
@@ -124,5 +136,3 @@ class SyntheticWaddingtonDataset(Dataset):
         # Output
         x_raw = torch.cat([modality_0, modality_1], dim=1)
         return {"x_raw": x_raw, "mask": mask, "y_true": y_true}
-
-

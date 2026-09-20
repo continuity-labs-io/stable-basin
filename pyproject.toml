@@ -23,6 +23,7 @@ dependencies = [
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+exclude = ["icebox"]
 
 [tool.ruff.lint]
 select = [
@@ -32,7 +33,10 @@ select = [
     "B",  # flake8-bugbear
     "TID", # flake8-tidy-imports
 ]
-ignore = ["F401", "E501", "E402"]
+ignore = [
+    "F401", # imported but unused
+    "E402", # module level import not at top of file
+]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "src.icebox" = { msg = "Do not import from the icebox. It contains deprecated/archived code." }

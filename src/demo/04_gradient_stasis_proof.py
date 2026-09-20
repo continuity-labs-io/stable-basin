@@ -106,8 +106,9 @@ Gradients flowing back to h_prev:
 -> The error signal survives the temporal void flawlessly across millions of steps.
 """
     print(summary)
-    
+
     import os
+
     output_dir = "output/demo"
     os.makedirs(output_dir, exist_ok=True)
     out_file = os.path.join(output_dir, "04_gradient_stasis_summary.txt")

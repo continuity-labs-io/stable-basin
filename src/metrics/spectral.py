@@ -3,6 +3,7 @@ import logging
 
 logger = logging.getLogger("DiagnosticLogger")
 
+
 def _hilbert_transform(x: torch.Tensor, dim: int = 0) -> torch.Tensor:
     """
     Computes the analytic signal using the Hilbert transform in native PyTorch.
@@ -10,21 +11,22 @@ def _hilbert_transform(x: torch.Tensor, dim: int = 0) -> torch.Tensor:
     """
     N = x.shape[dim]
     Xf = torch.fft.fft(x, dim=dim)
-    
+
     h = torch.zeros(N, device=x.device, dtype=x.dtype)
     if N % 2 == 0:
         h[0] = 1
         h[N // 2] = 1
-        h[1:N // 2] = 2
+        h[1 : N // 2] = 2
     else:
         h[0] = 1
-        h[1:(N + 1) // 2] = 2
-        
+        h[1 : (N + 1) // 2] = 2
+
     shape = [1] * x.dim()
     shape[dim] = N
     h = h.view(shape)
-    
+
     return torch.fft.ifft(Xf * h, dim=dim)
+
 
 class SpectralMetrics:
     def calculate_psd(self, tensor_seq: torch.Tensor, sampling_rate: float):
@@ -65,7 +67,7 @@ class SpectralMetrics:
 
         time_dim = 0
         min_steps = min(seq_a.shape[time_dim], seq_b.shape[time_dim])
-        
+
         if seq_a.dim() == 1:
             seq_a = seq_a[:min_steps]
             seq_b = seq_b[:min_steps]
@@ -104,7 +106,7 @@ class SpectralMetrics:
 
         time_dim = 0
         min_steps = min(slow_seq.shape[time_dim], fast_seq.shape[time_dim])
-        
+
         # Explicitly enforce identical temporal dimensions to prevent mismatched
         # sequence errors
         if slow_seq.dim() == 1:
@@ -115,7 +117,9 @@ class SpectralMetrics:
             fast_seq = fast_seq[:min_steps, ...]
 
         # Assert identical temporal dimensions after trimming
-        assert slow_seq.shape[time_dim] == fast_seq.shape[time_dim], "Temporal dimensions must be identical for PAC computation."
+        assert slow_seq.shape[time_dim] == fast_seq.shape[time_dim], (
+            "Temporal dimensions must be identical for PAC computation."
+        )
 
         # Extract the analytic signal for both sequences using the Hilbert
         # transform natively in PyTorch
@@ -125,7 +129,7 @@ class SpectralMetrics:
         # The instantaneous phase of the slow macroscopic variable (the top-down
         # prior)
         theta_slow = torch.angle(analytic_slow)
-        
+
         # The instantaneous amplitude envelope of the fast microscopic variable
         # (the enslaved state)
         A_fast = torch.abs(analytic_fast)

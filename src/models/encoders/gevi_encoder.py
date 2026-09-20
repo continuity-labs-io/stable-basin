@@ -4,9 +4,10 @@ import torch
 import torch.nn as nn
 from src.config import settings
 
+
 class GEVIEncoder(nn.Module):
     """
-    Temporally pools high-frequency bioelectric data streams (GEVI) down to 
+    Temporally pools high-frequency bioelectric data streams (GEVI) down to
     match a lower frequency optical framerate using a 1D Convolution.
     """
 
@@ -18,7 +19,7 @@ class GEVIEncoder(nn.Module):
     ):
         super().__init__()
         self.compression_ratio = int(gevi_sample_rate / target_clock_hz)
-        
+
         self.compressor = nn.Conv1d(
             in_channels=1,
             out_channels=gevi_dim,
@@ -27,7 +28,9 @@ class GEVIEncoder(nn.Module):
         )
 
     @jaxtyped(typechecker=beartype)
-    def forward(self, x: Float[torch.Tensor, "batch 1 total_steps"]) -> Float[torch.Tensor, "batch target_time_steps gevi_dim"]:
+    def forward(
+        self, x: Float[torch.Tensor, "batch 1 total_steps"]
+    ) -> Float[torch.Tensor, "batch target_time_steps gevi_dim"]:
         """
         Args:
             x: Tensor of shape (Batch, 1, Total_Steps) representing high-frequency GEVI data

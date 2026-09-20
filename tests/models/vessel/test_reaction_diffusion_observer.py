@@ -2,6 +2,7 @@ import torch
 import pytest
 from src.models.vessel.reaction_diffusion_observer import ReactionDiffusionObserver
 
+
 def test_laplacian_invariants():
     # ARRANGE
     size = 16
@@ -19,15 +20,22 @@ def test_laplacian_invariants():
     # ASSERT
     # Assertion 1: Shape consistency
     assert out.shape == x.shape, "Shape consistency failed for Laplacian"
-    
+
     # Assertion 2: Boundary conditions (Hard Boundaries / No-Flux)
-    # The kernel is 3x3. With replicate padding, the pixel at (0, 0) is duplicated 
-    # outwards, so the corner (0, 0) receives the impact of the top-left, top, and left kernel elements.
+    # The kernel is 3x3. With replicate padding, the pixel at (0, 0) is duplicated
+    # outwards, so the corner (0, 0) receives the impact of the top-left, top, and left kernel
+    # elements.
     # It should no longer wrap around to the opposite side of the grid.
-    assert torch.isclose(out[0, 0, size-1, size-1], torch.tensor(0.0)), "Boundary condition failed: should not wrap diagonally"
-    assert torch.isclose(out[0, 0, size-1, 0], torch.tensor(0.0)), "Boundary condition failed: should not wrap vertically"
-    assert torch.isclose(out[0, 0, 0, size-1], torch.tensor(0.0)), "Boundary condition failed: should not wrap horizontally"
-    
+    assert torch.isclose(out[0, 0, size - 1, size - 1], torch.tensor(0.0)), (
+        "Boundary condition failed: should not wrap diagonally"
+    )
+    assert torch.isclose(out[0, 0, size - 1, 0], torch.tensor(0.0)), (
+        "Boundary condition failed: should not wrap vertically"
+    )
+    assert torch.isclose(out[0, 0, 0, size - 1], torch.tensor(0.0)), (
+        "Boundary condition failed: should not wrap horizontally"
+    )
+
     # Assertion 3: Gradient stability
     assert x.grad is not None, "Gradient stability failed: no gradient"
     assert not torch.isnan(x.grad).any(), "Gradient stability failed: NaNs in gradient"
@@ -37,11 +45,13 @@ def test_laplacian_invariants():
 def test_continuous_update_invariants():
     # ARRANGE
     size = 16
-    model = ReactionDiffusionObserver(size=size, dt=0.1, sigma=0.0) # sigma=0 for deterministic gradient check
+    model = ReactionDiffusionObserver(
+        size=size, dt=0.1, sigma=0.0
+    )  # sigma=0 for deterministic gradient check
     # Require grad on buffers for testing
     model.u.requires_grad = True
     model.v.requires_grad = True
-    
+
     # Keep references to the leaf tensors
     u_init = model.u
     v_init = model.v
@@ -55,18 +65,19 @@ def test_continuous_update_invariants():
     # Assertion 1: Shape consistency
     assert u_new.shape == (1, 1, size, size), "Shape consistency failed for u_new"
     assert v_new.shape == (1, 1, size, size), "Shape consistency failed for v_new"
-    
+
     # Assertion 2: Boundary conditions (State integration bounds)
-    # Check that update is bounded and smooth, and values are physically plausible 
+    # Check that update is bounded and smooth, and values are physically plausible
     # For a small dt, max change should be bounded.
     max_change_u = torch.max(torch.abs(u_new - u_init))
     assert max_change_u < 10.0, "Boundary condition failed: update step exploded"
-    
+
     # Assertion 3: Gradient stability
     assert u_init.grad is not None, "Gradient stability failed: u missing grad"
     assert v_init.grad is not None, "Gradient stability failed: v missing grad"
     assert not torch.isnan(u_init.grad).any(), "Gradient stability failed: NaNs in u.grad"
     assert not torch.isnan(v_init.grad).any(), "Gradient stability failed: NaNs in v.grad"
+
 
 def test_inject_wound_invariants():
     # ARRANGE
@@ -74,28 +85,35 @@ def test_inject_wound_invariants():
     model = ReactionDiffusionObserver(size=size)
     model.u.requires_grad = True
     model.v.requires_grad = True
-    
+
     u_init = model.u
-    
+
     # ACT
     model.inject_wound(x=8, y=8, radius=3, u_val=5.0, v_val=-5.0)
-    
+
     loss = model.u.sum() + model.v.sum()
     loss.backward()
-    
+
     # ASSERT
     # 1. Shape consistency
     assert model.u.shape == (1, 1, size, size), "Shape consistency failed for wound u"
     assert model.v.shape == (1, 1, size, size), "Shape consistency failed for wound v"
-    
+
     # 2. Boundary conditions / Spatial assignment check
     # Check that the wound actually changed the values precisely in the radius
-    assert torch.isclose(model.u[0, 0, 8, 8], torch.tensor(5.0)), "Boundary condition failed: wound center unassigned"
+    assert torch.isclose(model.u[0, 0, 8, 8], torch.tensor(5.0)), (
+        "Boundary condition failed: wound center unassigned"
+    )
     # A point outside the radius (e.g. 0, 0) should remain unchanged
-    assert torch.isclose(model.u[0, 0, 0, 0], u_init[0, 0, 0, 0]), "Boundary condition failed: wound bled outside radius"
-    
+    assert torch.isclose(model.u[0, 0, 0, 0], u_init[0, 0, 0, 0]), (
+        "Boundary condition failed: wound bled outside radius"
+    )
+
     # 3. Gradient stability
-    # Our implementation uses torch.where, which should safely route gradients to the unmodified elements 
+    # Our implementation uses torch.where, which should safely route gradients to the unmodified
+    # elements
     # of the original tensor.
     assert u_init.grad is not None, "Gradient stability failed: wound broke u grad"
-    assert not torch.isnan(u_init.grad).any(), "Gradient stability failed: wound introduced NaNs in grad"
+    assert not torch.isnan(u_init.grad).any(), (
+        "Gradient stability failed: wound introduced NaNs in grad"
+    )

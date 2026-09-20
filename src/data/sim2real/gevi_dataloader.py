@@ -5,7 +5,7 @@ from src.config import settings
 class GEVIDataloader:
     """
     Simulates a high-frequency bioelectric data stream (GEVI).
-    Generates synthetic membrane potentials, action potentials, 
+    Generates synthetic membrane potentials, action potentials,
     and optionally injects a variance explosion anomaly.
 
     Args:

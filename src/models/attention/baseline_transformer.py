@@ -20,18 +20,20 @@ class BaselineTransformer(nn.Module):
         self.pos_embedding = nn.Parameter(torch.randn(1, max_len, d_model) * pos_embedding_scale)
 
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=d_model, nhead=nhead, batch_first=True, 
+            d_model=d_model,
+            nhead=nhead,
+            batch_first=True,
             dim_feedforward=d_model * ff_expansion_factor,
-            norm_first=True
+            norm_first=True,
         )
         self.transformer = nn.TransformerEncoder(
-            encoder_layer, 
-            num_layers=num_layers, 
-            enable_nested_tensor=False
+            encoder_layer, num_layers=num_layers, enable_nested_tensor=False
         )
 
     @jaxtyped(typechecker=beartype)
-    def forward(self, latent_x: Float[torch.Tensor, "batch seq_len d_model"]) -> Float[torch.Tensor, "batch seq_len d_model"]:
+    def forward(
+        self, latent_x: Float[torch.Tensor, "batch seq_len d_model"]
+    ) -> Float[torch.Tensor, "batch seq_len d_model"]:
         batch, seq_len, d_model = latent_x.size()
 
         # Add positional embeddings

@@ -34,40 +34,48 @@ class MeldLoss(nn.Module):
         target_t_plus_1: Float[torch.Tensor, "batch ..."],
         pred_t_plus_1: Float[torch.Tensor, "batch ..."],
         reconstructed_t: Float[torch.Tensor, "batch ..."],
-        delta_x: Float[torch.Tensor, "batch 1"]
+        delta_x: Float[torch.Tensor, "batch 1"],
     ):
         """
-        Calculates the composite loss.
+                Calculates the composite loss.
 
-        Args:
-            state_t: Tensor of shape (batch_size, ...) representing the actual state at time t.
-            target_t_plus_1: Tensor of shape (batch_size, ...) representing the ground-truth state at time t+1.
-            pred_t_plus_1: Tensor of shape (batch_size, ...) representing the predicted state at time t+1.
-            reconstructed_t: Tensor of shape (batch_size, ...) representing the reconstructed state at time t.
-            delta_x: Tensor of shape (batch_size, 1) representing the magnitude of the perturbation/time step.
+                Args:
+                    state_t: Tensor of shape (batch_size, ...) representing the state at time t.
+        target_t_plus_1: Tensor of shape (batch_size, ...) representing the ground-truth state
+                    at time t+1.
+        pred_t_plus_1: Tensor of shape (batch_size, ...) representing the predicted state at
+                    time t+1.
+        reconstructed_t: Tensor of shape (batch_size, ...) representing the reconstructed state
+                    at time t.
+        delta_x: Tensor of shape (batch_size, 1) representing the magnitude of the
+                    perturbation/time step.
 
-        Returns:
-            Tuple containing:
-            - L_total: A scalar tensor representing the total weighted loss.
-            - metrics: A dictionary of individual detached loss components for telemetry logging.
+                Returns:
+                    Tuple containing:
+                    - L_total: A scalar tensor representing the total weighted loss.
+                    - metrics: A dictionary of detached loss components for telemetry.
         """
         # 1. Next-Frame Forecasting (L_forecast)
         l_forecast = F.mse_loss(pred_t_plus_1, target_t_plus_1)
 
         # 2. Steady-State Flux Penalty (formerly Lipschitz Penalty)
         # Biology is an open thermodynamic system fed by microfluidics.
-        # We penalize the AI if it hallucinates a state transition whose required activation 
-        # energy exceeds the continuous glucose perfusion rate. 
+        # We penalize the AI if it hallucinates a state transition whose required activation
+        # energy exceeds the continuous glucose perfusion rate.
         # ΔATP_internal = Energy_imported - Energy_expended
-        
-        # Calculate the predicted state change (activation energy required): Δy = pred_t_plus_1 - state_t
+
+        # Calculate the predicted state change (activation energy required): Δy = pred_t_plus_1 -
+        # state_t
         delta_y = pred_t_plus_1 - state_t
 
-        # Calculate the L2 norm of the predicted state change per sample across all non-batch dimensions.
+        # Calculate the L2 norm of the predicted state change per sample across all non-batch
+        # dimensions.
         # This represents the Energy_expended for the state transition.
         batch_size = delta_y.size(0)
         delta_y_flat = delta_y.view(batch_size, -1)
-        energy_expended = torch.sqrt(torch.sum(delta_y_flat ** 2, dim=1, keepdim=True) + 1e-8)  # shape (batch_size, 1)
+        energy_expended = torch.sqrt(
+            torch.sum(delta_y_flat**2, dim=1, keepdim=True) + 1e-8
+        )  # shape (batch_size, 1)
 
         # The glucose perfusion rate provides continuous energy flux: Energy_imported = L * delta_x
         # where L is the perfusion rate constant (steady-state flux).
@@ -112,7 +120,11 @@ class TopoContrastiveLoss(nn.Module):
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
 
     @jaxtyped(typechecker=beartype)
-    def forward(self, lfp_latents: Float[torch.Tensor, "batch d_model"], vision_latents: Float[torch.Tensor, "batch d_model"]):
+    def forward(
+        self,
+        lfp_latents: Float[torch.Tensor, "batch d_model"],
+        vision_latents: Float[torch.Tensor, "batch d_model"],
+    ):
         # L2-normalize both sets of latent vectors along the feature dimension
         lfp_latents = F.normalize(lfp_latents, p=2, dim=1)
         vision_latents = F.normalize(vision_latents, p=2, dim=1)

@@ -17,6 +17,7 @@ from src.models.ssm.baseline_ssm import BaselineSSM
 from src.models.ssm.mask_aware_ssm import MaskAwareSSM
 from src.models.attention.baseline_transformer import BaselineTransformer
 
+
 class WaddingtonPredictor(nn.Module):
     def __init__(
         self, ssm_type: str, d_cartridge: int = 30, n_modalities: int = 2, d_model: int = 64
@@ -26,7 +27,9 @@ class WaddingtonPredictor(nn.Module):
 
         # For mask_concat, we concatenate the 2D mask to the 30D raw data
         if ssm_type == "mask_concat":
-            self.fusion = BiologicalCartridgeFusion(d_cartridge + n_modalities, n_modalities, d_model)
+            self.fusion = BiologicalCartridgeFusion(
+                d_cartridge + n_modalities, n_modalities, d_model
+            )
         else:
             self.fusion = BiologicalCartridgeFusion(d_cartridge, n_modalities, d_model)
 

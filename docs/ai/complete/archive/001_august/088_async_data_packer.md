@@ -42,11 +42,13 @@ the exact codebase for the first two files.
 import torch
 from torch.utils.data import Dataset
 
+
 class AsyncEventPackerDataset(Dataset):
     """
     Wraps a dense, zero-padded dataset and dynamically 'packs' it into a sparse,
     1-dimensional Event Tensor. Eliminates VRAM waste.
     """
+
     def __init__(self, base_dataset, dt_resolution=1.0):
         self.base_dataset = base_dataset
         self.dt_resolution = dt_resolution
@@ -57,7 +59,7 @@ class AsyncEventPackerDataset(Dataset):
     def __getitem__(self, idx):
         batch = self.base_dataset[idx]
         x_raw = batch["x_raw"]  # [Seq_Len, Dim]
-        mask = batch["mask"]    # [Seq_Len, Dim]
+        mask = batch["mask"]  # [Seq_Len, Dim]
         y_true = batch.get("y_true", None)
 
         # Extract active events (torch.nonzero naturally sorts by time_idx then sensor_idx)
@@ -81,6 +83,7 @@ class AsyncEventPackerDataset(Dataset):
 
         return out
 
+
 def ragged_collate_fn(batch):
     """
     Collates ragged event tensors by padding to max_events in the current batch.
@@ -100,11 +103,7 @@ def ragged_collate_fn(batch):
             padded_events[i, :L, :] = ev
             event_mask[i, :L] = True
 
-    out = {
-        "events": padded_events,
-        "event_mask": event_mask,
-        "lengths": lengths
-    }
+    out = {"events": padded_events, "event_mask": event_mask, "lengths": lengths}
 
     if batch[0].get("y_true") is not None:
         out["y_true"] = torch.stack([item["y_true"] for item in batch])

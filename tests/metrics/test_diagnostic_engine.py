@@ -11,8 +11,9 @@ def test_diagnostic_engine_generation():
     mock_attribution = torch.ones(1, 50, 114)
     # Give high importance to feature 10 to test if it detects it
     mock_attribution[0, :, 10] = 100.0
-    
+
     from src.metrics.attribution_engine import AttributionEngine
+
     AttributionEngine.get_instance().set_strategy(lambda m, x, t: mock_attribution)
 
     engine = ThermodynamicDiagnosticEngine(mock_model)

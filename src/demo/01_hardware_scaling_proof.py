@@ -43,7 +43,9 @@ def format_iops(iops: float) -> str:
     return f"{iops:.2f} IOPS"
 
 
-def plot_dashboard(raw_telemetry, ksm_scores, csd_scores, event_frame, freqs, power_pre, power_post):
+def plot_dashboard(
+    raw_telemetry, ksm_scores, csd_scores, event_frame, freqs, power_pre, power_post
+):
     plt.style.use("dark_background")
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 16))
 
@@ -109,15 +111,26 @@ def plot_dashboard(raw_telemetry, ksm_scores, csd_scores, event_frame, freqs, po
     ax3.set_xlabel("Time (Samples)", color="white")
     ax3.legend()
     ax3.grid(True, alpha=0.2)
-    
+
     # Panel 4: Spectral Decoherence (PSD)
-    ax4.plot(freqs.cpu().numpy(), power_pre.cpu().numpy(), color='green', label='Pre-Shock (Resonant Homeostasis)')
-    ax4.plot(freqs.cpu().numpy(), power_post.cpu().numpy(), color='red', alpha=0.7, label='Post-Shock (1/f Broadband Noise)')
+    ax4.plot(
+        freqs.cpu().numpy(),
+        power_pre.cpu().numpy(),
+        color="green",
+        label="Pre-Shock (Resonant Homeostasis)",
+    )
+    ax4.plot(
+        freqs.cpu().numpy(),
+        power_post.cpu().numpy(),
+        color="red",
+        alpha=0.7,
+        label="Post-Shock (1/f Broadband Noise)",
+    )
     ax4.set_title("Spectral Decoherence (Power Spectral Density)", color="white", fontweight="bold")
     ax4.set_ylabel("Power", color="white")
     ax4.set_xlabel("Frequency (Hz)", color="white")
-    ax4.set_yscale('log')
-    ax4.set_xscale('log')
+    ax4.set_yscale("log")
+    ax4.set_xscale("log")
     ax4.legend()
 
     plt.tight_layout()
@@ -197,7 +210,7 @@ def main():
     avg_latency = sum(latencies) / len(latencies)
 
     payload_bytes = BATCH_SIZE * SEQ_LEN * TARGET_CHANNELS * 4
-    
+
     # Calculate interrupts bypassed (assuming 1 frame = 1 interrupt)
     iops = (BATCH_SIZE * SEQ_LEN) / avg_latency
 
@@ -269,13 +282,14 @@ def main():
 
     logger.info("[*] Computing Power Spectral Density (PSD)...")
     from src.metrics.spectral import SpectralMetrics
+
     spectral = SpectralMetrics()
-    
+
     # Calculate PSD on a sliding window (using the full sequence lengths pre and post event)
     psd_window = EVENT_FRAME
     z_pre = hidden_states[0, EVENT_FRAME - psd_window : EVENT_FRAME].mean(dim=1)
     z_post = hidden_states[0, EVENT_FRAME : EVENT_FRAME + psd_window].mean(dim=1)
-    
+
     freqs, power_pre = spectral.calculate_psd(z_pre, SAMPLING_RATE_HZ)
     _, power_post = spectral.calculate_psd(z_post, SAMPLING_RATE_HZ)
 

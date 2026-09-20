@@ -42,13 +42,12 @@ def test_meld_loss_autograd_nan_hazard():
     delta_x = torch.ones(batch_size, 1) * 0.1
 
     l_total, _ = loss_fn(state_t, target_t_plus_1, pred_t_plus_1, reconstructed_t, delta_x)
-    
+
     # Backward pass should not crash
     l_total.backward()
-    
+
     # Gradient should not be NaN
     assert not torch.isnan(pred_t_plus_1.grad).any()
-
 
 
 def test_topo_contrastive_loss():

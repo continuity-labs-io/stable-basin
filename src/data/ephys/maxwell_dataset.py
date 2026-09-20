@@ -27,7 +27,8 @@ class MaxWellHDMEADataset(Dataset):
         self.target_channels = target_channels
         self.file = h5py.File(self.file_path, "r")
 
-        # MaxWell files store the raw voltage trace array under different keys depending on the export
+        # MaxWell files store the raw voltage trace array under different keys depending on the
+        # export
         keys_to_try = ["/sig", "/routing/lsb", "/mapping/sig"]
         self.raw_dataset = None
         for key in keys_to_try:

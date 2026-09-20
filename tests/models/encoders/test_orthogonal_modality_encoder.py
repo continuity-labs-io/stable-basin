@@ -2,6 +2,7 @@ import torch
 import pytest
 from src.models.encoders.orthogonal_modality_encoder import OrthogonalModalityEncoder
 
+
 def test_proportional_orthogonal_routing_edge_case():
     """
     Test edge case where one modality heavily outweighs the other.
@@ -18,7 +19,7 @@ def test_proportional_orthogonal_routing_edge_case():
     encoder = OrthogonalModalityEncoder(d_in=d_in, modality_dims=modality_dims, d_model=d_model)
 
     w_gate_weight = encoder.W_gate.weight
-    
+
     # Modality 0 should have 20.0 for first 63 dims
     assert torch.all(w_gate_weight[:63, 0] == 20.0)
     # Modality 0 should be 0.0 for the rest
@@ -28,6 +29,7 @@ def test_proportional_orthogonal_routing_edge_case():
     assert torch.all(w_gate_weight[:63, 1] == 0.0)
     # Modality 1 should have 20.0 for the last dim
     assert torch.all(w_gate_weight[63:, 1] == 20.0)
+
 
 def test_proportional_orthogonal_routing_equal():
     """
@@ -40,13 +42,14 @@ def test_proportional_orthogonal_routing_equal():
     encoder = OrthogonalModalityEncoder(d_in=d_in, modality_dims=modality_dims, d_model=d_model)
 
     w_gate_weight = encoder.W_gate.weight
-    
+
     # Should be 32/32 split
     assert torch.all(w_gate_weight[:32, 0] == 20.0)
     assert torch.all(w_gate_weight[32:, 0] == 0.0)
-    
+
     assert torch.all(w_gate_weight[:32, 1] == 0.0)
     assert torch.all(w_gate_weight[32:, 1] == 20.0)
+
 
 def test_too_many_modalities_error():
     # If d_model < n_modalities, should raise ValueError

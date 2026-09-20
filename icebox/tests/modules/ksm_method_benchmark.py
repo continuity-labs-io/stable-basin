@@ -9,12 +9,18 @@ logger = logging.getLogger(__name__)
 
 """
 Sample Result:
-+--------------------+--------------------+---------------+-----------------------------------+-------------------------+
-| Algorithm Name     | Avg Latency (ms)   | Max FPS       | Topological Accuracy              | 100Hz Viability         |
-+--------------------+--------------------+---------------+-----------------------------------+-------------------------+
-| DMD                | 1.29               | 774.5         | Lagging (approx. -46 frames)      | Yes                     |
-| PALC               | 721.71             | 1.4           | Instantaneous Frame-Perfect       | No (Compute Bottleneck) |
-+--------------------+--------------------+---------------+-----------------------------------+-------------------------+
++--------------------+--------------------+---------------+-----------------------------------+-----
+--------------------+
+| Algorithm Name     | Avg Latency (ms)   | Max FPS       | Topological Accuracy              |
+100Hz Viability         |
++--------------------+--------------------+---------------+-----------------------------------+-----
+--------------------+
+| DMD                | 1.29               | 774.5         | Lagging (approx. -46 frames)      | Yes
+|
+| PALC               | 721.71             | 1.4           | Instantaneous Frame-Perfect       | No
+(Compute Bottleneck) |
++--------------------+--------------------+---------------+-----------------------------------+-----
+--------------------+
 """
 
 
@@ -62,7 +68,7 @@ def run_dmd_speed_benchmark(device, warmup=False):
 
         n_rows, n_cols = X_cpu.shape
         rank = calculate_dynamic_rank(S_cpu.numpy(), n_rows, n_cols)
-        
+
         U_k = U[:, :rank]
         S_inv_k = torch.diag(1.0 / S[:rank])
         Vh_k = Vh[:rank, :]

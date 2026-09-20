@@ -53,7 +53,9 @@ class MeldTemporalDataset(Dataset):
 
 
 class AOLLSMDataset(Dataset):
-    def __init__(self, data_dir, num_frames=199, crop_size=(128, 128, 128), compressor=None, device=None):
+    def __init__(
+        self, data_dir, num_frames=199, crop_size=(128, 128, 128), compressor=None, device=None
+    ):
         """
         PyTorch Dataset for AO-LLSM sequential TIFF volumes.
         Ingests a directory of sequential TIFF stacks and stacks ch1 & ch2.
@@ -99,7 +101,8 @@ class AOLLSMDataset(Dataset):
                 self.sample_dirs = [data_dir]
 
         logger.info(
-            f"[INIT] AOLLSMDataset initialized with {len(self.sample_dirs)} sample(s) in: {data_dir}"
+            f"[INIT] AOLLSMDataset initialized with {len(self.sample_dirs)} sample(s) in: "
+            f"{data_dir}"
         )
 
     def __len__(self):
@@ -215,4 +218,3 @@ class AOLLSMDataset(Dataset):
 
 
 # --- Prototyping Execution ---
-

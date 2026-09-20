@@ -48,23 +48,21 @@ def test_baseline_transformer_kwargs():
     d_model = 16
     scale = 0.5
     factor = 2
-    
+
     model = BaselineTransformer(
-        d_model=d_model,
-        pos_embedding_scale=scale,
-        ff_expansion_factor=factor
+        d_model=d_model, pos_embedding_scale=scale, ff_expansion_factor=factor
     )
-    
+
     # Check pos_embedding scaling (std of standard normal * 0.5 should be approx 0.5)
     std = model.pos_embedding.std().item()
     assert abs(std - scale) < 0.1, f"Expected pos_embedding std ~ {scale}, got {std}"
-    
+
     # Check feedforward expansion factor
     # In PyTorch, the first linear layer expands to dim_feedforward
     dim_ff = model.transformer.layers[0].linear1.out_features
     expected_dim_ff = d_model * factor
     assert dim_ff == expected_dim_ff, f"Expected dim_feedforward {expected_dim_ff}, got {dim_ff}"
-    
+
     # Ensure forward pass runs smoothly with these args
     x = torch.randn(2, 20, 16)
     out = model(x)

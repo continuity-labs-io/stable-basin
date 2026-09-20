@@ -65,7 +65,10 @@ def main():
 
     # Extract attribution map
     from src.metrics.attribution_engine import AttributionEngine
-    attribution_map = AttributionEngine.get_instance().compute_attribution(engine, test_seq, target_time_step=EVENT_FRAME)
+
+    attribution_map = AttributionEngine.get_instance().compute_attribution(
+        engine, test_seq, target_time_step=EVENT_FRAME
+    )
 
     print("[*] Generating Thermodynamic Diagnostic Report...")
     diagnostic_engine = ThermodynamicDiagnosticEngine(engine)

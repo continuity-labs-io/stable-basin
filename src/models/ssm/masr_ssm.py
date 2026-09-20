@@ -14,14 +14,18 @@ class MaskAwareSSM(nn.Module):
     During inference, the model modulates the time-step based on the latent
     gate. When a sensor is masked (g_t ≈ 0), dt is forced to 0. This causes
     A_bar = exp(0) = 1, perfectly freezing the hidden state in time and
-    preventing any memory decay while observations are missing.  
+    preventing any memory decay while observations are missing.
     """
 
-    def __init__(self, d_model: int, A_scale: float = 0.5, A_shift: float = 0.1, a_init_type: str = "random"):
+    def __init__(
+        self, d_model: int, A_scale: float = 0.5, A_shift: float = 0.1, a_init_type: str = "random"
+    ):
         super().__init__()
-        
+
         # Initialize A using the specified factory
-        self.A_init = create_a_matrix(init_type=a_init_type, shape=(d_model,), a_scale=A_scale, a_shift=A_shift)
+        self.A_init = create_a_matrix(
+            init_type=a_init_type, shape=(d_model,), a_scale=A_scale, a_shift=A_shift
+        )
         self.B_proj = nn.Linear(d_model, d_model, bias=False)
         self.dt_proj = nn.Linear(d_model, d_model)
 
@@ -29,11 +33,11 @@ class MaskAwareSSM(nn.Module):
 
     def _apply_masking(self, dt_base: torch.Tensor, B_base: torch.Tensor, g_t: torch.Tensor):
         """
-        Time freezing: By modulating the time-step with the gate, a masked sensor 
-        (g_t ≈ 0) forces dt to 0. This causes A_bar = exp(0) = 1, perfectly freezing 
-        the hidden state in time and preventing any memory decay while observations 
+        Time freezing: By modulating the time-step with the gate, a masked sensor
+        (g_t ≈ 0) forces dt to 0. This causes A_bar = exp(0) = 1, perfectly freezing
+        the hidden state in time and preventing any memory decay while observations
         are missing.
-        
+
         Explicit input gating: Block offline sensors from adding noise to the state.
         """
         dt_gated = dt_base * g_t + 1e-8
@@ -41,10 +45,14 @@ class MaskAwareSSM(nn.Module):
         return dt_gated, B_gated
 
     @jaxtyped(typechecker=beartype)
-    def forward(self, latent_x: Float[torch.Tensor, "batch seq_len d_model"], latent_gate: Float[torch.Tensor, "batch seq_len d_model"]) -> Float[torch.Tensor, "batch seq_len d_model"]:
+    def forward(
+        self,
+        latent_x: Float[torch.Tensor, "batch seq_len d_model"],
+        latent_gate: Float[torch.Tensor, "batch seq_len d_model"],
+    ) -> Float[torch.Tensor, "batch seq_len d_model"]:
         """
         Args:
-            latent_x: Tensor of shape [batch, seq_len, d_model] 
+            latent_x: Tensor of shape [batch, seq_len, d_model]
             latent_gate: Tensor of shape [batch, seq_len, d_model]
         """
         batch, seq_len, d_model = latent_x.size()

@@ -57,18 +57,17 @@ def test_waddington_dynamics_leakage():
             if corr > max_mod0_corr:
                 max_mod0_corr = corr
 
-    # Modality 0 is the slow variable, which lags the fast variable. 
+    # Modality 0 is the slow variable, which lags the fast variable.
     # Correlation is usually moderate but never > 0.9.
-    assert max_mod0_corr < 0.90, (
-        f"Data leakage detected! Modality 0 has suspiciously high correlation {max_mod0_corr} with target v."
-    )
+    assert max_mod0_corr < 0.2, f"Data leak! Mod 0 corr {max_mod0_corr} with target is too high."
 
     # Now check Modality 1 (when it is NOT masked out)
     mod1_active_idx = mask[:, 1] == 1.0
     active_y = y_true[mod1_active_idx].squeeze().numpy()
     active_mod1 = mod1[mod1_active_idx]
 
-    # At least one dimension in Modality 1 MUST be highly correlated because it's the projection of v
+    # At least one dimension in Modality 1 MUST be highly correlated because it's the projection of
+    # v
     max_mod1_corr = 0.0
     for dim in range(10):
         mod1_dim = active_mod1[:, dim].numpy()

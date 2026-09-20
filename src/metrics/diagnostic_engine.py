@@ -50,37 +50,39 @@ class ThermodynamicDiagnosticEngine:
         self, x_sequence: torch.Tensor, crash_time_step: int, confidence_score: float = 0.98
     ) -> dict:
         """
-        Generates a structured causal trace identifying the root cause of an event.
+                Generates a structured causal trace identifying the root cause of an event.
 
-        Args:
-            x_sequence (torch.Tensor): The input telemetry tensor of shape [1, Time, 114].
-            crash_time_step (int): The specific time index (T) where the target event occurred.
-            confidence_score (float): Optional confidence threshold. Default is 0.98.
+                Args:
+                    x_sequence (torch.Tensor): The input telemetry tensor of shape [1, Time, 114].
+                    crash_time_step (int): The time index (T) where the target event occurred.
+                    confidence_score (float): Optional confidence threshold. Default is 0.98.
 
-        Returns:
-            dict: A structured diagnostic report with the following schema:
-                {
-                    "status": str,                       # E.g., "CRITICAL_FAILURE_PREDICTED"
-                    "predicted_crash_time": str,         # E.g., "T=140"
-                    "confidence_score": float,           # E.g., 0.98
-                    "anomaly_ontology": {
-                        "primary_latent_driver": str,    # E.g., "RNA_TP53"
-                        "causal_trace": list[dict]       # Top 3 anomalous events leading to the crash
-                    }
-                }
+                Returns:
+                    dict: A structured diagnostic report with the following schema:
+                        {
+                            "status": str,  # E.g., "CRITICAL_FAILURE_PREDICTED"
+                            "predicted_crash_time": str,         # E.g., "T=140"
+                            "confidence_score": float,           # E.g., 0.98
+                            "anomaly_ontology": {
+                                "primary_latent_driver": str,    # E.g., "RNA_TP53"
+        "causal_trace": list[dict]       # Top 3 anomalous events leading to the
+                                crash
+                            }
+                        }
 
-                Each dict in `causal_trace` contains:
-                {
-                    "time_step": str,                    # E.g., "T=110"
-                    "flagged_input": str,                # The name of the offending feature
-                    "relevance_score": float,            # Normalized LRP attribution score
-                    "mechanism": str                     # High-level biological mechanism
-                }
+                        Each dict in `causal_trace` contains:
+                        {
+                            "time_step": str,                    # E.g., "T=110"
+                            "flagged_input": str,                # The name of the offending feature
+                            "relevance_score": float,            # Normalized LRP attribution score
+                            "mechanism": str                     # High-level biological mechanism
+                        }
         """
         # x_sequence: [1, Time, 114]
 
         # 1. Compute attribution using the singleton engine
         from src.metrics.attribution_engine import AttributionEngine
+
         attribution_matrix = AttributionEngine.get_instance().compute_attribution(
             self.model, x_sequence, crash_time_step
         )
@@ -88,7 +90,8 @@ class ThermodynamicDiagnosticEngine:
         # attribution_matrix is [1, Time, 114]
         attr_np = attribution_matrix[0].detach().cpu().numpy()  # [Time, 114]
 
-        # 2. Identify the primary latent driver dimension with the highest global variance or gradient magnitude.
+        # 2. Identify the primary latent driver dimension with the highest global variance or
+        # gradient magnitude.
         # Compute magnitude across the sequence leading up to the crash
         seq_attr = attr_np[: crash_time_step + 1, :]
         feature_magnitudes = np.abs(seq_attr).sum(axis=0)  # Sum of magnitudes over time
@@ -151,6 +154,3 @@ class ThermodynamicDiagnosticEngine:
                 "causal_trace": causal_trace,
             },
         }
-
-
-

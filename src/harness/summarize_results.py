@@ -18,11 +18,14 @@ with open(out_path, "w") as out:
                     out.write(f"  Status: {data.get('status')}\n")
                     out.write(f"  Predicted Crash Time: {data.get('predicted_crash_time')}\n")
                     out.write(f"  Confidence Score: {data.get('confidence_score')}\n")
-                    ontology = data.get('anomaly_ontology', {})
+                    ontology = data.get("anomaly_ontology", {})
                     out.write(f"  Primary Latent Driver: {ontology.get('primary_latent_driver')}\n")
-                    trace = ontology.get('causal_trace', [])
+                    trace = ontology.get("causal_trace", [])
                     if len(trace) > 0:
-                        out.write(f"  Top Flagged Input: {trace[0].get('flagged_input')} at {trace[0].get('time_step')}\n")
+                        out.write(
+                            f"  Top Flagged Input: {trace[0].get('flagged_input')} at "
+                            f"{trace[0].get('time_step')}\n"
+                        )
                     out.write("\n")
 
     out.write("=== CLINICAL DIAGNOSTIC METRICS (CSV) ===\n")
@@ -35,14 +38,16 @@ with open(out_path, "w") as out:
 
     out.write("=== 01 BASELINE INTERPOLATION ===\n")
     df_interp = pd.read_csv("output/harness/01_baseline_interpolation.csv")
-    out.write(df_interp.groupby('config/model_type')['mse'].mean().to_string() + "\n")
+    out.write(df_interp.groupby("config/model_type")["mse"].mean().to_string() + "\n")
 
     out.write("\n=== 02 EXTRAPOLATION TEST ===\n")
     df_extrap = pd.read_csv("output/harness/02_extrapolation_test.csv")
-    out.write(df_extrap.groupby('config/model_type')['mse'].mean().to_string() + "\n")
+    out.write(df_extrap.groupby("config/model_type")["mse"].mean().to_string() + "\n")
 
     out.write("\n=== 03 SENSOR DENSITY SWEEP ===\n")
     df_density = pd.read_csv("output/harness/03_sensor_density_sweep.csv")
-    out.write(df_density.groupby(['config/model_type', 'config/density'])['mse'].mean().to_string() + "\n")
+    out.write(
+        df_density.groupby(["config/model_type", "config/density"])["mse"].mean().to_string() + "\n"
+    )
 
 print(f"Summary written to {out_path}")

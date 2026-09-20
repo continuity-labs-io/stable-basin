@@ -121,6 +121,3 @@ class TranscriptomicLoader:
         )
         event_tensor = point_process.generate_event_stream(total_minutes=total_minutes)
         return event_tensor
-
-
-

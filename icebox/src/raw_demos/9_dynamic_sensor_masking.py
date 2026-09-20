@@ -124,7 +124,8 @@ def main():
         seq = seq.unsqueeze(0).to(device)  # Clean ground truth [1, SEQUENCE_LENGTH, INPUT_DIM]
 
         # CURRICULUM UPGRADE: Dynamic Mid-Sequence Sensor Failure
-        # We simulate sensors suddenly dying partway through the recording (matching the disaster scenario)
+        # We simulate sensors suddenly dying partway through the recording (matching the disaster
+        # scenario)
         seq_corrupt = seq.clone()
 
         # Pick a random time for the failure to occur (e.g. between step 10 and 190)
@@ -188,14 +189,16 @@ def main():
 
     test_seq = true_seq.clone()
 
-    # Inject NaNs into the last two features halfway through the sequence (Omega_VoltRed, Omega_VoltGrn)
+    # Inject NaNs into the last two features halfway through the sequence (Omega_VoltRed,
+    # Omega_VoltGrn)
     DROP_FRAME = SEQUENCE_LENGTH // 2
     # The last two features are Omega_VoltRed (112) and Omega_VoltGrn (113)
     FAILED_INDEX = 112
     test_seq[:, DROP_FRAME:, FAILED_INDEX:] = float("nan")
 
     with torch.no_grad():
-        # Mask encoder intercepts the NaNs and infers the voltage based on the optical shape (Features 0-111)
+        # Mask encoder intercepts the NaNs and infers the voltage based on the optical shape
+        # (Features 0-111)
         pred_seq, _ = engine(test_seq[:, :-1, :])
 
         # Calculate the error between the mask encoder's guess and the ground truth we hid

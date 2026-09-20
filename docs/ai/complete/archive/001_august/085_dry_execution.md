@@ -21,6 +21,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class StableBasinTrainer:
     def __init__(self, model, optimizer, device, loss_type="residual_mse", clip_grad_norm=1.0):
         """
@@ -71,6 +72,7 @@ class StableBasinTrainer:
 
         if use_wandb:
             import wandb
+
             wandb.log({"train_loss": avg_loss, "epoch": epoch, "epoch_time": epoch_time})
 
         return avg_loss

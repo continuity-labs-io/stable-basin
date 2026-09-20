@@ -11,26 +11,37 @@ class BaselineSSM(nn.Module):
     """
     A baseline continuous-time State Space Model (SSM) that processes all
     timesteps sequentially without any explicit masking mechanism (i.e., it
-    ingests padded or masked states blindly). 
-    
+    ingests padded or masked states blindly).
+
     It serves as a control group against mask-aware variants. The model uses
     Zero-Order Hold (ZOH) discretization with an input-dependent time step
     (`dt`) and input projection (`B`), while the state transition `A` is a
     learned global parameter restricted to negative values for stability.
     """
 
-    def __init__(self, d_model: int, d_state: int = 16, A_scale: float = 0.5, A_shift: float = 0.1, a_init_type: str = "random"):
+    def __init__(
+        self,
+        d_model: int,
+        d_state: int = 16,
+        A_scale: float = 0.5,
+        A_shift: float = 0.1,
+        a_init_type: str = "random",
+    ):
         super().__init__()
         self.d_model = d_model
         self.d_state = d_state
-        self.A_init = create_a_matrix(init_type=a_init_type, shape=(d_model,), a_scale=A_scale, a_shift=A_shift)
+        self.A_init = create_a_matrix(
+            init_type=a_init_type, shape=(d_model,), a_scale=A_scale, a_shift=A_shift
+        )
         self.B_proj = nn.Linear(d_model, d_model, bias=False)
         self.dt_proj = nn.Linear(d_model, d_model)
-        
+
         self.dt_proj.bias.data.uniform_(math.log(0.001), math.log(0.1))
 
     @jaxtyped(typechecker=beartype)
-    def forward(self, latent_x: Float[torch.Tensor, "batch seq_len d_model"]) -> Float[torch.Tensor, "batch seq_len d_model"]:
+    def forward(
+        self, latent_x: Float[torch.Tensor, "batch seq_len d_model"]
+    ) -> Float[torch.Tensor, "batch seq_len d_model"]:
         """
         Args:
             latent_x: Tensor of shape [batch, seq_len, d_model]

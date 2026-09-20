@@ -7,9 +7,10 @@ import numpy as np
 
 from src.echo.architecture.observer import MarkovBlanketObserver
 
+
 def main():
     print("Running Silent Drift Benchmark...")
-    
+
     d_internal = 16
     d_sensory = 8
     d_active = 16
@@ -30,21 +31,21 @@ def main():
         n_steps=1,
         temperature=1.0,
         key=k1,
-        D_s=None
+        D_s=None,
     )
 
     D_s_zero = jnp.zeros((d_sensory, d_sensory))
-    
+
     # We must replace D_s in the top-level hull, as well as inside the unrollers' flow_factors.
     observer_blind = eqx.tree_at(
         lambda tree: (
             tree.hull.D_s,
             tree.thermalizer.graph.sites[0].factor.base.hull.D_s,
-            tree.forced_thermalizer.flow_factor.hull.D_s
+            tree.forced_thermalizer.flow_factor.hull.D_s,
         ),
         observer_healthy,
         (D_s_zero, D_s_zero, D_s_zero),
-        is_leaf=lambda x: x is None
+        is_leaf=lambda x: x is None,
     )
 
     # 2. Simulation
@@ -71,6 +72,7 @@ def main():
             state_obs = obs.hull.apply_sensory_degradation(state)
             e, _ = obs.ebm(state_obs)
             return e
+
         grad_e = jax.grad(energy_fn)(x)
         return jnp.linalg.norm(obs.hull.partition(grad_e)["sensory"])
 
@@ -88,14 +90,14 @@ def main():
     plot_path = "output/echo/benchmarks/02_silent_drift_benchmark.png"
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
-    
+
     # Subplot 1: Physical State Divergence
     ax1.plot(div_healthy_np, label="Healthy (D_s = None)", color="blue")
     ax1.plot(div_blind_np, label="Blind (D_s = 0)", color="red", linestyle="--")
     ax1.set_title("Physical State Divergence over time")
     ax1.set_ylabel("L2 Norm (x_current - x_init)")
     ax1.legend()
-    
+
     # Subplot 2: Internal Surprisal
     ax2.plot(surp_healthy_np, label="Healthy (D_s = None)", color="blue")
     ax2.plot(surp_blind_np, label="Blind (D_s = 0)", color="red", linestyle="--")
@@ -119,12 +121,19 @@ def main():
     print(f"Blind Divergence (mean): {mean_div_b:.4f}")
     print(f"Healthy Surprisal (mean): {mean_surp_h:.4f}")
     print(f"Blind Surprisal (mean): {mean_surp_b:.4f}")
-    
+
     # Blind system should have exactly 0 surprisal on the sensory partition.
     if np.isclose(mean_surp_b, 0.0, atol=1e-5) and mean_surp_h > 0.0:
-        print("DIAGNOSIS SUCCESS: The blind system experienced exactly zero surprisal. Silent drift confirmed.")
+        print(
+            "DIAGNOSIS SUCCESS: The blind system experienced exactly zero surprisal. Silent drift "
+            "confirmed."
+        )
     else:
-        print("DIAGNOSIS FAILED: The blind system generated surprisal, meaning it was not truly blind.")
+        print(
+            "DIAGNOSIS FAILED: The blind system generated surprisal, meaning it was not truly "
+            "blind."
+        )
+
 
 if __name__ == "__main__":
     main()

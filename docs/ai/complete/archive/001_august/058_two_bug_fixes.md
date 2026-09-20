@@ -30,6 +30,7 @@ mathematically guarantee stasis:
 import torch
 import torch.nn as nn
 
+
 class BiologicalCartridgeFusion(nn.Module):
     def __init__(self, d_cartridge: int, n_modalities: int, d_model: int):
         super().__init__()

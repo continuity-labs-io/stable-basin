@@ -63,7 +63,8 @@ class PhaseStructureLoader:
         to capture non-linear structural topology.
         """
         logger.info(
-            f"[ML] Compressing {raw_spatial_features.shape[1]} raw features to {self.target_components} dimensions..."
+            f"[ML] Compressing {raw_spatial_features.shape[1]} raw features to "
+            f"{self.target_components} dimensions..."
         )
 
         # We use PCA here just to build the V1 plumbing and prove the API works
@@ -87,7 +88,8 @@ class PhaseStructureLoader:
         How do we map the slow 1-minute shape data onto the 2ms electrical grid?
         """
         logger.info(
-            "[ALIGNMENT] Interpolating slow morphology to the 500Hz master clock using Piecewise Neural ODE..."
+            "[ALIGNMENT] Interpolating slow morphology to the 500Hz master clock using Piecewise "
+            "Neural ODE..."
         )
 
         # Convert master clock to minutes
@@ -151,4 +153,3 @@ class PhaseStructureLoader:
 # ==========================================
 # EXECUTION (Drop this in the Jupyter Notebook)
 # ==========================================
-

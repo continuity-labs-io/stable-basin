@@ -9,11 +9,13 @@ proportional routing:
 import torch
 import torch.nn as nn
 
+
 class OrthogonalModalityEncoder(nn.Module):
     """
     Gated Modality Fusion Layer (Mask-to-Gate Projector).
     Implements Proportional Orthogonal Routing.
     """
+
     def __init__(self, d_in: int, modality_dims: list[int], d_model: int):
         super().__init__()
         self.W_cart = nn.Linear(d_in, d_model, bias=False)
