@@ -108,6 +108,7 @@ class GaussianEBM(eqx.Module):
     L: Float[Array, "d_state d_state"]
     d_state: int = eqx.field(static=True)
 
+    @jaxtyped(typechecker=beartype)
     def __init__(
         self, d_state: int, hidden_size: int, depth: int, key: PRNGKeyArray, epsilon: float = 1e-4
     ):
@@ -118,8 +119,16 @@ class GaussianEBM(eqx.Module):
         self.d_state = d_state
         k1, k2 = jax.random.split(key)
         self.mu = jax.random.normal(k1, (d_state,))
+        
         # Initialize L to be roughly identity so Pi is roughly identity
-        self.L = jax.random.normal(k2, (d_state, d_state)) * 0.1 + jnp.eye(d_state)
+        # Strictly enforce lower triangular form with positive diagonals
+        L_raw = jax.random.normal(k2, (d_state, d_state)) * 0.1 + jnp.eye(d_state)
+        L_tril = jnp.tril(L_raw)
+        
+        # Ensure diagonals are strictly positive (using softplus + epsilon)
+        diag_indices = jnp.diag_indices(d_state)
+        diag_values = jax.nn.softplus(L_tril[diag_indices]) + epsilon
+        self.L = L_tril.at[diag_indices].set(diag_values)
 
     @jaxtyped(typechecker=beartype)
     def __call__(

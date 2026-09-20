@@ -271,7 +271,7 @@ class ForcedTorxThermalizer(eqx.Module):
             return next_state, next_state
 
         keys = jax.random.split(key, seq_len)
-        dummy_seq = jnp.zeros((seq_len, 1))
+        dummy_seq = jnp.zeros((seq_len, 1), dtype=jnp.float32)
 
         scan_seq = seq if seq is not None else dummy_seq
         scan_omega = omega_seq if omega_seq is not None else dummy_seq
