@@ -26,7 +26,7 @@ from src.data.ephys.pharma_shock_dataset import PharmacologicalShockDataset
 from src.data.datasets import JAXDictDataset
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
-from src.echo.metrics.thermal_interpretability import HessianCurvatureTracker
+from src.echo.metrics.energy_landscape import batch_calculate_curvature
 from src.echo.harness.echo_trainer import EchoTrainer
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 
@@ -135,15 +135,15 @@ def run_waddington_collapse_benchmark(output_plot: str = "output/echo/benchmarks
     
     # 5. Metric Extraction & EBET Calculation
     print("Calculating macro-state curvature...")
-    tracker = HessianCurvatureTracker(graph.flow_factor.macro_ebm)
-    
     # Batch curvature calculation to avoid OOM
     batch_size = 500
-    num_states = macro_traj.shape[0]
     traces = []
-    for i in range(0, num_states, batch_size):
+    
+    energy_fn = lambda x: graph.flow_factor.macro_ebm(x)[0]
+    
+    for i in range(0, macro_traj.shape[0], batch_size):
         batch = macro_traj[i:i+batch_size]
-        res = tracker.batch_calculate_curvature(batch)
+        res = batch_calculate_curvature(energy_fn, batch)
         traces.append(res["hessian_trace"])
     hessian_trace = jnp.concatenate(traces, axis=0)
     

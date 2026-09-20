@@ -14,6 +14,7 @@ except ImportError:
     RAY_AVAILABLE = False
 
 from src.echo.harness.echo_trainer import EchoTrainer
+from src.echo.metrics.energy_landscape import batch_calculate_curvature
 from src.harness.pytorch_jax_bridge import torch_to_jax
 
 logger = logging.getLogger(__name__)
@@ -45,33 +46,6 @@ def compute_validation_loss(model: eqx.Module, s_true_batch: jax.Array, x_init_b
     return jnp.mean(batch_loss)
 
 
-class HessianCurvatureTracker(eqx.Module):
-    """
-    Evaluates the Hessian matrix of the learned energy landscape with respect to the state vector.
-    Computes the trace (sum of eigenvalues) to measure the total steepness/precision of the Waddington basin.
-    """
-    
-    @eqx.filter_jit
-    def compute_trace(self, model: eqx.Module, x_batch: jax.Array) -> float:
-        """
-        Computes the trace of the Hessian matrix for a batch of state vectors.
-        """
-        def energy_fn(x):
-            state_obs = model.hull.apply_sensory_degradation(x)
-            e, _ = model.ebm(state_obs)
-            return e
-            
-        hessian_fn = jax.hessian(energy_fn)
-        batched_hessian_fn = jax.vmap(hessian_fn)
-        
-        # Calculate Hessian for batch: (batch, d_state, d_state)
-        hessian_matrices = batched_hessian_fn(x_batch)
-        
-        # Calculate trace for each matrix in the batch
-        traces = jax.vmap(jnp.trace)(hessian_matrices)
-        return jnp.mean(traces)
-
-
 class EchoRunner:
     """
     Orchestrates the training lifecycle, managing PyTorch DataLoaders and the pure Equinox/Optax training loop.
@@ -81,7 +55,6 @@ class EchoRunner:
             self.config = yaml.safe_load(f)
             
         self.trainer: Optional[EchoTrainer] = None
-        self.curvature_tracker = HessianCurvatureTracker()
         self.wandb_run = None
         
     def setup(self, trainer: EchoTrainer):
@@ -141,8 +114,13 @@ class EchoRunner:
             if hessian_computed < max_hessian_samples:
                 samples_to_take = min(s_true.shape[0], max_hessian_samples - hessian_computed)
                 x_subset = x_init[:samples_to_take]
+                def energy_fn(x):
+                    state_obs = model.hull.apply_sensory_degradation(x)
+                    e, _ = model.ebm(state_obs)
+                    return e
                 
-                trace_val = self.curvature_tracker.compute_trace(model, x_subset)
+                metrics = batch_calculate_curvature(energy_fn, x_subset)
+                trace_val = jnp.mean(metrics["hessian_trace"])
                 hessian_traces.append(trace_val.item())
                 hessian_computed += samples_to_take
                 

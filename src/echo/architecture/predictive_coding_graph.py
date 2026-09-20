@@ -14,6 +14,8 @@ class PredictiveCodingGraph(eqx.Module):
     """
     Couples a Micro and a Macro Markov Blanket Observer into a nested 
     hierarchical predictive coding network.
+    
+    NOTE: This implementation is currently hardcoded to exactly 2 hierarchical levels.
     """
     W_down: eqx.nn.Linear
     thermalizer: TorxThermalizer

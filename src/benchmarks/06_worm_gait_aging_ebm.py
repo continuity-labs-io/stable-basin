@@ -21,7 +21,7 @@ from src.data.datasets import JAXDictDataset
 from src.echo.primitives.ebm import GaussianEBM, PrecisionWeightedEBM
 from src.echo.harness.echo_runner import EchoRunner
 from src.echo.harness.echo_trainer import EchoTrainer
-from src.echo.metrics.thermal_interpretability import HessianCurvatureTracker
+from src.echo.metrics.energy_landscape import batch_calculate_curvature
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -108,12 +108,12 @@ def get_full_states(graph, loader):
     return jnp.concatenate(full_traj_list, axis=0)
 
 
-def compute_full_trace(tracker, states, batch_size=1000):
+def compute_full_trace(energy_fn, states, batch_size=1000):
     num_states = states.shape[0]
     traces = []
     for i in range(0, num_states, batch_size):
         batch = states[i:i+batch_size]
-        res = tracker.batch_calculate_curvature(batch)
+        res = batch_calculate_curvature(energy_fn, batch)
         traces.append(res["hessian_trace"])
     return jnp.concatenate(traces, axis=0)
 
@@ -248,9 +248,9 @@ def run_worm_gait_experiment(
     full_states_old = get_full_states(graph, eval_old_loader)
     
     logger.info(f"Computing Hessian Traces for {ebm_class.__name__}.")
-    tracker = HessianCurvatureTracker(graph.ebm)
-    trace_young = compute_full_trace(tracker, full_states_young)
-    trace_old = compute_full_trace(tracker, full_states_old)
+    energy_fn = lambda x: graph.ebm(x)[0]
+    trace_young = compute_full_trace(energy_fn, full_states_young)
+    trace_old = compute_full_trace(energy_fn, full_states_old)
     
     metrics = compute_metrics(ebm_class.__name__, trace_young, trace_old)
     return metrics, trace_young, trace_old, graph

@@ -17,6 +17,8 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
     """
     Custom Torx factor that defines a joint free energy over a Micro and a Macro 
     Markov Blanket Observer, enabling automatic message passing via gradient flow.
+    
+    NOTE: This implementation is currently hardcoded to exactly 2 hierarchical levels.
     """
     micro_hull: MarkovHull
     macro_hull: MarkovHull
@@ -163,7 +165,7 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         omega_ext = inputs.get("omega_ext", jnp.zeros(self.d_micro + self.d_macro, dtype=jnp.float32))
         q_ext = inputs.get("q_ext", jnp.zeros(self.d_micro + self.d_macro, dtype=jnp.float32))
         
-        # a) Split input and forces
+        # Split input and forces
         x_micro = x[:self.d_micro]
         x_macro = x[self.d_micro:]
         
@@ -173,18 +175,18 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
         q_micro = q_ext[:self.d_micro]
         q_macro = q_ext[self.d_micro:]
         
-        # c) Compute gradients simultaneously
+        # Compute gradients simultaneously
         grad_micro, grad_macro = jax.grad(self.joint_energy_fn, argnums=(0, 1))(x_micro, x_macro)
         
         params = params or {}
-        # d) Get precomputed topologically constrained matrices
+        # Get precomputed topologically constrained matrices
         Q_micro_masked = params.get("Q_micro_masked", self.micro_solenoidal.Q)
         Gamma_micro_masked = params.get("Gamma_micro_masked", self.micro_dissipative.Gamma)
         
         Q_macro_masked = params.get("Q_macro_masked", self.macro_solenoidal.Q)
         Gamma_macro_masked = params.get("Gamma_macro_masked", self.macro_dissipative.Gamma)
         
-        # e) Get precomputed safe diffusion matrix S (fallback to slow eigh if not found)
+        # Get precomputed safe diffusion matrix S (fallback to slow eigh if not found)
         if "S_micro" in params:
             S_micro = params["S_micro"]
         else:
@@ -201,7 +203,7 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             evals_m = jnp.maximum(evals_m, 0.0)
             S_macro = evecs_m @ jnp.diag(jnp.sqrt(evals_m))
         
-        # f) Execute Thermostat steps independently
+        # Execute Thermostat steps independently
         k_micro, k_macro = jax.random.split(key, 2)
         
         x_micro_next = self.micro_thermostat(
@@ -228,7 +230,6 @@ class HierarchicalThermoFlowFactor(torx.factor.AbstractReferenceFactor):
             Gamma=Gamma_macro_masked
         )
         
-        # g) Concatenate and return
         x_next = jnp.concatenate([x_micro_next, x_macro_next])
         
         if return_aux:

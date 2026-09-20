@@ -16,7 +16,7 @@ from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, Synthe
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.echo.primitives.ebm import PrecisionWeightedEBM
-from src.echo.metrics.thermal_interpretability import HessianCurvatureTracker
+from src.echo.metrics.energy_landscape import batch_calculate_curvature
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -163,7 +163,7 @@ def run_experiment(graph, x0, key, config):
 
 def calculate_metrics(graph, traj_A_batch, traj_B_batch, config):
     logger.info("Computing thermodynamic restoration metrics (Hessian trace).")
-    tracker = HessianCurvatureTracker(graph.ebm)
+    energy_fn = lambda x: graph.ebm(x)[0]
     num_runs = config['experiment']['num_runs']
     lambda_A = config['intervention']['lambda_A']
     lambda_B = config['intervention']['lambda_B']
@@ -171,7 +171,7 @@ def calculate_metrics(graph, traj_A_batch, traj_B_batch, config):
     def get_traces(traj_batch):
         traces = []
         for i in range(num_runs):
-            metrics = tracker.batch_calculate_curvature(traj_batch[i])
+            metrics = batch_calculate_curvature(energy_fn, traj_batch[i])
             traces.append(np.array(metrics["hessian_trace"]))
         return np.vstack(traces)
         

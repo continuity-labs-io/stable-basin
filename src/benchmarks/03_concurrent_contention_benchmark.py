@@ -5,7 +5,7 @@ import equinox as eqx
 import matplotlib.pyplot as plt
 
 from src.echo.architecture.observer import MarkovBlanketObserver
-from src.echo.metrics.thermal_interpretability import HessianCurvatureTracker
+from src.echo.metrics.energy_landscape import batch_calculate_curvature
 
 def main():
     print("Running Concurrent Contention Benchmark...")
@@ -76,11 +76,11 @@ def main():
     div_B = compute_divergence(traj_B)
     div_C = compute_divergence(traj_C)
     
-    tracker = HessianCurvatureTracker(observer.ebm)
-    
-    metrics_seq_A = tracker.batch_calculate_curvature(traj_A)
-    metrics_seq_B = tracker.batch_calculate_curvature(traj_B)
-    metrics_seq_C = tracker.batch_calculate_curvature(traj_C)
+    energy_fn = lambda x: observer.ebm(x)[0]
+
+    metrics_seq_A = batch_calculate_curvature(energy_fn, traj_A)
+    metrics_seq_B = batch_calculate_curvature(energy_fn, traj_B)
+    metrics_seq_C = batch_calculate_curvature(energy_fn, traj_C)
     
     nullity_seq_A = metrics_seq_A["hessian_nullity"]
     nullity_seq_B = metrics_seq_B["hessian_nullity"]
