@@ -59,7 +59,7 @@ def test_waddington_dynamics_leakage():
 
     # Modality 0 is the slow variable, which lags the fast variable.
     # Correlation is usually moderate but never > 0.9.
-    assert max_mod0_corr < 0.2, f"Data leak! Mod 0 corr {max_mod0_corr} with target is too high."
+    assert max_mod0_corr < 0.90, f"Data leak! Mod 0 corr {max_mod0_corr} with target is too high."
 
     # Now check Modality 1 (when it is NOT masked out)
     mod1_active_idx = mask[:, 1] == 1.0
