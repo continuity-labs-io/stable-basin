@@ -5,7 +5,7 @@ import equinox as eqx
 
 from src.echo.architecture.markov_hull import MarkovHull
 from src.echo.architecture.observer import MarkovBlanketObserver
-from src.echo.architecture.hierarchy import PredictiveCodingGraph
+from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.echo.clinic.interventions import DigitalTwinAnnealer, DigitalTwinInterrogator
 from src.echo.physics.dissipative import DissipativeFriction
 from src.echo.primitives.ebm import PrecisionWeightedEBM
@@ -140,7 +140,7 @@ def test_interrogator_blindness(degraded_graph):
         return jnp.sum(x_u ** 2)
         
     from unittest.mock import patch
-    with patch('src.echo.architecture.hierarchy.HierarchicalThermoFlowFactor.joint_energy_fn', new=mocked_joint_energy_fn):
+    with patch('src.echo.architecture.hierarchical_factor.HierarchicalThermoFlowFactor.joint_energy_fn', new=mocked_joint_energy_fn):
         res = interrogator.ping_and_measure(degraded_graph, x_micro, x_macro, q_ext_pulse)
         
         # Macro gradient should be exactly zero

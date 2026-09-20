@@ -25,7 +25,7 @@ import numpy as np
 from src.data.ephys.pharma_shock_dataset import PharmacologicalShockDataset
 from src.data.datasets import JAXDictDataset
 from src.echo.architecture.observer import MarkovBlanketObserver
-from src.echo.architecture.hierarchy import PredictiveCodingGraph
+from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.echo.metrics.thermal_interpretability import HessianCurvatureTracker
 from src.echo.harness.echo_trainer import EchoTrainer
 from src.echo.primitives.ebm import PrecisionWeightedEBM

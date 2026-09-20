@@ -4,7 +4,7 @@ import jax.numpy as jnp
 import equinox as eqx
 
 from src.echo.architecture.observer import MarkovBlanketObserver
-from src.echo.architecture.hierarchy import PredictiveCodingGraph
+from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 
 def _create_graph(key):
     k1, k2, k3 = jax.random.split(key, 3)

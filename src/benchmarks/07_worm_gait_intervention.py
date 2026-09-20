@@ -14,7 +14,7 @@ from scipy.stats import ks_2samp, wasserstein_distance
 
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
 from src.echo.architecture.observer import MarkovBlanketObserver
-from src.echo.architecture.hierarchy import PredictiveCodingGraph
+from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 from src.echo.metrics.thermal_interpretability import HessianCurvatureTracker
 

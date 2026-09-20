@@ -119,3 +119,9 @@ Whenever you author new code, add new logic, or modify existing functionality, y
 - If the new code is uncovered, you MUST proactively write new unit tests (or update existing ones) alongside the implementation.
 - You must not wait for the user to ask for tests. Consider writing tests an inseparable part of writing the code itself.
 - Ensure that the tests verify both positive (happy path) and negative (defensive guardrails/error handling) boundaries.
+
+### Python Style Guidelines (PEP 8 & Google Python Style Guide)
+
+- **Class Structure & Method Ordering**: When authoring or modifying Python classes, strictly follow the method ordering defined by the Google Python Style Guide. 
+  - `__init__` (and other dunder methods like `__new__`) must be the very first methods defined in the class, immediately following the class docstring and class-level attributes.
+  - `@property` decorators, standard instance methods, and static/class methods must always come *after* the `__init__` method.

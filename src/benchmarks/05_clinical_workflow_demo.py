@@ -6,7 +6,7 @@ import logging
 import os
 from src.echo.architecture.markov_hull import MarkovHull
 from src.echo.architecture.observer import MarkovBlanketObserver
-from src.echo.architecture.hierarchy import PredictiveCodingGraph
+from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.echo.clinic.interventions import DigitalTwinAnnealer, DigitalTwinInterrogator
 from src.echo.metrics.thermal_interpretability import HessianCurvatureTracker
 from src.echo.physics.dissipative import DissipativeFriction
