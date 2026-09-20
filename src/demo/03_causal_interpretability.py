@@ -21,7 +21,7 @@ import logging
 from src.models.ssm.masr_mamba import MaskAwareMamba
 from src.metrics.mamba_lrp import MambaLRPEpsilon
 from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
-from src.utils.device import get_optimal_device
+from src.core.substrate import get_optimal_device
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("MultimodalDiagnostic")

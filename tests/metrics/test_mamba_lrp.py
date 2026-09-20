@@ -2,7 +2,7 @@ import torch
 import pytest
 from src.metrics.mamba_lrp import MambaLRPEpsilon
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
-from src.utils.device import get_optimal_device
+from src.core.substrate import get_optimal_device
 import torch.nn as nn
 import torch.nn.functional as F
 

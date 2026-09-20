@@ -15,7 +15,7 @@ import logging
 from src.models.ssm.masr_mamba import MaskAwareMamba
 from src.metrics import ThermodynamicMetrics, SpectralMetrics
 from src.system.telemetry_logger import TelemetryLogger
-from src.utils.device import get_optimal_device
+from src.core.substrate import get_optimal_device
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("FlightRecorderDemo")

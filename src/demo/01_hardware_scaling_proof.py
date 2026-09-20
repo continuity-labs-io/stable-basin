@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 from src.data.ephys.maxwell_dataset import MaxWellHDMEADataset
 from src.models.ssm.masr_mamba import MaskAwareMamba
 from src.metrics import ThermodynamicMetrics
-from src.utils.device import get_optimal_device
+from src.core.substrate import get_optimal_device
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("HardwareScalingProofEngine")

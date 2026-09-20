@@ -23,7 +23,7 @@ try:
 except ImportError:
     Mamba2 = None
 
-from src.utils.device import get_optimal_device
+from src.core.substrate import get_optimal_device
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("IndestructibleEdge")

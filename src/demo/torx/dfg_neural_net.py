@@ -29,7 +29,7 @@ from torx.factor import AbstractReferenceFactor
 
 # Ensure src is in the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
-from src.utils.device import get_optimal_device
+from src.core.substrate import get_optimal_device
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("TorxNeuralNet")
