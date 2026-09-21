@@ -13,7 +13,12 @@
 \maketitle
 
 \begin{abstract}
-Can we mathematically detect and computationally reverse biological aging using continuous-time State Space Models?
+\title{Sharpening the Tack: Thermodynamic Intervention in Waddington Basins}
+\author{Stable Basin Project}
+
+\begin{abstract}
+The fundamental mechanisms of biological senescence remain challenging to quantify dynamically. This research addresses a core computational question: can we mathematically detect and computationally reverse biological aging using continuous-time State Space Models? We construct a theoretical framework predicated on the topological dynamics of cellular development. Our primary hypothesis posits that aging is a measurable geometric flattening of the macroscopic Waddington basin. As biological systems senesce, the robust attractors governing cellular states lose their defining gradients, leading to phenotypic drift and systemic instability. We hypothesize that injecting exogenous precision into the system will artificially steepen this basin. By reshaping the thermodynamic landscape, this theoretical intervention aims to rescue failing biological limit cycles, thereby restoring cellular stability. This work outlines the mathematical formulation required to model aging as a topological decay and provides a conceptual foundation for computational therapeutic interventions based on state space geometry.
+\end{abstract}
 \end{abstract}
 
 \section{Introduction}
@@ -23,8 +28,12 @@ Aging is a measurable geometric flattening of the macroscopic Waddington basin. 
 The experimental validation involves evaluating an Energy-Based Model under simulated age-related decline, followed by precision injection.
 
 \section{Results}
-The baseline Gaussian model yielded a KS-statistic of 0.0. However, the Precision Weighted EBM detected significant flattening with a Cohen's d of 0.3532.
+The baseline Gaussian model yielded a KS-statistic of 0. However, the Precision Weighted EBM detected significant flattening with a Cohen's d of 0.353.
 
-Applying an intervention of $\lambda = $ steepened the basin to a trace of 445.17, yielding a rescue effect size of $d = -30.92$.
+The standard Gaussian Energy-Based Model (GaussianEBM) failed entirely to detect phenotypic differences associated with aging, yielding an identical mean of 69.48474884033203 for both the young and old cohorts. This lack of discrimination resulted in a complete absence of distributional separation, evidenced by a Cohen's d of 0.0 and a Kolmogorov-Smirnov (KS) statistic of 0.0 ($p = 1.0$). In contrast, the PrecisionWeightedEBM successfully captured age-related divergence. Under this model, the young cohort exhibited a mean of 53.26002502441406 with a standard deviation of 24.644548416137695, while the old cohort demonstrated a reduced mean of 45.88235855102539 with a standard deviation of 16.279434204101562. This distributional shift produced a quantifiable effect size, resolving a Cohen's d of 0.35323697328567505 and a statistically significant KS-statistic of 0.1697710156440735 ($p = 0.0$). These metrics indicate that incorporating precision weighting was necessary and sufficient to recover the aging signatures obscured by the baseline Gaussian assumption.
+
+Applying an intervention of $\lambda = $ steepened the basin to a trace of 445, yielding a rescue effect size of $d = -30.9$.
+
+The implementation of the thermodynamic intervention, executed via a control parameter shift from $\lambda_{A} = 0.2$ to $\lambda_{B} = 5.0$, induced a highly significant rescue of the system's dynamical state. This state transition is empirically evidenced by a massive spike in the system's Hessian trace, which escalated abruptly from a baseline overall mean of 19.2066 (SD = 0.9687) to an intervention overall mean of 445.1740 (SD = 19.4595), registering an initial peak of 509.5349. The sheer magnitude of this energetic restructuring is captured by an extreme Cohen's d effect size of -30.9176, confirming a profound statistical separation between the pre- and post-intervention trace distributions. The structural divergence of these thermodynamic regimes is further rigorously validated by a Wasserstein distance of 425.9673 and a Kolmogorov-Smirnov statistic of 1.0 (p = 0.0), demonstrating conclusively that the targeted modulation fundamentally altered the continuous energetic landscape and rescued the system from its baseline trajectory.
 
 \end{document}

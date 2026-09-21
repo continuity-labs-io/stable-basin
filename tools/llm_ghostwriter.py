@@ -25,10 +25,19 @@ class LLMGhostwriter:
         raw_key = system_prompt + user_prompt + data_str
         return hashlib.sha256(raw_key.encode('utf-8')).hexdigest()
 
-    def draft_section(self, system_prompt: str, user_prompt: str, context_data: dict, model: str = "gemini/gemini-pro") -> str:
+    def draft_section(self, system_prompt: str, user_prompt: str, context_data: dict, model: str = None) -> str:
         """
         Drafts a section using the specified LLM. Checks the cache first to avoid unnecessary API calls.
         """
+        if model is None:
+            try:
+                from genai_client import get_client, get_best_model
+                client = get_client()
+                model = get_best_model(client)
+            except Exception as e:
+                logger.warning(f"Failed to auto-select model: {e}")
+                model = "gemini/gemini-2.5-pro"
+                
         cache_key = self._generate_cache_key(system_prompt, user_prompt, context_data)
         cache_file = self.cache_dir / f"{cache_key}.txt"
 
