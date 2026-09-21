@@ -103,9 +103,12 @@ class ThermodynamicMetrics:
             var_t = torch.var(z_win_active, dim=0).mean().item()
 
             # Lag-1 Autocorrelation (Critical Slowing Down)
-            ar1_t = (
-                F.cosine_similarity(z_win_active[:-1, :], z_win_active[1:, :], dim=0).mean().item()
-            )
+            if z_win_active.shape[0] < 2:
+                ar1_t = 0.0
+            else:
+                ar1_t = (
+                    F.cosine_similarity(z_win_active[:-1, :], z_win_active[1:, :], dim=0).mean().item()
+                )
 
             csd = (self.alpha * var_t) + (self.beta * ar1_t)
             csd_scores.append(csd)
@@ -342,7 +345,10 @@ class ThermodynamicMetrics:
         hsic_ll = hsic(L_c, L_c)
 
         # Return the normalized CKA score
-        cka = hsic_kl / torch.sqrt(hsic_kk * hsic_ll)
+        denominator = torch.sqrt(hsic_kk * hsic_ll)
+        if denominator < 1e-8:
+            return 0.0
+        cka = hsic_kl / denominator
         return cka.item()
 
     def calculate_epigenetic_dispersion(self, cpg_tensor):
