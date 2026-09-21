@@ -4,7 +4,15 @@
     "**/*.ruff_cache": true,
     "**/*.egg-info": true,
     "**/__pycache__": true,
-    "**/.venv": true
+    "**/.venv": true,
+    "**/wandb": true,
+    ".coverage": true,
+    "**/.gitattributes": true,
+    "**/repomix.config.json": true,
+    "**/LICENSE": true,
+    "pytest.ini": true,
+    ".prettierrc": true,
+    ".envrc": true
   },
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",

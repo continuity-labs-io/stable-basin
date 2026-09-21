@@ -1,0 +1,30 @@
+\documentclass{article}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{graphicx}
+\usepackage{amsmath}
+
+\title{\VAR{ meta.title }}
+\author{\VAR{ meta.author }}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\VAR{ meta.core_question }
+\end{abstract}
+
+\section{Introduction}
+\VAR{ meta.hypothesis }
+
+\section{Methods}
+The experimental validation involves evaluating an Energy-Based Model under simulated age-related decline, followed by precision injection.
+
+\section{Results}
+The baseline Gaussian model yielded a KS-statistic of \VAR{ metrics_decline.GaussianEBM.ks_statistic | round(4) }. However, the Precision Weighted EBM detected significant flattening with a Cohen's d of \VAR{ metrics_decline.PrecisionWeightedEBM.cohens_d | round(4) }.
+
+Applying an intervention of $\lambda = \VAR{ config_intervention.lambda_B }$ steepened the basin to a trace of \VAR{ metrics_intervention.RunB.overall_mean | round(2) }, yielding a rescue effect size of $d = \VAR{ metrics_intervention.Comparisons.cohens_d | round(2) }$.
+
+\end{document}
