@@ -20,6 +20,6 @@ We have identified critical sections of the codebase that lack test coverage. Yo
 
 ## Critical Uncovered Code
 Please investigate and write adversarial tests for the following file and specific lines:
-- [ ] File: `src/metrics/entropy_production_surrogates.py` (Missing: 116-144)
+- [x] File: `src/metrics/entropy_production_surrogates.py` (Missing: 116-144)
 
 **Targeted Attack Vector:** The phase-randomization logic relies heavily on Fourier transforms. Attack the FFT/IFFT transitions: what happens if the input sequence length is a prime number? What if the input contains NaNs, Infs, or is a completely flat DC signal? Try to induce phase-leakage or broadcasting errors.

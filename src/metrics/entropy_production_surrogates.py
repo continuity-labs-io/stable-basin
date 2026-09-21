@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.linalg as la
-from src.metrics.entropy_production import MOUResult
+from src.metrics.entropy_production import MOUResult, _check_shape
 
 
 def reversible_gaussian_surrogate(x: np.ndarray, fs: float, rng: np.random.Generator) -> np.ndarray:
@@ -18,7 +18,7 @@ def reversible_gaussian_surrogate(x: np.ndarray, fs: float, rng: np.random.Gener
     Returns:
         The surrogate time series array with the same shape as the input.
     """
-    x_c = x - np.mean(x, axis=0)
+    x_c = _check_shape(x)
     N, k = x_c.shape
 
     # Take full-sequence FFT to preserve all finite-length spectral properties without windowing
@@ -72,8 +72,8 @@ def phase_randomized_surrogate(x: np.ndarray, rng: np.random.Generator) -> np.nd
     Returns:
         The phase-randomized surrogate time series array with the same shape as the input.
     """
-    N, k = x.shape
-    x_c = x - np.mean(x, axis=0)
+    x_c = _check_shape(x)
+    N, k = x_c.shape
 
     X = np.fft.rfft(x_c, axis=0)
     n_freqs = X.shape[0]
@@ -117,7 +117,11 @@ def reversible_mou_surrogate(
     dt = 1.0 / fs
 
     # Reversible Drift Matrix: A_rev = -Gamma @ Sigma^-1
-    inv_Sigma = np.linalg.inv(mou.Sigma + np.eye(k) * 1e-8)
+    tr_sigma = float(np.trace(mou.Sigma))
+    ridge_scale = tr_sigma if tr_sigma > 1e-12 else 1.0
+    ridge = np.eye(k) * 1e-8 * ridge_scale / k
+    inv_Sigma = np.linalg.inv(mou.Sigma + ridge)
+    
     A_rev = -mou.Gamma @ inv_Sigma
 
     # Exact discrete state transition matrix: M = exp(A_rev * dt)
