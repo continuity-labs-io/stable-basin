@@ -97,3 +97,50 @@ def test_surrogates_near_zero_ep():
     assert mou_res_pr.phi < 0.5, (
         f"Phase-randomized surrogate EP {mou_res_pr.phi:.3f} is not near-zero."
     )
+
+def test_adversarial_entropy_production():
+    # ARRANGE
+    import torch
+    torch.autograd.set_detect_anomaly(True)
+    
+    fs = 100.0
+    lag = 1
+    
+    # 1. Zero-variance signal
+    x_zero = np.zeros((100, 2))
+    
+    # 2. NaNs
+    x_nan = np.full((100, 2), np.nan)
+    
+    # 3. Perfectly symmetric trajectory
+    x_sym = np.array([[float(i), float(i)] for i in range(50)] + [[float(49 - i), float(49 - i)] for i in range(50)])
+    
+    # ACT & ASSERT
+    logger.info("Executing adversarial tests on entropy_production_pairwise...")
+    ep_pw_zero = entropy_production_pairwise(x_zero, fs, lag)
+    assert ep_pw_zero == 0.0, f"Expected 0.0 for zero variance, got {ep_pw_zero}"
+    
+    # NaNs should raise ValueError
+    with pytest.raises(ValueError, match="NaNs or Infs"):
+        entropy_production_pairwise(x_nan, fs, lag)
+    
+    ep_pw_sym = entropy_production_pairwise(x_sym, fs, lag)
+    assert ep_pw_sym < 1e-5, f"Expected near 0.0 for symmetric trajectory, got {ep_pw_sym}"
+    
+    logger.info("Executing adversarial tests on entropy_production_mou...")
+    ep_mou_zero = entropy_production_mou(x_zero, fs, lag)
+    assert ep_mou_zero.phi == 0.0, f"Expected 0.0 for zero variance, got {ep_mou_zero.phi}"
+    
+    with pytest.raises(ValueError, match="NaNs or Infs"):
+        entropy_production_mou(x_nan, fs, lag)
+        
+    ep_mou_sym = entropy_production_mou(x_sym, fs, lag)
+    assert ep_mou_sym.phi < 1e-5, f"Expected near 0.0 for symmetric trajectory, got {ep_mou_sym.phi}"
+
+    logger.info("Executing adversarial tests on entropy_production_spectral...")
+    spec_zero = entropy_production_spectral(x_zero, fs, nperseg=32)
+    assert spec_zero.phi_total == 0.0, "Expected 0.0 for zero variance"
+    
+    with pytest.raises(ValueError, match="NaNs or Infs"):
+        entropy_production_spectral(x_nan, fs, nperseg=32)
+

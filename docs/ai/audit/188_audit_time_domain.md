@@ -1,4 +1,4 @@
-# Adversarial Code Coverage Audit
+# Adversarial Code Coverage Audit: Time Domain Metrics
 
 ## Objective
 We have identified critical sections of the codebase that lack test coverage. Your primary task is to write adversarial unit tests designed specifically to **break** these uncovered code paths and expose latent bugs. Do not write happy-path tests simply to increase the coverage percentage; your goal is to find vulnerabilities.
@@ -18,13 +18,8 @@ We have identified critical sections of the codebase that lack test coverage. Yo
    - **1-to-1 Invariant Rule**: For every non-standard tensor operation, there must be an isolated mathematical invariant test.
    - **Paranoid Debugging**: Use `torch.autograd.set_detect_anomaly(True)` at the top of the test script and ensure tests run on `device="cpu"` when investigating NaNs.
 
-## Critical Uncovered Code (To Be Filled By User)
-Please investigate and write adversarial tests for the following files and specific lines:
-
-- [ ] File: `src/metrics/entropy_production.py` (Missing: 64, 82-110, 134, 146-150, 164-165, 171-173, 212, 244-248, 251-254, 276-285)
-- [ ] File: `src/metrics/entropy_production_surrogates.py` (Missing: 116-144)
-- [ ] File: `src/metrics/spectral.py` (Missing: 21-22, 44-49)
+## Critical Uncovered Code
+Please investigate and write adversarial tests for the following file and specific lines:
 - [ ] File: `src/metrics/time_domain.py` (Missing: 58, 85, 171, 181-182, 212-226, 248, 273, 283-284, 297-299, 354-364, 379-406, 420-430)
-- [ ] File: `src/models/encoders/spatial_compressor.py` (Missing: 1-74)
 
-*(Note for user: Feel free to remove or edit the lines above based on which specific critical lines you want the agent to target first.)*
+**Targeted Attack Vector:** This file has massive gaps related to sliding windows and correlations. Attack the "Lag Paradox": pass a `tau` (lag) value that is larger than the entire time series sequence length. Test sliding windows where `window_size` is not cleanly divisible by the sequence length. Force a `ZeroDivisionError` on correlations by passing constant (zero-variance) data.

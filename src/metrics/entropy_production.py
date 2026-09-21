@@ -62,6 +62,8 @@ def _check_shape(x: np.ndarray) -> np.ndarray:
     """
     if x.ndim != 2:
         raise ValueError(f"Input x must be 2D (samples, channels), got {x.ndim}D")
+    if not np.isfinite(x).all():
+        raise ValueError("Input time series contains NaNs or Infs.")
     return x - np.mean(x, axis=0)
 
 
@@ -98,7 +100,9 @@ def entropy_production_pairwise(x: np.ndarray, fs: float, lag_samples: int) -> f
     S_b = np.block([[Sigma, C], [C.T, Sigma]])
 
     # Add jitter to ensure invertibility
-    jitter = np.eye(2 * k) * 1e-8 * np.trace(Sigma) / k
+    tr_sigma = float(np.trace(Sigma))
+    jitter_scale = tr_sigma if tr_sigma > 1e-12 else 1.0
+    jitter = np.eye(2 * k) * 1e-8 * jitter_scale / k
     S_f += jitter
     S_b += jitter
 
@@ -137,7 +141,9 @@ def entropy_production_mou(x: np.ndarray, fs: float, lag_samples: int) -> MOURes
     x_t_plus_tau = x[lag_samples:]
     C = (x_t_plus_tau.T @ x_t) / (N - lag_samples)
 
-    ridge = np.eye(k) * 1e-8 * np.trace(Sigma) / k
+    tr_sigma = float(np.trace(Sigma))
+    ridge_scale = tr_sigma if tr_sigma > 1e-12 else 1.0
+    ridge = np.eye(k) * 1e-8 * ridge_scale / k
 
     try:
         inv_Sigma = np.linalg.inv(Sigma + ridge)
