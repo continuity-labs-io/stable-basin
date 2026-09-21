@@ -1,0 +1,21 @@
+title: "Sharpening the Tack: Thermodynamic Intervention in Waddington Basins"
+author: "Stable Basin Project"
+core_question: "Can we mathematically detect and computationally reverse biological aging using continuous-time State Space Models?"
+hypothesis: "Aging is a measurable geometric flattening of the macroscopic Waddington basin. Injecting exogenous precision will artificially steepen this basin and rescue failing biological limit cycles."
+significant_figures: 3
+
+data_sources:
+  config_intervention: "configs/worm_gait_intervention.yaml"
+  metrics_decline: "output/echo/benchmarks/06_worm_gait_metrics.json"
+  metrics_intervention: "output/echo/benchmarks/07_worm_gait_intervention_metrics.json"
+
+ghostwriter_sections:
+  ai_abstract:
+    prompt: "Write a concise, 150-word scientific abstract summarizing the core question and hypothesis."
+    context: "meta"
+  ai_results_pathology:
+    prompt: "Write a 1-paragraph summary explaining how the Gaussian model failed to detect aging, but the PrecisionWeightedEBM succeeded, specifically citing the Cohen's d and KS-statistic."
+    context: "metrics_decline"
+  ai_results_intervention:
+    prompt: "Write a 1-paragraph summary explaining the thermodynamic rescue, specifically citing the massive spike in the Hessian trace and the intervention's Cohen's d effect size."
+    context: "metrics_intervention"

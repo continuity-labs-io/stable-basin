@@ -21,9 +21,13 @@ coverage:
 	@echo "Running unit tests with coverage analysis..."
 	pytest --cov=src --cov-report=term-missing tests/
 
+# The PAPER variable specifies the subfolder within the paper/ directory to compile.
+# You can override it from the CLI, e.g.: make paper PAPER=my_future_paper
+PAPER ?= sharpening_the_tack
+
 paper:
-	python tools/compile_paper.py
-	cd paper && pdflatex sharpening_the_tack.tex
+	python tools/compile_paper.py --paper $(PAPER)
+	cd paper/$(PAPER) && pdflatex $(PAPER).tex
 
 
 # ==========================================

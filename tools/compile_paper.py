@@ -6,6 +6,7 @@ import json
 import yaml
 import jinja2
 import logging
+import argparse
 import math
 from pathlib import Path
 from llm_ghostwriter import LLMGhostwriter
@@ -46,25 +47,38 @@ def load_json(filepath: Path) -> dict:
         return {}
 
 def main():
+    parser = argparse.ArgumentParser(description="Compile LaTeX paper.")
+    parser.add_argument("--paper", type=str, default="sharpening_the_tack", help="Name of the paper directory")
+    args = parser.parse_args()
+
     root_dir = Path(__file__).resolve().parent.parent
+    paper_dir = root_dir / "paper" / args.paper
     
     # Define file paths
-    meta_path = root_dir / "paper" / "paper_metadata.yaml"
-    config_intervention_path = root_dir / "configs" / "worm_gait_intervention.yaml"
-    metrics_decline_path = root_dir / "output" / "echo" / "benchmarks" / "06_worm_gait_metrics.json"
-    metrics_intervention_path = root_dir / "output" / "echo" / "benchmarks" / "07_worm_gait_intervention_metrics.json"
+    meta_path = paper_dir / "paper_metadata.yaml"
+    
+    # Load metadata
+    logger.info("Loading paper metadata...")
+    meta = load_yaml(meta_path)
+    
+    context = {"meta": meta}
     
     # Load data sources
     logger.info("Loading data sources...")
-    meta = load_yaml(meta_path)
-    config_intervention = load_yaml(config_intervention_path)
-    metrics_decline = load_json(metrics_decline_path)
-    metrics_intervention = load_json(metrics_intervention_path)
+    for key, rel_path in meta.get("data_sources", {}).items():
+        filepath = root_dir / rel_path
+        if filepath.suffix in ['.yaml', '.yml']:
+            context[key] = load_yaml(filepath)
+        elif filepath.suffix == '.json':
+            context[key] = load_json(filepath)
+        else:
+            logger.warning(f"Unknown file extension for data source {key}: {filepath}")
+    
     
     # Setup LaTeX-Safe Jinja2 Environment
     logger.info("Setting up Jinja2 environment...")
     env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(root_dir / "paper"),
+        loader=jinja2.FileSystemLoader(paper_dir),
         block_start_string=r'\BLOCK{',
         block_end_string='}',
         variable_start_string=r'\VAR{',
@@ -74,44 +88,32 @@ def main():
     )
     env.filters['sig_figs'] = sig_figs_filter
     
-    template = env.get_template("sharpening_the_tack.tex.j2")
+    template = env.get_template(f"{args.paper}.tex.j2")
     
     # Generate AI content
     logger.info("Drafting AI content...")
     ghostwriter = LLMGhostwriter()
+    ghostwriter_results = {}
     
-    ai_abstract = ghostwriter.draft_section(
-        system_prompt=SYSTEM_PROMPT,
-        user_prompt="Write a concise, 150-word scientific abstract summarizing the core question and hypothesis.",
-        context_data=meta
-    )
-    
-    ai_results_pathology = ghostwriter.draft_section(
-        system_prompt=SYSTEM_PROMPT,
-        user_prompt="Write a 1-paragraph summary explaining how the Gaussian model failed to detect aging, but the PrecisionWeightedEBM succeeded, specifically citing the Cohen's d and KS-statistic.",
-        context_data=metrics_decline
-    )
-    
-    ai_results_intervention = ghostwriter.draft_section(
-        system_prompt=SYSTEM_PROMPT,
-        user_prompt="Write a 1-paragraph summary explaining the thermodynamic rescue, specifically citing the massive spike in the Hessian trace and the intervention's Cohen's d effect size.",
-        context_data=metrics_intervention
-    )
+    for key, section in meta.get("ghostwriter_sections", {}).items():
+        logger.info(f"Drafting AI content for {key}...")
+        ctx_key = section.get("context", "meta")
+        ctx_data = context.get(ctx_key, {})
+        ghostwriter_results[key] = ghostwriter.draft_section(
+            system_prompt=SYSTEM_PROMPT,
+            user_prompt=section["prompt"],
+            context_data=ctx_data
+        )
     
     # Render template
     logger.info("Rendering LaTeX template...")
     rendered_content = template.render(
-        meta=meta,
-        config_intervention=config_intervention,
-        metrics_decline=metrics_decline,
-        metrics_intervention=metrics_intervention,
-        ai_abstract=ai_abstract,
-        ai_results_pathology=ai_results_pathology,
-        ai_results_intervention=ai_results_intervention
+        **context,
+        **ghostwriter_results
     )
     
     # Write output
-    output_path = root_dir / "paper" / "sharpening_the_tack.tex"
+    output_path = paper_dir / f"{args.paper}.tex"
     logger.info(f"Writing rendered output to {output_path}...")
     with open(output_path, "w") as f:
         f.write(rendered_content)
