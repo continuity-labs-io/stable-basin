@@ -20,6 +20,6 @@ We have identified critical sections of the codebase that lack test coverage. Yo
 
 ## Critical Uncovered Code
 Please investigate and write adversarial tests for the following file and specific lines:
-- [ ] File: `src/metrics/spectral.py` (Missing: 21-22, 44-49)
+- [x] File: `src/metrics/spectral.py` (Missing: 21-22, 44-49)
 
 **Targeted Attack Vector:** Attack the Cross-Spectral Matrix (CSM) and Power Spectral Density (PSD) logic. Pass frequency bands that exceed the Nyquist frequency. Test what happens when the specified frequency band contains zero bins (e.g., highly constrained band with a low sampling rate). Force divide-by-zero errors.

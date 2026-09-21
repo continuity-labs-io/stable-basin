@@ -10,6 +10,9 @@ def _hilbert_transform(x: torch.Tensor, dim: int = 0) -> torch.Tensor:
     This replicates scipy.signal.hilbert exactly and prevents CPU syncs.
     """
     N = x.shape[dim]
+    if N == 0:
+        return x.clone()
+
     Xf = torch.fft.fft(x, dim=dim)
 
     h = torch.zeros(N, device=x.device, dtype=x.dtype)
@@ -39,8 +42,21 @@ class SpectralMetrics:
         time_dim = 0
         n = tensor_seq.shape[time_dim]
 
+        if n == 0:
+            logger.debug("Empty sequence provided to calculate_psd.")
+            fft_shape = list(tensor_seq.shape)
+            fft_shape[time_dim] = 0
+            return torch.empty(0, device=tensor_seq.device), torch.empty(fft_shape, device=tensor_seq.device)
+
+        if n == 1:
+            logger.debug("Length-1 sequence provided to calculate_psd.")
+            freqs = torch.fft.rfftfreq(n, d=1.0 / sampling_rate)
+            fft_shape = list(tensor_seq.shape)
+            fft_shape[time_dim] = 1
+            return freqs, torch.zeros(fft_shape, device=tensor_seq.device)
+
         # Handle flatlines gracefully
-        if torch.var(tensor_seq, dim=time_dim).mean() < 1e-8:
+        if torch.var(tensor_seq, dim=time_dim, unbiased=False).mean() < 1e-8:
             freqs = torch.fft.rfftfreq(n, d=1.0 / sampling_rate)
             fft_shape = list(tensor_seq.shape)
             fft_shape[time_dim] = n // 2 + 1
@@ -67,6 +83,9 @@ class SpectralMetrics:
 
         time_dim = 0
         min_steps = min(seq_a.shape[time_dim], seq_b.shape[time_dim])
+
+        if min_steps == 0:
+            return torch.tensor(0.0, device=seq_a.device)
 
         if seq_a.dim() == 1:
             seq_a = seq_a[:min_steps]
@@ -106,6 +125,9 @@ class SpectralMetrics:
 
         time_dim = 0
         min_steps = min(slow_seq.shape[time_dim], fast_seq.shape[time_dim])
+
+        if min_steps == 0:
+            return torch.tensor(0.0, device=slow_seq.device)
 
         # Explicitly enforce identical temporal dimensions to prevent mismatched
         # sequence errors

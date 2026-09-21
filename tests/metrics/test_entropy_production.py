@@ -144,3 +144,28 @@ def test_adversarial_entropy_production():
     with pytest.raises(ValueError, match="NaNs or Infs"):
         entropy_production_spectral(x_nan, fs, nperseg=32)
 
+def test_band_entropy_production_adversarial():
+    # ARRANGE
+    from src.metrics.entropy_production import band_entropy_production
+    
+    fs = 100.0
+    rng = np.random.default_rng(42)
+    x = rng.standard_normal((1000, 2))
+    spec = entropy_production_spectral(x, fs, nperseg=256)
+    
+    # 1. Band exceeds Nyquist (fs/2 = 50.0)
+    band_exceed_nyquist = (40.0, 100.0)
+    
+    # 2. Band contains zero bins (highly constrained)
+    band_zero_bins = (10.0, 10.0001)
+    
+    # ACT
+    phi_exceed = band_entropy_production(spec, band_exceed_nyquist)
+    phi_zero = band_entropy_production(spec, band_zero_bins)
+    
+    # ASSERT
+    assert isinstance(phi_exceed, float)
+    assert not np.isnan(phi_exceed)
+    
+    assert phi_zero == 0.0
+

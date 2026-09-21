@@ -162,3 +162,60 @@ def test_native_hilbert_transform():
     # The imaginary part should be sin(wt)
     expected_imag = torch.sin(2 * math.pi * freq * t)
     assert torch.allclose(actual_analytic.imag, expected_imag, atol=1e-5)
+
+def test_adversarial_spectral_telemetry():
+    """
+    Adversarial tests for SpectralMetrics targeting edge cases:
+    - Empty sequences
+    - Length-1 sequences
+    - Flatlines
+    - Odd length sequences in Hilbert transform
+    """
+    # ARRANGE
+    torch.autograd.set_detect_anomaly(True)
+    metrics = SpectralMetrics()
+    fs = 100.0
+
+    # 1. Empty sequence
+    empty_seq = torch.empty((0, 3), device="cpu")
+    
+    # ACT
+    freqs_empty, power_empty = metrics.calculate_psd(empty_seq, sampling_rate=fs)
+    plv_empty = metrics.calculate_plv(empty_seq, empty_seq)
+    cfc_empty = metrics.calculate_cfc_pac(empty_seq, empty_seq)
+    
+    # ASSERT
+    assert power_empty.shape == (0, 3)
+    assert freqs_empty.shape == (0,)
+    assert plv_empty.item() == 0.0
+    assert cfc_empty.item() == 0.0
+
+    # 2. Length-1 sequence
+    len1_seq = torch.randn(1, 3, device="cpu")
+    
+    # ACT
+    freqs_len1, power_len1 = metrics.calculate_psd(len1_seq, sampling_rate=fs)
+    plv_len1 = metrics.calculate_plv(len1_seq, len1_seq)
+    cfc_len1 = metrics.calculate_cfc_pac(len1_seq, len1_seq)
+    
+    # ASSERT
+    assert power_len1.shape == (1, 3)
+    assert torch.all(power_len1 == 0.0)
+    assert freqs_len1.shape == (1,)
+    
+    # 3. Flatline sequence
+    flat_seq = torch.zeros(100, 3, device="cpu")
+    
+    # ACT
+    freqs_flat, power_flat = metrics.calculate_psd(flat_seq, sampling_rate=fs)
+    
+    # ASSERT
+    assert torch.all(power_flat == 0.0)
+    assert not torch.isnan(power_flat).any()
+    
+    # 4. Odd length sequence (Hilbert Transform logic)
+    odd_seq = torch.randn(5, 3, device="cpu")
+    analytic_odd = _hilbert_transform(odd_seq, dim=0)
+    
+    assert analytic_odd.shape == odd_seq.shape
+    assert not torch.isnan(analytic_odd).any()
