@@ -20,6 +20,12 @@ def sig_figs_filter(value, sig_figs):
         return "0"
     try:
         value = float(value)
+        if abs(value) < 1e-4 or abs(value) >= 1e5:
+            formatted = f"{value:.{sig_figs - 1}e}"
+            base, exponent = formatted.split("e")
+            exponent = int(exponent)
+            return f"{base} \\times 10^{{{exponent}}}"
+            
         precision = int(sig_figs - math.floor(math.log10(abs(value))) - 1)
         if precision <= 0:
             return str(int(round(value, precision)))
@@ -95,14 +101,29 @@ def main():
     ghostwriter = LLMGhostwriter()
     ghostwriter_results = {}
     
+    def apply_sig_figs(data, sig_figs):
+        if isinstance(data, dict):
+            return {k: apply_sig_figs(v, sig_figs) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [apply_sig_figs(v, sig_figs) for v in data]
+        elif isinstance(data, float):
+            return sig_figs_filter(data, sig_figs)
+        else:
+            return data
+
     for key, section in meta.get("ghostwriter_sections", {}).items():
         logger.info(f"Drafting AI content for {key}...")
         ctx_key = section.get("context", "meta")
         ctx_data = context.get(ctx_key, {})
+        
+        # Apply significant figures to context data before passing to LLM
+        sig_figs = meta.get("significant_figures", 3)
+        formatted_ctx_data = apply_sig_figs(ctx_data, sig_figs)
+        
         ghostwriter_results[key] = ghostwriter.draft_section(
             system_prompt=SYSTEM_PROMPT,
             user_prompt=section["prompt"],
-            context_data=ctx_data
+            context_data=formatted_ctx_data
         )
     
     # Render template
