@@ -87,7 +87,7 @@ class ThermodynamicMetrics:
         for t in range(window_size, time_steps + 1):
             z_win = z_sequence[t - window_size : t, :]
 
-            channel_vars = torch.var(z_win, dim=0)
+            channel_vars = torch.var(z_win, dim=0, unbiased=(window_size > 1))
             active_mask = channel_vars > 1e-8
 
             if not active_mask.any():

@@ -97,7 +97,10 @@ def test_surrogates_near_zero_ep():
     assert mou_res_pr.phi < 0.5, (
         f"Phase-randomized surrogate EP {mou_res_pr.phi:.3f} is not near-zero."
     )
+import warnings
 
+@pytest.mark.filterwarnings("ignore:The logm input matrix is exactly singular")
+@pytest.mark.filterwarnings("ignore:logm result may be inaccurate")
 def test_adversarial_entropy_production():
     # ARRANGE
     import torch
