@@ -1,5 +1,5 @@
 **Context Files to Load / Create:**
-* `paper_metadata.yaml`
+* `paper/paper_metadata.yaml`
 * `paper/sharpening_the_tack.tex.j2`
 * `configs/worm_gait_intervention.yaml`
 * `output/echo/benchmarks/06_worm_gait_metrics.json`
@@ -28,7 +28,7 @@ We need to build the Python script that reads our physical outputs and configura
 * Write the rendered output to `paper/sharpening_the_tack.tex`.
 
 **2. Update the `Makefile`:**
-* Add a new `.PHONY: paper` target.
+* Add a new `.PHONY: paper` target in the engineering tools section.
 * The command should execute sequentially:
   1. `python tools/compile_paper.py`
   2. `cd paper && pdflatex sharpening_the_tack.tex`

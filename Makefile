@@ -1,6 +1,6 @@
 MODELS ?= zero_padded_ssm forward_fill_ssm mask_concat_ssm causal_transformer masr_ssm masr_mamba gru_d ode_rnn
 
-.PHONY: baseline extrapolation loss-ablation density-sweep ssm-experiments clinical-diagnostic worm-gait-ebm worm-gait-intervention worm-gait-experiments lint-pytorch preflight audit coverage
+.PHONY: baseline extrapolation loss-ablation density-sweep ssm-experiments clinical-diagnostic worm-gait-ebm worm-gait-intervention worm-gait-experiments lint-pytorch preflight audit coverage paper
 
 # ==========================================
 # General Software Engineering Tools
@@ -20,6 +20,10 @@ audit:
 coverage:
 	@echo "Running unit tests with coverage analysis..."
 	pytest --cov=src --cov-report=term-missing tests/
+
+paper:
+	python tools/compile_paper.py
+	cd paper && pdflatex sharpening_the_tack.tex
 
 
 # ==========================================
