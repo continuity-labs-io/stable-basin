@@ -181,3 +181,8 @@ logs/
 *.aux
 *.out
 *.toc
+
+# Images
+*.png
+*.jpg
+*.jpeg

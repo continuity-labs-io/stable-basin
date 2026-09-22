@@ -29,8 +29,20 @@ The baseline Gaussian model yielded a KS-statistic of \VAR{ metrics_decline.Gaus
 
 \VAR{ ai_results_pathology }
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{../../output/echo/benchmarks/06_worm_gait_decline_ablation.png}
+    \caption{\textbf{Worm Gait Decline Ablation Plot.} \VAR{ ai_caption_decline }}
+\end{figure}
+
 Applying an intervention of $\lambda = \VAR{ config_intervention.lambda_B }$ steepened the basin to a trace of \VAR{ metrics_intervention.RunB.overall_mean | sig_figs(meta.significant_figures) }, yielding a rescue effect size of $d = \VAR{ metrics_intervention.Comparisons.cohens_d | sig_figs(meta.significant_figures) }$.
 
 \VAR{ ai_results_intervention }
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{../../output/echo/benchmarks/07_worm_gait_intervention_rescue.png}
+    \caption{\textbf{Thermodynamic Intervention Rescue Plot.} \VAR{ ai_caption_rescue }}
+\end{figure}
 
 \end{document}

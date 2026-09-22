@@ -26,3 +26,9 @@ ghostwriter_sections:
   ai_results_intervention:
     prompt: "Write a 1-paragraph summary explaining the thermodynamic rescue, specifically citing the massive spike in the Hessian trace and the intervention's Cohen's d effect size."
     context: "metrics_intervention"
+  ai_caption_decline:
+    prompt: "Write a formal 2-sentence figure caption for the 'Worm Gait Decline Ablation Plot'. Explain that the figure demonstrates the failure of the baseline Gaussian model and the successful detection of the flattened Waddington basin by the PrecisionWeightedEBM, citing the relevant KS-statistics. Do not output anything other than the caption text."
+    context: "metrics_decline"
+  ai_caption_rescue:
+    prompt: "Write a formal 2-sentence figure caption for the 'Thermodynamic Intervention Rescue Plot'. Explain that the figure visualizes the steepening of the thermodynamic basin and the rescue of the limit cycle after the precision injection, citing the massive spike in the Hessian trace. Do not output anything other than the caption text."
+    context: "metrics_intervention"
