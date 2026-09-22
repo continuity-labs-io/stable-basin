@@ -64,10 +64,13 @@ ssm-experiments: baseline extrapolation density-sweep loss-ablation clinical-dia
 # Scientific Experiments (Worm Gait Suite)
 # ==========================================
 
+worm-gait-baseline:
+	python -m src.benchmarks.08_worm_gait_baseline_metrics
+
 worm-gait-ebm:
 	python -m src.benchmarks.06_worm_gait_aging_ebm --config configs/worm_gait_ebm.yaml
 
 worm-gait-intervention:
 	python -m src.benchmarks.07_worm_gait_intervention --config configs/worm_gait_intervention.yaml
 
-worm-gait-experiments: worm-gait-ebm worm-gait-intervention
+worm-gait-experiments: worm-gait-baseline worm-gait-ebm worm-gait-intervention
