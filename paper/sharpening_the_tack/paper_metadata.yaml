@@ -8,11 +8,18 @@ data_sources:
   config_intervention: "configs/worm_gait_intervention.yaml"
   metrics_decline: "output/echo/benchmarks/06_worm_gait_metrics.json"
   metrics_intervention: "output/echo/benchmarks/07_worm_gait_intervention_metrics.json"
+  metrics_baseline: "output/echo/benchmarks/08_worm_gait_baseline_metrics.json"
 
 ghostwriter_sections:
   ai_abstract:
-    prompt: "Write a concise, 150-word scientific abstract summarizing the core question and hypothesis."
+    prompt: "Write a concise, 150-word scientific abstract summarizing the core question and hypothesis. Do not include \\begin{abstract} or \\end{abstract} tags."
     context: "meta"
+  ai_methods:
+    prompt: "Write the content for a highly detailed 'Methods' section explaining the architecture of the physics engine. You must detail the 46-dimensional state space partitioned into a Micro and Macro observer via Fristonian Markov Blankets. You must also detail the neural network architecture used to learn the energy landscape: the PrecisionWeightedEBM, which consists of a shared MLP backbone with GELU activations (to ensure smooth, twice-differentiable physics), splitting into a scalar Energy head and a Precision head that enforces a strictly Symmetric Positive-Definite matrix via Cholesky decomposition. Do not include the \\section heading in your output. Do not mention specific file paths, code artifacts, serialized weights, or plotting scripts."
+    context: "config_intervention"
+  ai_results_baseline:
+    prompt: "Write the opening content to the 'Results' section summarizing the baseline biological metrics. Using the provided metrics, detail the differences in the Time Domain (Critical Slowing Down), Spectral Domain, and Entropy Production between the Young and Old C. elegans worms. Crucially, you must explicitly explain to the reader that a higher Hessian trace is 'better' because it indicates a steep, robust thermodynamic basin that resists noise, whereas a low trace indicates a flattened, pathological landscape. Do not include the \\section heading in your output."
+    context: "metrics_baseline"
   ai_results_pathology:
     prompt: "Write a 1-paragraph summary explaining how the Gaussian model failed to detect aging, but the PrecisionWeightedEBM succeeded, specifically citing the Cohen's d and KS-statistic."
     context: "metrics_decline"
