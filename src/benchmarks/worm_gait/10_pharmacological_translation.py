@@ -11,7 +11,7 @@ import jax.numpy as jnp
 import equinox as eqx
 
 import importlib
-worm_gait_intervention = importlib.import_module("src.benchmarks.07_worm_gait_intervention")
+worm_gait_intervention = importlib.import_module("src.benchmarks.worm_gait.07_worm_gait_intervention")
 setup_experiment = worm_gait_intervention.setup_experiment
 simulate_sde = worm_gait_intervention.simulate_sde
 

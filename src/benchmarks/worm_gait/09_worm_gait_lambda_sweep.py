@@ -11,7 +11,7 @@ import numpy as np
 import pingouin as pg
 
 import importlib
-worm_gait_intervention = importlib.import_module("src.benchmarks.07_worm_gait_intervention")
+worm_gait_intervention = importlib.import_module("src.benchmarks.worm_gait.07_worm_gait_intervention")
 setup_experiment = worm_gait_intervention.setup_experiment
 simulate_sde = worm_gait_intervention.simulate_sde
 from src.echo.metrics.energy_landscape import batch_calculate_curvature

@@ -12,7 +12,7 @@ import optuna
 import copy
 
 # Import necessary components using importlib since the filename starts with a number
-benchmark_module = importlib.import_module("src.benchmarks.06_worm_gait_aging_ebm")
+benchmark_module = importlib.import_module("src.benchmarks.worm_gait.06_worm_gait_aging_ebm")
 run_worm_gait_experiment = benchmark_module.run_worm_gait_experiment
 build_graph = benchmark_module.build_graph
 RealEigenwormDataset = benchmark_module.RealEigenwormDataset

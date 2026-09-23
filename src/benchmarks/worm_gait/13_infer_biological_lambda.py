@@ -12,7 +12,7 @@ import torch
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset
 from src.data.datasets import JAXDictDataset
 import importlib
-worm_gait_aging_ebm = importlib.import_module("src.benchmarks.06_worm_gait_aging_ebm")
+worm_gait_aging_ebm = importlib.import_module("src.benchmarks.worm_gait.06_worm_gait_aging_ebm")
 build_graph = worm_gait_aging_ebm.build_graph
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 from src.echo.architecture.hierarchical_factor import HierarchicalThermoFlowFactor
