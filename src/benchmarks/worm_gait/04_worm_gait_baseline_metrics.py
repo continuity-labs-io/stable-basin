@@ -91,7 +91,7 @@ def run_baseline_metrics():
     logger.info(f"Old Entropy Production:   {mou_o.phi:.4f}")
 
     # Save results
-    out_dir = "output/echo/benchmarks"
+    out_dir = "output/benchmarks/worm_gait"
     os.makedirs(out_dir, exist_ok=True)
     out_file = os.path.join(out_dir, "08_worm_gait_baseline_metrics.json")
     

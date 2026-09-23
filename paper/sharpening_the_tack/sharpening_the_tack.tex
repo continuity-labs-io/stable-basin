@@ -45,7 +45,7 @@ Our analysis reveals a stark contrast in the capacity of the evaluated models to
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{../../output/echo/benchmarks/06_worm_gait_decline_ablation.png}
+    \includegraphics[width=\textwidth]{../../output/benchmarks/worm_gait/02_worm_gait_decline_ablation.png}
     \caption{\textbf{Worm Gait Decline Ablation Plot.} The Worm Gait Decline Ablation Plot demonstrates the failure of the baseline Gaussian model to detect age-related behavioral changes ($KS = 0$, $p = 1.00$). In contrast, the PrecisionWeightedEBM successfully detects the flattened Waddington basin, accurately capturing the distributional shift associated with aging ($KS = 0.119$, $p = 0$).}
 \end{figure}
 
@@ -55,7 +55,7 @@ The thermodynamic rescue of the system was evaluated by shifting the interventio
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{../../output/echo/benchmarks/07_worm_gait_intervention_rescue.png}
+    \includegraphics[width=\textwidth]{../../output/benchmarks/worm_gait/03_worm_gait_intervention_rescue.png}
     \caption{\textbf{Thermodynamic Intervention Rescue Plot.} This figure visualizes the steepening of the thermodynamic basin and the rescue of the limit cycle following the precision injection intervention of $\lambda = 5.00$. This structural restoration is directly evidenced by a massive spike in the overall mean Hessian trace from a baseline of 19.2 at $\lambda = 0.200$ to 449, quantitatively reflecting a substantial topological shift with a Wasserstein distance of 430 and a Cohen's d of -32.4.}
 \end{figure}
 

@@ -88,7 +88,7 @@ def build_waddington_graph(key, input_dim):
 
 
 def run_waddington_collapse_benchmark(
-    output_plot: str = "output/echo/benchmarks/01_waddington_collapse_plot.png",
+    output_plot: str = "output/benchmarks/basic/01_waddington_collapse_plot.png",
 ) -> int:
     key = jax.random.PRNGKey(42)
     k_graph, k_train, k_eval = jax.random.split(key, 3)

@@ -32,6 +32,6 @@ dataset:
   seq_len: 10
 
 paths:
-  model_weights: "output/echo/benchmarks/06_worm_gait_decline_trained_engine.eqx"
-  output_plot: "output/echo/benchmarks/07_worm_gait_intervention_rescue.png"
-  output_metrics: "output/echo/benchmarks/07_worm_gait_intervention_metrics.json"
+  model_weights: "output/benchmarks/worm_gait/02_worm_gait_decline_trained_engine.eqx"
+  output_plot: "output/benchmarks/worm_gait/03_worm_gait_intervention_rescue.png"
+  output_metrics: "output/benchmarks/worm_gait/03_worm_gait_intervention_metrics.json"

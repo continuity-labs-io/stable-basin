@@ -12,7 +12,7 @@ import torch
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset
 from src.data.datasets import JAXDictDataset
 import importlib
-worm_gait_aging_ebm = importlib.import_module("src.benchmarks.worm_gait.06_worm_gait_aging_ebm")
+worm_gait_aging_ebm = importlib.import_module("src.benchmarks.worm_gait.02_worm_gait_aging_ebm")
 build_graph = worm_gait_aging_ebm.build_graph
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 from src.echo.architecture.hierarchical_factor import HierarchicalThermoFlowFactor
@@ -162,7 +162,7 @@ def main():
     dataset = JAXDictDataset(eval_old_dataset_raw, d_state)
     loader = DataLoader(dataset, batch_size=8, shuffle=True)
 
-    model_path = "output/echo/benchmarks/06_worm_gait_decline_trained_engine.eqx"
+    model_path = "output/benchmarks/worm_gait/02_worm_gait_decline_trained_engine.eqx"
     if not os.path.exists(model_path):
         logger.error(f"Pre-trained model not found at {model_path}. Please run benchmark 06 first.")
         return
@@ -197,7 +197,7 @@ def main():
     final_lambda = float(jnp.exp(lambda_model.log_lambda))
     logger.info(f"Optimization complete. Final inferred biological lambda: {final_lambda:.4f}")
 
-    out_path = "output/echo/benchmarks/13_inferred_biological_lambda.json"
+    out_path = "output/benchmarks/worm_gait/10_inferred_biological_lambda.json"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as f:
         json.dump({"biological_lambda": final_lambda}, f, indent=4)

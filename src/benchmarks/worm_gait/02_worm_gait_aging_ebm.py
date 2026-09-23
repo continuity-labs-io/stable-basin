@@ -186,12 +186,12 @@ def plot_ablation_results(
     axes[2].legend()
 
     plt.tight_layout()
-    os.makedirs("output/echo/benchmarks", exist_ok=True)
-    plt.savefig("output/echo/benchmarks/06_worm_gait_decline_ablation.png")
+    os.makedirs("output/benchmarks/worm_gait", exist_ok=True)
+    plt.savefig("output/benchmarks/worm_gait/02_worm_gait_decline_ablation.png")
     plt.close()
 
     logger.info(
-        "Benchmark complete. Plot saved to output/echo/benchmarks/06_worm_gait_decline_ablation.png"
+        "Benchmark complete. Plot saved to output/benchmarks/worm_gait/02_worm_gait_decline_ablation.png"
     )
 
 
@@ -334,14 +334,14 @@ def main():
     )
 
     logger.info("Serializing trained Young Worm engine to disk.")
-    os.makedirs("output/echo/benchmarks", exist_ok=True)
+    os.makedirs("output/benchmarks/worm_gait", exist_ok=True)
     eqx.tree_serialise_leaves(
-        "output/echo/benchmarks/06_worm_gait_decline_trained_engine.eqx", graph_B
+        "output/benchmarks/worm_gait/02_worm_gait_decline_trained_engine.eqx", graph_B
     )
 
     all_metrics = {"GaussianEBM": metrics_A, "PrecisionWeightedEBM": metrics_B}
 
-    metrics_path = "output/echo/benchmarks/06_worm_gait_metrics.json"
+    metrics_path = "output/benchmarks/worm_gait/02_worm_gait_metrics.json"
     with open(metrics_path, "w") as f:
         json.dump(all_metrics, f, indent=2)
     logger.info(f"Serialized full statistical metrics to {metrics_path}")

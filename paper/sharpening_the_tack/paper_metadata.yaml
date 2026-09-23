@@ -6,9 +6,9 @@ significant_figures: 3
 
 data_sources:
   config_intervention: "configs/worm_gait_intervention.yaml"
-  metrics_decline: "output/echo/benchmarks/06_worm_gait_metrics.json"
-  metrics_intervention: "output/echo/benchmarks/07_worm_gait_intervention_metrics.json"
-  metrics_baseline: "output/echo/benchmarks/08_worm_gait_baseline_metrics.json"
+  metrics_decline: "output/benchmarks/worm_gait/02_worm_gait_metrics.json"
+  metrics_intervention: "output/benchmarks/worm_gait/03_worm_gait_intervention_metrics.json"
+  metrics_baseline: "output/benchmarks/worm_gait/04_worm_gait_baseline_metrics.json"
 
 ghostwriter_sections:
   ai_abstract:

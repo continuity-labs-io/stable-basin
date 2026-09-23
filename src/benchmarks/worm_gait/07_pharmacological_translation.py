@@ -11,7 +11,7 @@ import jax.numpy as jnp
 import equinox as eqx
 
 import importlib
-worm_gait_intervention = importlib.import_module("src.benchmarks.worm_gait.07_worm_gait_intervention")
+worm_gait_intervention = importlib.import_module("src.benchmarks.worm_gait.03_worm_gait_intervention")
 setup_experiment = worm_gait_intervention.setup_experiment
 simulate_sde = worm_gait_intervention.simulate_sde
 
@@ -72,7 +72,7 @@ def main():
         config = yaml.safe_load(f)
 
     # 1. Load JSON Data
-    sweep_metrics_path = "output/echo/benchmarks/09_lambda_sweep_metrics.json"
+    sweep_metrics_path = "output/benchmarks/worm_gait/06_lambda_sweep_metrics.json"
     if not os.path.exists(sweep_metrics_path):
         logger.error(f"Sweep metrics file not found: {sweep_metrics_path}")
         return
@@ -148,7 +148,7 @@ def main():
     logger.info(f"Delta G: {delta_G:.4f}")
 
     # 6. Serialization
-    output_metrics = "output/echo/benchmarks/10_clinical_translation_metrics.json"
+    output_metrics = "output/benchmarks/worm_gait/07_clinical_translation_metrics.json"
     os.makedirs(os.path.dirname(output_metrics), exist_ok=True)
     metrics_data = {
         "EC50": float(ec50),
@@ -164,7 +164,7 @@ def main():
     logger.info(f"Metrics saved to {output_metrics}")
 
     # 7. Visualization
-    output_plot = "output/echo/benchmarks/10_pharmacological_curve.png"
+    output_plot = "output/benchmarks/worm_gait/07_pharmacological_curve.png"
     plt.figure(figsize=(10, 6))
     
     # Plot raw points

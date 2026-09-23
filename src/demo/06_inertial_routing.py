@@ -38,7 +38,7 @@ class MockKinematicRouting(nn.Module):
         return dt.squeeze(1)
 
 
-def test_inertial_routing_plot():
+def plot_inertial_routing():
     dataloader = GEVIDataloader(
         gevi_sample_rate=1000,
         target_clock_hz=1000,  # 1:1 compression so we can see the raw wave
@@ -65,7 +65,7 @@ def test_inertial_routing_plot():
     dt_np = dt[0].numpy()
 
     # Output path compliance
-    output_dir = "output/tests/models/ssm/physics"
+    output_dir = "output/demo"
     os.makedirs(output_dir, exist_ok=True)
     out_path = os.path.join(output_dir, "inertia_dial_validation.png")
 
@@ -97,3 +97,7 @@ def test_inertial_routing_plot():
     assert anomaly_dt > baseline_dt * 1.5, (
         f"Inertial Dial failed to spike. Anomaly: {anomaly_dt:.2f}, Baseline: {baseline_dt:.2f}"
     )
+
+if __name__ == "__main__":
+    plot_inertial_routing()
+

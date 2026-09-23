@@ -216,8 +216,8 @@ def main():
 
     plt.suptitle("Active Inference Clinical Workflow")
     plt.tight_layout()
-    os.makedirs("output/echo/benchmarks", exist_ok=True)
-    plt.savefig("output/echo/benchmarks/05_clinical_workflow_demo.png")
+    os.makedirs("output/benchmarks/basic", exist_ok=True)
+    plt.savefig("output/benchmarks/basic/05_clinical_workflow_demo.png")
     plt.close()
 
 

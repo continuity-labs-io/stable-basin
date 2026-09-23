@@ -65,36 +65,36 @@ ssm-experiments: baseline extrapolation density-sweep loss-ablation clinical-dia
 # ==========================================
 
 worm-gait-baseline:
-	python -m src.benchmarks.worm_gait.08_worm_gait_baseline_metrics
+	python -m src.benchmarks.worm_gait.04_worm_gait_baseline_metrics
 
 .PHONY: worm-gait-optune
 worm-gait-optune:
-	python -m src.benchmarks.worm_gait.06_optune
+	python -m src.benchmarks.worm_gait.01_optune
 
 worm-gait-ebm:
-	python -m src.benchmarks.worm_gait.06_worm_gait_aging_ebm --config configs/worm_gait_ebm.yaml
+	python -m src.benchmarks.worm_gait.02_worm_gait_aging_ebm --config configs/worm_gait_ebm.yaml
 
 worm-gait-intervention:
-	python -m src.benchmarks.worm_gait.07_worm_gait_intervention --config configs/worm_gait_intervention.yaml
+	python -m src.benchmarks.worm_gait.03_worm_gait_intervention --config configs/worm_gait_intervention.yaml
 
 .PHONY: worm-gait-sweep
 worm-gait-sweep:
-	python -m src.benchmarks.worm_gait.09_worm_gait_lambda_sweep --config configs/worm_gait_intervention.yaml
+	python -m src.benchmarks.worm_gait.06_worm_gait_lambda_sweep --config configs/worm_gait_intervention.yaml
 
 .PHONY: worm-gait-pharmacology
 worm-gait-pharmacology:
-	python -m src.benchmarks.worm_gait.10_pharmacological_translation --config configs/worm_gait_intervention.yaml
+	python -m src.benchmarks.worm_gait.07_pharmacological_translation --config configs/worm_gait_intervention.yaml
 
 .PHONY: worm-gait-ssm
 worm-gait-ssm:
-	python -m src.benchmarks.worm_gait.11_worm_gait_aging_ssm
+	python -m src.benchmarks.worm_gait.08_worm_gait_aging_ssm
 
 .PHONY: worm-gait-transformer
 worm-gait-transformer:
-	python -m src.benchmarks.worm_gait.12_worm_gait_aging_transformer
+	python -m src.benchmarks.worm_gait.09_worm_gait_aging_transformer
 
 .PHONY: worm-gait-infer-lambda
 worm-gait-infer-lambda:
-	python -m src.benchmarks.worm_gait.13_infer_biological_lambda
+	python -m src.benchmarks.worm_gait.10_infer_biological_lambda
 
 worm-gait-experiments: worm-gait-baseline worm-gait-ebm worm-gait-intervention worm-gait-sweep worm-gait-pharmacology worm-gait-ssm worm-gait-transformer worm-gait-infer-lambda

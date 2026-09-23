@@ -11,7 +11,7 @@ import numpy as np
 import pingouin as pg
 
 import importlib
-worm_gait_intervention = importlib.import_module("src.benchmarks.worm_gait.07_worm_gait_intervention")
+worm_gait_intervention = importlib.import_module("src.benchmarks.worm_gait.03_worm_gait_intervention")
 setup_experiment = worm_gait_intervention.setup_experiment
 simulate_sde = worm_gait_intervention.simulate_sde
 from src.echo.metrics.energy_landscape import batch_calculate_curvature
@@ -98,13 +98,13 @@ def main():
         mean_traces_per_lambda.append(overall_lam_mean)
         lambdas_for_plot.append(lam)
 
-    output_metrics = "output/echo/benchmarks/09_lambda_sweep_metrics.json"
+    output_metrics = "output/benchmarks/worm_gait/06_lambda_sweep_metrics.json"
     os.makedirs(os.path.dirname(output_metrics), exist_ok=True)
     with open(output_metrics, "w") as f:
         json.dump(results, f, indent=2)
     logger.info(f"Metrics saved to {output_metrics}")
 
-    output_plot = "output/echo/benchmarks/09_lambda_dose_response.png"
+    output_plot = "output/benchmarks/worm_gait/06_lambda_dose_response.png"
     os.makedirs(os.path.dirname(output_plot), exist_ok=True)
     plt.figure(figsize=(10, 6))
     

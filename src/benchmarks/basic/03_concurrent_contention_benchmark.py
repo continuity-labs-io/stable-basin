@@ -104,7 +104,7 @@ def main():
     rank_C = metrics_C["hessian_rank"]
 
     # Plotting
-    os.makedirs("output/echo/benchmarks", exist_ok=True)
+    os.makedirs("output/benchmarks/basic", exist_ok=True)
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10), sharex=True)
 
     # Top Plot: Divergence
@@ -127,10 +127,10 @@ def main():
     ax2.grid(True)
 
     plt.tight_layout()
-    plt.savefig("output/echo/benchmarks/03_concurrent_contention_benchmark.png")
+    plt.savefig("output/benchmarks/basic/03_concurrent_contention_benchmark.png")
     plt.close()
 
-    print("Plot saved to output/echo/benchmarks/03_concurrent_contention_benchmark.png")
+    print("Plot saved to output/benchmarks/basic/03_concurrent_contention_benchmark.png")
     print("--- Final Results ---")
     print(f"Phase A | Div: {div_A[-1]:.4f} | Trace: {trace_A:.4f}")
     print(f"Phase A | Rank: {rank_A} | Nullity: {nullity_A}")

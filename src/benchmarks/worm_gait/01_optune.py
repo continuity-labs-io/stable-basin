@@ -12,7 +12,7 @@ import optuna
 import copy
 
 # Import necessary components using importlib since the filename starts with a number
-benchmark_module = importlib.import_module("src.benchmarks.worm_gait.06_worm_gait_aging_ebm")
+benchmark_module = importlib.import_module("src.benchmarks.worm_gait.02_worm_gait_aging_ebm")
 run_worm_gait_experiment = benchmark_module.run_worm_gait_experiment
 build_graph = benchmark_module.build_graph
 RealEigenwormDataset = benchmark_module.RealEigenwormDataset
@@ -140,8 +140,8 @@ def main():
     logger.info(f"Best Params: {study.best_trial.params}")
 
     # Save best parameters to a JSON for easy extraction later
-    os.makedirs("output/echo/benchmarks", exist_ok=True)
-    with open("output/echo/benchmarks/06_worm_gait_ebm_best_params.json", "w") as f:
+    os.makedirs("output/benchmarks/worm_gait", exist_ok=True)
+    with open("output/benchmarks/worm_gait/01_worm_gait_ebm_best_params.json", "w") as f:
         json.dump(study.best_trial.params, f, indent=2)
 
 
