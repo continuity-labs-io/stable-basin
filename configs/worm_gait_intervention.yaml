@@ -7,6 +7,7 @@ experiment:
 intervention:
   lambda_A: 0.2
   lambda_B: 5.0
+  lambda_sweep: [0.1, 0.2, 0.3, 0.4, 0.5, 1.0, 5.0]
 
 observer:
   micro:

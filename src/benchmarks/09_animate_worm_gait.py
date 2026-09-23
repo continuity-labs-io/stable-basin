@@ -25,7 +25,7 @@ def main():
     young_data = ds_young[0].numpy()
     old_data = ds_old[0].numpy()
     
-    output_dir = "output/benchmarks"
+    output_dir = "output/echo/benchmarks"
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, "09_worm_gait_animation.gif")
     

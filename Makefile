@@ -77,4 +77,8 @@ worm-gait-intervention:
 worm-gait-sweep:
 	python -m src.benchmarks.09_worm_gait_lambda_sweep --config configs/worm_gait_intervention.yaml
 
-worm-gait-experiments: worm-gait-baseline worm-gait-ebm worm-gait-intervention worm-gait-sweep
+.PHONY: worm-gait-pharmacology
+worm-gait-pharmacology:
+	python -m src.benchmarks.10_pharmacological_translation --config configs/worm_gait_intervention.yaml
+
+worm-gait-experiments: worm-gait-baseline worm-gait-ebm worm-gait-intervention worm-gait-sweep worm-gait-pharmacology

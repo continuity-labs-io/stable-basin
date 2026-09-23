@@ -43,8 +43,8 @@ def main():
 
     graph, x0, key = setup_experiment(config)
 
-    lambdas = [0.1, 0.2, 0.3, 0.4, 0.5, 1.0, 5.0]
-    lambda_baseline = 0.2
+    lambdas = config["intervention"]["lambda_sweep"]
+    lambda_baseline = config["intervention"]["lambda_A"]
 
     N_steps = config["experiment"]["N_steps"]
     dt = config["experiment"]["dt"]
