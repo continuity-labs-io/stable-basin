@@ -52,3 +52,13 @@ gracefully handle the massive `NaN`gaps of hourly epigenetic reads.
 - The Action: We hook up the MultimodalBioDataset directly to the PredictiveCodingGraph.
 
 - The Proof: We prove that the engine can maintain a coherent biological limit cycle even when the Epigenetic sensors update once an hour, while the Bioelectric sensors update 20,000 times a second. We modify the TorxThermalizer to handle multi-rate polling.
+
+### Pipeline Orchestration (Flyte)
+
+- **Issue**: The `worm_gait` pipeline is currently orchestrated sequentially via a `Makefile`, passing JSON and EQX files on the local filesystem, which doesn't scale well for robust provenance and computational biology workloads.
+- **Task**: Migrate to Flyte. Rewrite the 10 standalone Python scripts as Flyte `@task` functions. Replace file-based artifacts with strongly typed data classes or `FlyteFile` passing. Construct a DAG `@workflow` to manage dependencies, retries, and artifact provenance. Containerize the environment (Dockerfile) for execution on a Flyte backend (local sandbox or Kubernetes).
+
+### Distributed Compute (Ray)
+
+- **Issue**: The ML pipeline involves heavy computational tasks (like hyperparameter sweeps with Optuna and EBM training) that run on single machines and take too long.
+- **Task**: Integrate Ray to scale computation massively across a cluster. For hyperparameter optimization, replace the standard Optuna loop in `05_worm_gait_optune_ebm_architecture.py` with `ray.tune`, wrapping the objective in a Ray Trainable. For distributed training, refactor `06_worm_gait_aging_ebm.py` to use `ray.train` for distributing the JAX/Equinox computations across multiple GPUs/nodes. Adapting data loaders for sharded data and wrapping model updates in Ray's JAX worker logic will be required.

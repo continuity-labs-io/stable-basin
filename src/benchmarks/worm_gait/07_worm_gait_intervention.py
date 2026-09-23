@@ -4,6 +4,7 @@ import logging
 import argparse
 import yaml
 import json
+import wandb
 import jax
 import jax.numpy as jnp
 import equinox as eqx
@@ -174,6 +175,13 @@ def save_results(
     with open(output_metrics, "w") as f:
         json.dump(data, f, indent=2)
 
+    wandb.log(data["Comparisons"])
+    wandb.log({"07_worm_gait_intervention_rescue": wandb.Image(config["paths"]["output_plot"])})
+    
+    artifact = wandb.Artifact("07_worm_gait_intervention_metrics", type="metrics")
+    artifact.add_file(output_metrics)
+    wandb.log_artifact(artifact)
+
     logger.info(f"Summary metrics successfully saved to: {output_metrics}")
 
 
@@ -189,6 +197,12 @@ def main():
 
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
+
+    wandb.init(project="worm_gait", name="07_worm_gait_intervention", config=config)
+    
+    # Establish lineage
+    weights_path = config["paths"]["model_weights"]
+    wandb.run.use_artifact("06_worm_gait_decline_trained_engine:latest", type="model")
 
     graph, x0, key = setup_experiment(config)
 
@@ -219,7 +233,7 @@ def main():
         std_trace_B,
         config,
     )
-
+    wandb.finish()
 
 if __name__ == "__main__":
     main()

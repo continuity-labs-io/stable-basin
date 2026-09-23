@@ -27,7 +27,7 @@ def main():
     
     output_dir = "output/benchmarks/worm_gait"
     os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, "09_worm_gait_animation.gif")
+    output_path = os.path.join(output_dir, "10_worm_gait_animation.gif")
     
     logger.info("Rendering animation (this may take a minute)...")
     

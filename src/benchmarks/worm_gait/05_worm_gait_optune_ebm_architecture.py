@@ -9,8 +9,9 @@ import json
 from torch.utils.data import DataLoader
 import importlib
 import optuna
+from optuna.integration.wandb import WeightsAndBiasesCallback
 import copy
-
+import wandb
 from src.benchmarks.worm_gait.core import run_worm_gait_experiment, build_graph
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
 from src.data.datasets import JAXDictDataset
@@ -123,6 +124,9 @@ def main():
     # 1 hour timeout limit
     timeout_seconds = 3600
 
+    wandb_kwargs = {"project": "worm_gait"}
+    wandbc = WeightsAndBiasesCallback(metric_name="score", wandb_kwargs=wandb_kwargs)
+
     logger.info(f"Starting Optuna search with timeout of {timeout_seconds} seconds")
     study.optimize(
         lambda trial: objective(
@@ -130,6 +134,7 @@ def main():
         ),
         timeout=timeout_seconds,
         catch=(Exception,),
+        callbacks=[wandbc]
     )
 
     logger.info(f"Best Trial: {study.best_trial.value}")
@@ -139,6 +144,12 @@ def main():
     os.makedirs("output/benchmarks/worm_gait", exist_ok=True)
     with open("output/benchmarks/worm_gait/05_worm_gait_ebm_best_params.json", "w") as f:
         json.dump(study.best_trial.params, f, indent=2)
+        
+    wandb.summary["best_params"] = study.best_trial.params
+    artifact = wandb.Artifact("05_optune_best_params", type="metrics")
+    artifact.add_file("output/benchmarks/worm_gait/05_worm_gait_ebm_best_params.json")
+    wandb.log_artifact(artifact)
+    wandb.finish()
 
 
 if __name__ == "__main__":

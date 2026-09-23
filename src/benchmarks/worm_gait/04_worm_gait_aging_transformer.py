@@ -1,5 +1,6 @@
 import os
 import json
+import wandb
 import numpy as np
 import torch
 import torch.nn as nn
@@ -108,6 +109,9 @@ def main():
         "old_mse_std": float(np.std(old_mses))
     }
     
+    wandb.init(project="worm_gait", name="04_aging_transformer", config=metrics)
+    wandb.log(metrics)
+    
     with open(os.path.join(out_dir, "04_baseline_transformer_metrics.json"), "w") as f:
         json.dump(metrics, f, indent=4)
         
@@ -120,8 +124,15 @@ def main():
     plt.legend()
     plt.tight_layout()
     plt.savefig(os.path.join(out_dir, "04_baseline_transformer_mse.png"))
+    wandb.log({"04_baseline_transformer_mse": wandb.Image(os.path.join(out_dir, "04_baseline_transformer_mse.png"))})
     plt.close()
-    print("Saved metrics and plot.")
+    
+    artifact = wandb.Artifact("04_baseline_transformer_metrics", type="metrics")
+    artifact.add_file(os.path.join(out_dir, "04_baseline_transformer_metrics.json"))
+    wandb.log_artifact(artifact)
+    wandb.finish()
+    
+    print("Saved metrics and plot, and logged to wandb.")
 
 if __name__ == "__main__":
     main()

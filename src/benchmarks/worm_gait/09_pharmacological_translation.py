@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import wandb
 import argparse
 import yaml
 import numpy as np
@@ -105,6 +106,9 @@ def main():
         logger.error(f"Curve fitting failed: {e}")
         return
 
+    wandb.init(project="worm_gait", name="09_pharmacological_translation", config=config)
+    wandb.run.use_artifact("06_worm_gait_decline_trained_engine:latest", type="model")
+
     # 3. Setup Physics Engine
     graph, x0, key = setup_experiment(config)
 
@@ -158,6 +162,8 @@ def main():
     }
     with open(output_metrics, "w") as f:
         json.dump(metrics_data, f, indent=2)
+        
+    wandb.log(metrics_data)
     logger.info(f"Metrics saved to {output_metrics}")
 
     # 7. Visualization
@@ -189,8 +195,14 @@ def main():
     plt.grid(True, which="both", ls="--", alpha=0.5)
     
     plt.savefig(output_plot, dpi=300)
+    wandb.log({"09_pharmacological_curve": wandb.Image(output_plot)})
     plt.close()
-    logger.info(f"Curve plot saved to {output_plot}")
+    
+    artifact = wandb.Artifact("09_clinical_translation_metrics", type="metrics")
+    artifact.add_file(output_metrics)
+    wandb.log_artifact(artifact)
+    wandb.finish()
+    logger.info(f"Curve plot saved to {output_plot} and logged to wandb")
 
 if __name__ == "__main__":
     main()

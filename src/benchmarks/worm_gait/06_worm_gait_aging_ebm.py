@@ -7,6 +7,7 @@ import jax
 import jax.numpy as jnp
 import torch
 import json
+import wandb
 import pingouin as pg
 from scipy.stats import ks_2samp, wasserstein_distance
 from torch.utils.data import DataLoader, Dataset
@@ -82,6 +83,9 @@ def plot_ablation_results(
     plt.tight_layout()
     os.makedirs("output/benchmarks/worm_gait", exist_ok=True)
     plt.savefig("output/benchmarks/worm_gait/06_worm_gait_decline_ablation.png")
+    
+    if wandb.run is not None:
+        wandb.log({"06_worm_gait_decline_ablation": wandb.Image("output/benchmarks/worm_gait/06_worm_gait_decline_ablation.png")})
     plt.close()
 
     logger.info(
@@ -174,6 +178,16 @@ def main():
         trace_young_B,
         trace_old_B,
     )
+    
+    artifact = wandb.Artifact("06_worm_gait_decline_trained_engine", type="model")
+    artifact.add_file("output/benchmarks/worm_gait/06_worm_gait_decline_trained_engine.eqx")
+    wandb.log_artifact(artifact)
+    
+    metrics_artifact = wandb.Artifact("06_worm_gait_metrics", type="metrics")
+    metrics_artifact.add_file(metrics_path)
+    wandb.log_artifact(metrics_artifact)
+    
+    wandb.finish()
 
 
 if __name__ == "__main__":

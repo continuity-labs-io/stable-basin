@@ -3,6 +3,7 @@ import argparse
 import yaml
 import json
 import logging
+import wandb
 import jax
 import jax.numpy as jnp
 import equinox as eqx
@@ -37,6 +38,9 @@ def main():
 
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
+
+    wandb.init(project="worm_gait", name="08_worm_gait_lambda_sweep", config=config)
+    wandb.run.use_artifact("06_worm_gait_decline_trained_engine:latest", type="model")
 
     graph, x0, key = setup_experiment(config)
 
@@ -99,6 +103,11 @@ def main():
     os.makedirs(os.path.dirname(output_metrics), exist_ok=True)
     with open(output_metrics, "w") as f:
         json.dump(results, f, indent=2)
+    
+    # Log numerical sweep results
+    for lam, metric in results.items():
+        wandb.log({"lambda": lam, "mean_trace_overall": metric["mean_trace_overall"], "cohens_d": metric["cohens_d"]})
+
     logger.info(f"Metrics saved to {output_metrics}")
 
     output_plot = "output/benchmarks/worm_gait/08_lambda_dose_response.png"
@@ -118,8 +127,14 @@ def main():
     plt.grid(True, which="both", ls="--", alpha=0.5)
     
     plt.savefig(output_plot, dpi=300)
+    wandb.log({"08_lambda_dose_response": wandb.Image(output_plot)})
     plt.close()
-    logger.info(f"Dose-response plot saved to {output_plot}")
+    
+    artifact = wandb.Artifact("08_lambda_sweep_metrics", type="metrics")
+    artifact.add_file(output_metrics)
+    wandb.log_artifact(artifact)
+    wandb.finish()
+    logger.info(f"Dose-response plot saved to {output_plot} and logged to wandb")
 
 if __name__ == "__main__":
     main()

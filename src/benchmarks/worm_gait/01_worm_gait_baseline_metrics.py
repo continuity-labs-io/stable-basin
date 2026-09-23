@@ -1,4 +1,5 @@
 import json
+import wandb
 import torch
 import numpy as np
 import logging
@@ -98,7 +99,25 @@ def run_baseline_metrics():
     with open(out_file, "w") as f:
         json.dump(results, f, indent=2)
         
-    logger.info(f"\n[DONE] Successfully serialized all baseline metrics to: {out_file}")
+    wandb.init(project="worm_gait", name="01_baseline_metrics", config=results)
+    
+    # Flatten results for logging
+    flat_results = {}
+    for k, v in results.items():
+        if isinstance(v, dict):
+            for sub_k, sub_v in v.items():
+                flat_results[f"{k}/{sub_k}"] = sub_v
+        else:
+            flat_results[k] = v
+    wandb.log(flat_results)
+    
+    # Save the json as an artifact
+    artifact = wandb.Artifact("baseline_metrics_json", type="metrics")
+    artifact.add_file(out_file)
+    wandb.log_artifact(artifact)
+    wandb.finish()
+        
+    logger.info(f"\n[DONE] Successfully serialized all baseline metrics to: {out_file} and logged to wandb")
 
 if __name__ == "__main__":
     run_baseline_metrics()

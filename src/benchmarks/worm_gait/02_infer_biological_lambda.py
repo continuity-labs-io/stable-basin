@@ -1,4 +1,5 @@
 import os
+import wandb
 import jax
 import jax.numpy as jnp
 import equinox as eqx
@@ -175,6 +176,7 @@ def main():
     logger.info("Starting inference optimization for log_lambda...")
     
     epochs = 30
+    wandb.init(project="worm_gait", name="02_infer_biological_lambda")
     for epoch in range(epochs):
         epoch_loss = 0.0
         batches = 0
@@ -190,6 +192,7 @@ def main():
             batches += 1
             
         current_lambda = jnp.exp(lambda_model.log_lambda)
+        wandb.log({"train_loss": epoch_loss/batches, "inferred_lambda": float(current_lambda), "epoch": epoch})
         logger.info(f"Epoch {epoch+1}/{epochs}, Loss: {epoch_loss/batches:.4f}, Inferred lambda: {current_lambda:.4f}")
 
     final_lambda = float(jnp.exp(lambda_model.log_lambda))
@@ -200,7 +203,13 @@ def main():
     with open(out_path, "w") as f:
         json.dump({"biological_lambda": final_lambda}, f, indent=4)
         
-    logger.info(f"Saved result to {out_path}")
+    wandb.log({"final_biological_lambda": final_lambda})
+    
+    artifact = wandb.Artifact("02_biological_lambda_json", type="metrics")
+    artifact.add_file(out_path)
+    wandb.log_artifact(artifact)
+    wandb.finish()
+    logger.info(f"Saved result to {out_path} and logged to wandb")
 
 
 if __name__ == "__main__":

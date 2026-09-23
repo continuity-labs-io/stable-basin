@@ -7,7 +7,7 @@ experiment:
 graph:
   n_steps: 1
 logging:
-  wandb_project: worm_gait_ebm
+  wandb_project: worm_gait
 model:
   hidden_dimensions: 128
   use_blanket_topology: false
