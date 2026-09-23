@@ -226,6 +226,14 @@ def calculate_metrics(graph, traj_A_batch, traj_B_batch, config):
     trace_A_batch = get_traces(traj_A_batch) * lambda_A
     trace_B_batch = get_traces(traj_B_batch) * lambda_B
 
+    if np.isnan(trace_A_batch).any():
+        logger.warning(f"NaNs detected in Run A (lambda={lambda_A}) trace. Imputing with 1.0.")
+        trace_A_batch = np.nan_to_num(trace_A_batch, nan=1.0)
+    
+    if np.isnan(trace_B_batch).any():
+        logger.warning(f"NaNs detected in Run B (lambda={lambda_B}) trace. Imputing with 1.0.")
+        trace_B_batch = np.nan_to_num(trace_B_batch, nan=1.0)
+
     mean_trace_A = np.mean(trace_A_batch, axis=0)
     std_trace_A = np.std(trace_A_batch, axis=0)
 
@@ -295,11 +303,8 @@ def save_results(
     output_metrics = config["paths"]["output_metrics"]
     os.makedirs(os.path.dirname(output_metrics), exist_ok=True)
 
-    tA_flat = np.array(trace_A_batch).flatten()
-    tB_flat = np.array(trace_B_batch).flatten()
-
-    tA_clean = np.nan_to_num(tA_flat, nan=1.0)
-    tB_clean = np.nan_to_num(tB_flat, nan=1.0)
+    tA_clean = np.array(trace_A_batch).flatten()
+    tB_clean = np.array(trace_B_batch).flatten()
 
     ks_stat, ks_pval = ks_2samp(tA_clean, tB_clean)
     wd = wasserstein_distance(tA_clean, tB_clean)

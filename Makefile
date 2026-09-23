@@ -73,4 +73,8 @@ worm-gait-ebm:
 worm-gait-intervention:
 	python -m src.benchmarks.07_worm_gait_intervention --config configs/worm_gait_intervention.yaml
 
-worm-gait-experiments: worm-gait-baseline worm-gait-ebm worm-gait-intervention
+.PHONY: worm-gait-sweep
+worm-gait-sweep:
+	python -m src.benchmarks.09_worm_gait_lambda_sweep --config configs/worm_gait_intervention.yaml
+
+worm-gait-experiments: worm-gait-baseline worm-gait-ebm worm-gait-intervention worm-gait-sweep
