@@ -93,4 +93,8 @@ worm-gait-ssm:
 worm-gait-transformer:
 	python -m src.benchmarks.12_worm_gait_aging_transformer
 
-worm-gait-experiments: worm-gait-baseline worm-gait-ebm worm-gait-intervention worm-gait-sweep worm-gait-pharmacology worm-gait-ssm worm-gait-transformer
+.PHONY: worm-gait-infer-lambda
+worm-gait-infer-lambda:
+	python -m src.benchmarks.13_infer_biological_lambda
+
+worm-gait-experiments: worm-gait-baseline worm-gait-ebm worm-gait-intervention worm-gait-sweep worm-gait-pharmacology worm-gait-ssm worm-gait-transformer worm-gait-infer-lambda
