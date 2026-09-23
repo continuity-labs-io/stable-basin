@@ -142,12 +142,12 @@ def main():
 
     # Save best parameters to a JSON for easy extraction later
     os.makedirs("output/benchmarks/worm_gait", exist_ok=True)
-    with open("output/benchmarks/worm_gait/05_worm_gait_ebm_best_params.json", "w") as f:
+    with open("output/benchmarks/worm_gait/04_worm_gait_ebm_best_params.json", "w") as f:
         json.dump(study.best_trial.params, f, indent=2)
         
     wandb.summary["best_params"] = study.best_trial.params
-    artifact = wandb.Artifact("05_optune_best_params", type="metrics")
-    artifact.add_file("output/benchmarks/worm_gait/05_worm_gait_ebm_best_params.json")
+    artifact = wandb.Artifact("04_optune_best_params", type="metrics")
+    artifact.add_file("output/benchmarks/worm_gait/04_worm_gait_ebm_best_params.json")
     wandb.log_artifact(artifact)
     wandb.finish()
 

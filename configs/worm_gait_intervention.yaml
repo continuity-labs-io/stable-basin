@@ -6,8 +6,8 @@ experiment:
 
 intervention:
   lambda_A: 0.2
-  lambda_B: 5.0
-  lambda_sweep: [0.1, 0.2, 0.3, 0.4, 0.5, 1.0, 5.0]
+  lambda_B: 3.0
+  lambda_sweep: [0.1, 0.2, 0.3, 0.4, 0.5, 1.0, 3.0]
 
 observer:
   micro:
@@ -32,7 +32,7 @@ dataset:
   seq_len: 10
 
 paths:
-  model_weights: "output/benchmarks/worm_gait/06_worm_gait_decline_trained_engine.eqx"
+  model_weights: "output/benchmarks/worm_gait/05_worm_gait_decline_trained_engine.eqx"
   output_plot: "output/benchmarks/worm_gait/07_worm_gait_intervention_rescue.png"
   output_metrics: "output/benchmarks/worm_gait/07_worm_gait_intervention_metrics.json"
 

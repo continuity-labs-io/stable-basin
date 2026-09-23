@@ -198,11 +198,22 @@ def main():
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
 
+    # Dynamically inject lambda_A from inferred baseline
+    inferred_lambda_path = "output/benchmarks/worm_gait/06_inferred_biological_lambda.json"
+    if os.path.exists(inferred_lambda_path):
+        with open(inferred_lambda_path, "r") as f:
+            lambda_data = json.load(f)
+            inferred_lambda = lambda_data.get("biological_lambda")
+            if inferred_lambda is not None:
+                config["intervention"]["lambda_A"] = inferred_lambda
+    else:
+        logger.warning(f"Inferred lambda not found at {inferred_lambda_path}, falling back to config.")
+
     wandb.init(project="worm_gait", name="07_worm_gait_intervention", config=config)
     
     # Establish lineage
     weights_path = config["paths"]["model_weights"]
-    wandb.run.use_artifact("06_worm_gait_decline_trained_engine:latest", type="model")
+    wandb.run.use_artifact("05_worm_gait_decline_trained_engine:latest", type="model")
 
     graph, x0, key = setup_experiment(config)
 

@@ -68,25 +68,25 @@ ssm-experiments: baseline extrapolation density-sweep loss-ablation clinical-dia
 worm-gait-baseline:
 	python -m src.benchmarks.worm_gait.01_worm_gait_baseline_metrics
 
-.PHONY: worm-gait-infer-lambda
-worm-gait-infer-lambda:
-	python -m src.benchmarks.worm_gait.02_infer_biological_lambda
-
 .PHONY: worm-gait-ssm
 worm-gait-ssm:
-	python -m src.benchmarks.worm_gait.03_worm_gait_aging_ssm
+	python -m src.benchmarks.worm_gait.02_worm_gait_aging_ssm
 
 .PHONY: worm-gait-transformer
 worm-gait-transformer:
-	python -m src.benchmarks.worm_gait.04_worm_gait_aging_transformer
+	python -m src.benchmarks.worm_gait.03_worm_gait_aging_transformer
 
 .PHONY: worm-gait-optune
 worm-gait-optune:
-	python -m src.benchmarks.worm_gait.05_worm_gait_optune_ebm_architecture
+	python -m src.benchmarks.worm_gait.04_worm_gait_optune_ebm_architecture
 
 .PHONY: worm-gait-ebm
 worm-gait-ebm:
-	python -m src.benchmarks.worm_gait.06_worm_gait_aging_ebm --config configs/worm_gait_ebm.yaml
+	python -m src.benchmarks.worm_gait.05_worm_gait_aging_ebm --config configs/worm_gait_ebm.yaml
+
+.PHONY: worm-gait-infer-lambda
+worm-gait-infer-lambda:
+	python -m src.benchmarks.worm_gait.06_infer_biological_lambda
 
 .PHONY: worm-gait-intervention
 worm-gait-intervention:
@@ -105,7 +105,7 @@ worm-gait-animate:
 	python -m src.benchmarks.worm_gait.10_animate_worm_gait
 
 .PHONY: worm-gait-experiments
-worm-gait-experiments: worm-gait-baseline worm-gait-infer-lambda worm-gait-ssm worm-gait-transformer worm-gait-optune worm-gait-ebm worm-gait-intervention worm-gait-sweep worm-gait-pharmacology worm-gait-animate
+worm-gait-experiments: worm-gait-baseline worm-gait-ssm worm-gait-transformer worm-gait-optune worm-gait-ebm worm-gait-infer-lambda worm-gait-intervention worm-gait-sweep worm-gait-pharmacology worm-gait-animate
 
 .PHONY: reproduce-paper
 reproduce-paper: worm-gait-experiments paper

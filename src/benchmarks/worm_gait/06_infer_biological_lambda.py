@@ -161,9 +161,9 @@ def main():
     dataset = JAXDictDataset(eval_old_dataset_raw, d_state)
     loader = DataLoader(dataset, batch_size=8, shuffle=True)
 
-    model_path = "output/benchmarks/worm_gait/06_worm_gait_decline_trained_engine.eqx"
+    model_path = "output/benchmarks/worm_gait/05_worm_gait_decline_trained_engine.eqx"
     if not os.path.exists(model_path):
-        logger.error(f"Pre-trained model not found at {model_path}. Please run benchmark 06 first.")
+        logger.error(f"Pre-trained model not found at {model_path}. Please run benchmark 05 first.")
         return
 
     graph = eqx.tree_deserialise_leaves(model_path, dummy_graph)
@@ -176,7 +176,7 @@ def main():
     logger.info("Starting inference optimization for log_lambda...")
     
     epochs = 30
-    wandb.init(project="worm_gait", name="02_infer_biological_lambda")
+    wandb.init(project="worm_gait", name="06_infer_biological_lambda")
     for epoch in range(epochs):
         epoch_loss = 0.0
         batches = 0
@@ -198,14 +198,14 @@ def main():
     final_lambda = float(jnp.exp(lambda_model.log_lambda))
     logger.info(f"Optimization complete. Final inferred biological lambda: {final_lambda:.4f}")
 
-    out_path = "output/benchmarks/worm_gait/02_inferred_biological_lambda.json"
+    out_path = "output/benchmarks/worm_gait/06_inferred_biological_lambda.json"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as f:
         json.dump({"biological_lambda": final_lambda}, f, indent=4)
         
     wandb.log({"final_biological_lambda": final_lambda})
     
-    artifact = wandb.Artifact("02_biological_lambda_json", type="metrics")
+    artifact = wandb.Artifact("06_biological_lambda_json", type="metrics")
     artifact.add_file(out_path)
     wandb.log_artifact(artifact)
     wandb.finish()
