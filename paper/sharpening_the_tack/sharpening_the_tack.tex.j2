@@ -3,7 +3,8 @@
 \geometry{a4paper, margin=1in}
 \usepackage{graphicx}
 \usepackage{amsmath}
-
+\usepackage{amssymb}
+\usepackage{amsfonts}
 \title{\VAR{ meta.title }}
 \author{\VAR{ meta.author }}
 \date{\today}
@@ -31,7 +32,7 @@ The baseline Gaussian model yielded a KS-statistic of \VAR{ metrics_decline.Gaus
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{../../output/benchmarks/worm_gait/06_worm_gait_decline_ablation.png}
+    \includegraphics[width=\textwidth]{../../output/benchmarks/worm_gait/05_worm_gait_decline_ablation.png}
     \caption{\textbf{Worm Gait Decline Ablation Plot.} \VAR{ ai_caption_decline }}
 \end{figure}
 
@@ -43,6 +44,12 @@ Applying an intervention of $\lambda = \VAR{ config_intervention.lambda_B }$ ste
     \centering
     \includegraphics[width=\textwidth]{../../output/benchmarks/worm_gait/07_worm_gait_intervention_rescue.png}
     \caption{\textbf{Thermodynamic Intervention Rescue Plot.} \VAR{ ai_caption_rescue }}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{../../output/benchmarks/worm_gait/08_lambda_dose_response.png}
+    \caption{\textbf{Lambda Dose-Response Sweep.} This figure demonstrates the dose-response effect of various precision injection gain ($\lambda$) values.}
 \end{figure}
 
 \end{document}

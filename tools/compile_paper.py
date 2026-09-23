@@ -34,7 +34,7 @@ def sig_figs_filter(value, sig_figs):
     except (ValueError, TypeError):
         return str(value)
 
-SYSTEM_PROMPT = """You are a rigorous computational biology researcher writing a paper in LaTeX format. You must ONLY use the empirical numbers provided in the JSON payload. Do not hallucinate external studies, metrics, or calculations. Maintain an objective, academic tone. Do not use markdown formatting; output LaTeX-safe plaintext."""
+SYSTEM_PROMPT = """You are a rigorous computational biology researcher writing a paper in LaTeX format. You must ONLY use the empirical numbers provided in the JSON payload. Do not hallucinate external studies, metrics, or calculations. Maintain an objective, academic tone. Do not use markdown formatting; output LaTeX-safe plaintext. Ensure all mathematical symbols and notations (like \\mathcal, \\mathbb, _, ^) are enclosed in math mode ($...$ or \\begin{equation}...\\end{equation})."""
 
 def load_yaml(filepath: Path) -> dict:
     try:

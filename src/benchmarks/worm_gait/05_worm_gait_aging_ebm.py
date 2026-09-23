@@ -78,6 +78,7 @@ def plot_ablation_results(
     axes[2].set_title("Panel C: Waddington Basin Flattening")
     axes[2].set_xlabel("Hessian Trace (Curvature)")
     axes[2].set_ylabel("Density")
+    axes[2].set_xlim(0, 300)
     axes[2].legend()
 
     plt.tight_layout()
