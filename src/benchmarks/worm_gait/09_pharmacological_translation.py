@@ -94,7 +94,7 @@ def main():
     
     # Bounds: bottom/top can be anything, ec50 bounded to reasonable dose range, hill_slope can be anything
     bounds = (
-        [-np.inf, -np.inf, min(lambdas)*0.1, -np.inf], 
+        [-np.inf, -np.inf, min(lambdas), -np.inf], 
         [np.inf, np.inf, max(lambdas), np.inf]
     )
     
@@ -151,8 +151,8 @@ def main():
     mean_energy_base = float(np.mean(energy_base))
     mean_energy_rescue = float(np.mean(energy_rescue))
     
-    G_baseline = lambda_base * mean_energy_base
-    G_rescue = lambda_rescue * mean_energy_rescue
+    G_baseline = mean_energy_base
+    G_rescue = mean_energy_rescue
     delta_G = abs(G_rescue - G_baseline)
     
     logger.info(f"G_baseline: {G_baseline:.4f}")

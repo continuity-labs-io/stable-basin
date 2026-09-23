@@ -61,16 +61,16 @@ def calculate_metrics(graph, traj_A_batch, traj_B_batch, config):
             traces.append(np.array(metrics["hessian_trace"]))
         return np.vstack(traces)
 
-    trace_A_batch = get_traces(traj_A_batch) * lambda_A
-    trace_B_batch = get_traces(traj_B_batch) * lambda_B
+    trace_A_batch = get_traces(traj_A_batch)
+    trace_B_batch = get_traces(traj_B_batch)
 
     if np.isnan(trace_A_batch).any():
-        logger.warning(f"NaNs detected in Run A (lambda={lambda_A}) trace. Imputing with 1.0.")
-        trace_A_batch = np.nan_to_num(trace_A_batch, nan=1.0)
+        logger.warning(f"NaNs detected in Run A (lambda={lambda_A}) trace. Imputing with 0.0.")
+        trace_A_batch = np.nan_to_num(trace_A_batch, nan=0.0)
     
     if np.isnan(trace_B_batch).any():
-        logger.warning(f"NaNs detected in Run B (lambda={lambda_B}) trace. Imputing with 1.0.")
-        trace_B_batch = np.nan_to_num(trace_B_batch, nan=1.0)
+        logger.warning(f"NaNs detected in Run B (lambda={lambda_B}) trace. Imputing with 0.0.")
+        trace_B_batch = np.nan_to_num(trace_B_batch, nan=0.0)
 
     mean_trace_A = np.mean(trace_A_batch, axis=0)
     std_trace_A = np.std(trace_A_batch, axis=0)

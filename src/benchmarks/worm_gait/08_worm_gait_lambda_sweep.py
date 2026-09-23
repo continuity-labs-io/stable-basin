@@ -74,11 +74,11 @@ def main():
     logger.info(f"Simulating Baseline: lambda={lambda_baseline}")
     keys_baseline = jax.random.split(key, num_runs)
     traj_baseline_batch = vmap_simulate(graph, x0, lambda_baseline, N_steps, dt, keys_baseline)
-    trace_baseline_batch = get_traces(graph, traj_baseline_batch, num_runs) * lambda_baseline
+    trace_baseline_batch = get_traces(graph, traj_baseline_batch, num_runs)
     
     if np.isnan(trace_baseline_batch).any():
-        logger.warning(f"NaNs detected in Baseline (lambda={lambda_baseline}) trace. Imputing with 1.0.")
-        trace_baseline_batch = np.nan_to_num(trace_baseline_batch, nan=1.0)
+        logger.warning(f"NaNs detected in Baseline (lambda={lambda_baseline}) trace. Imputing with 0.0.")
+        trace_baseline_batch = np.nan_to_num(trace_baseline_batch, nan=0.0)
         
     baseline_flat = np.array(trace_baseline_batch).flatten()
     baseline_mean_trace = np.mean(trace_baseline_batch, axis=0)
@@ -88,11 +88,11 @@ def main():
         logger.info(f"Simulating Sweep: lambda={lam}")
         # Use same keys for fair comparison
         traj_lam_batch = vmap_simulate(graph, x0, lam, N_steps, dt, keys_baseline)
-        trace_lam_batch = get_traces(graph, traj_lam_batch, num_runs) * lam
+        trace_lam_batch = get_traces(graph, traj_lam_batch, num_runs)
         
         if np.isnan(trace_lam_batch).any():
-            logger.warning(f"NaNs detected in Sweep (lambda={lam}) trace. Imputing with 1.0.")
-            trace_lam_batch = np.nan_to_num(trace_lam_batch, nan=1.0)
+            logger.warning(f"NaNs detected in Sweep (lambda={lam}) trace. Imputing with 0.0.")
+            trace_lam_batch = np.nan_to_num(trace_lam_batch, nan=0.0)
             
         lam_flat = np.array(trace_lam_batch).flatten()
         lam_mean_trace = np.mean(trace_lam_batch, axis=0)
