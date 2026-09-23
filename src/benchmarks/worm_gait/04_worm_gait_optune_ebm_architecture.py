@@ -108,9 +108,9 @@ def main():
         eval_young_dataset_raw = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
         eval_old_dataset_raw = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
 
-    # We need d_state which can be calculated using GaussianEBM or PrecisionWeightedEBM
-    GaussianEBM = benchmark_module.GaussianEBM
-    _, d_state = build_graph(GaussianEBM, key, base_config)
+    # We need d_state which can be calculated using IdentityPrecisionEBM or PrecisionWeightedEBM
+    IdentityPrecisionEBM = benchmark_module.IdentityPrecisionEBM
+    _, d_state = build_graph(IdentityPrecisionEBM, key, base_config)
 
     train_young_dataset = JAXDictDataset(train_young_dataset_raw, d_state)
     eval_young_dataset = JAXDictDataset(eval_young_dataset_raw, d_state)

@@ -266,7 +266,7 @@ def run_worm_gait_experiment(
 
     runner = EchoRunner(config_path)
     runner.setup(trainer)
-    graph = runner.run(graph, train_young_loader, train_young_loader, key, dt=dt)
+    graph = runner.run(graph, train_young_loader, eval_young_loader, key, dt=dt)
 
     logger.info(f"Evaluating {ebm_class.__name__} on biological population.")
     full_states_young = get_full_states(graph, eval_young_loader)

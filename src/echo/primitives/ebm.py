@@ -98,6 +98,93 @@ class PrecisionWeightedEBM(eqx.Module):
         return energy, precision
 
 
+class IdentityPrecisionEBM(eqx.Module):
+    """
+    Core Energy-Based Model for the biological observer with fixed identity precision.
+    Maps a biological state vector `x` to two outputs:
+    1. A scalar Energy E_θ(x) representing the thermodynamic potential.
+    2. A fixed Identity matrix for precision.
+    """
+
+    mlp: eqx.nn.MLP
+    energy_head: eqx.nn.Linear
+    d_state: int = eqx.field(static=True)
+    epsilon: float = eqx.field(static=True)
+
+    @jaxtyped(typechecker=beartype)
+    def __init__(
+        self, d_state: int, hidden_size: int, depth: int, key: PRNGKeyArray, epsilon: float = 1e-4
+    ):
+        """
+        Initializes the IdentityPrecisionEBM.
+
+        Args:
+            d_state: Dimensionality of the input state.
+            hidden_size: Number of hidden units in the MLP layers.
+            depth: Number of hidden layers in the MLP backbone.
+            key: PRNGKeyArray for initialization.
+            epsilon: Ignored (kept for signature compatibility).
+        """
+        self.d_state = d_state
+        self.epsilon = epsilon
+
+        if d_state <= 0:
+            raise ValueError(f"d_state must be positive, got {d_state}")
+        if hidden_size <= 0:
+            raise ValueError(f"hidden_size must be positive, got {hidden_size}")
+        if depth < 0:
+            raise ValueError(f"depth must be non-negative, got {depth}")
+
+        key_mlp, key_energy = jax.random.split(key, 2)
+
+        # Backbone MLP. Must use a smooth activation function (e.g., GELU)
+        # to ensure the network is twice-differentiable everywhere.
+        self.mlp = eqx.nn.MLP(
+            in_size=d_state,
+            out_size=hidden_size,
+            width_size=hidden_size,
+            depth=depth,
+            activation=jax.nn.gelu,
+            key=key_mlp,
+        )
+
+        # Energy head: maps from hidden state to 1 scalar feature
+        self.energy_head = eqx.nn.Linear(hidden_size, 1, key=key_energy)
+
+    @jaxtyped(typechecker=beartype)
+    def __call__(
+        self, x: Float[Array, "d_state"]
+    ) -> Tuple[Float[Array, ""], Float[Array, "d_state d_state"]]:
+        """
+        Forward pass mapping state vector `x` to (energy, precision).
+
+        Args:
+            x: 1D state vector of shape (d_state,).
+
+        Returns:
+            A tuple of (energy, precision) where:
+            - energy is a scalar JAX array of shape ().
+            - precision is an Identity matrix of shape (d_state, d_state).
+        """
+        # 1. Process through the backbone MLP
+        h = self.mlp(x)
+
+        # 2. Compute scalar energy
+        energy_raw = self.energy_head(h)
+        # Bound energy from below to ensure a thermodynamic floor (prevents infinite sinkholes)
+        e_mlp = jnp.squeeze(jax.nn.softplus(energy_raw))  # Shape: ()
+
+        # Add a global structural prior to guarantee the landscape is a positive-definite basin
+        e_prior = 0.5 * 0.001 * jnp.sum(x**2)
+        energy = e_prior + e_mlp
+
+        # 3. Compute precision matrix
+        precision = jnp.eye(self.d_state, dtype=jnp.float32)
+
+        return energy, precision
+
+
+
 class GaussianEBM(eqx.Module):
     """
     Implements a rigid, single-basin parabolic landscape: E(x) = 1/2 * (x - mu)^T Pi (x - mu).

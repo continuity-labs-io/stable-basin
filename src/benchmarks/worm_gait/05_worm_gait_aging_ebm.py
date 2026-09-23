@@ -20,7 +20,7 @@ from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, Synthe
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.data.datasets import JAXDictDataset
-from src.echo.primitives.ebm import GaussianEBM, PrecisionWeightedEBM
+from src.echo.primitives.ebm import IdentityPrecisionEBM, PrecisionWeightedEBM
 from src.echo.harness.echo_runner import EchoRunner
 from src.echo.harness.echo_trainer import EchoTrainer
 from src.echo.metrics.energy_landscape import batch_calculate_curvature
@@ -53,12 +53,12 @@ def plot_ablation_results(
     trace_young_B_np = np.nan_to_num(np.array(trace_young_B), nan=1.0)
     trace_old_B_np = np.nan_to_num(np.array(trace_old_B), nan=1.0)
 
-    # Panel B: Laplace Flatline We use a thick line for Young and a dashed line
-    # for Old because the GaussianEBM's Hessian is mathematically constant
+    # Panel B: Frozen Identity Precision We use a thick line for Young and a dashed line
+    # for Old because the IdentityPrecisionEBM's Hessian is mathematically constant
     # across the state space, causing perfect overlap.
     axes[1].plot(trace_young_A_np, label="Young", color="blue", linewidth=4)
     axes[1].plot(trace_old_A_np, label="Old", color="orange", linestyle="--", linewidth=2)
-    axes[1].set_title("Panel B: Laplace Flatline")
+    axes[1].set_title("Panel B: Frozen Identity Precision")
     axes[1].set_xlabel("Time Step")
     axes[1].set_ylabel("Hessian Trace (Curvature)")
     axes[1].legend()
@@ -131,7 +131,7 @@ def main():
         eval_old_dataset_raw = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
 
     # Determine d_state
-    _, d_state = build_graph(GaussianEBM, key, config)
+    _, d_state = build_graph(IdentityPrecisionEBM, key, config)
 
     train_young_dataset = JAXDictDataset(train_young_dataset_raw, d_state)
     eval_young_dataset = JAXDictDataset(eval_young_dataset_raw, d_state)
@@ -144,7 +144,7 @@ def main():
 
     key, kA = jax.random.split(key)
     metrics_A, trace_young_A, trace_old_A, graph_A = run_worm_gait_experiment(
-        config, GaussianEBM, kA, train_young_loader, eval_young_loader, eval_old_loader, args.config
+        config, IdentityPrecisionEBM, kA, train_young_loader, eval_young_loader, eval_old_loader, args.config
     )
 
     key, kB = jax.random.split(key)
@@ -164,7 +164,7 @@ def main():
         "output/benchmarks/worm_gait/05_worm_gait_decline_trained_engine.eqx", graph_B
     )
 
-    all_metrics = {"GaussianEBM": metrics_A, "PrecisionWeightedEBM": metrics_B}
+    all_metrics = {"IdentityPrecisionEBM": metrics_A, "PrecisionWeightedEBM": metrics_B}
 
     metrics_path = "output/benchmarks/worm_gait/05_worm_gait_metrics.json"
     with open(metrics_path, "w") as f:
