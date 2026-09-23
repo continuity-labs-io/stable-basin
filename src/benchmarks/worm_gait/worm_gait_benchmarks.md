@@ -3,7 +3,7 @@
 ## 02: Worm Gait Decline (`06_worm_gait_aging_ebm.py`)
 The ultimate integration benchmark operating on the *C. elegans* gait dataset, orchestrated via `configs/worm_gait_ebm.yaml`. It trains a full predictive coding graph using a joint Energy-Based Model (EBM). This script proves that the system successfully converges onto non-linear biological limit cycles and conclusively demonstrates our ability to measure the thermodynamic flattening (decline in the Hessian Curvature trace of the Joint EBM) of a Waddington basin caused by biological aging.
 
-## 01: Hyperparameter Optimization (`05_optune.py`)
+## 01: Hyperparameter Optimization (`05_worm_gait_optune_ebm_architecture.py`)
 An automated `optuna` tuning script designed to search the hyperparameter space for the optimal network dimensions (e.g., hidden sizes and depths) for both the micro and macro observers in the `PredictiveCodingGraph`. Saves the best configuration to `output/benchmarks/worm_gait/05_worm_gait_ebm_best_params.json`.
 
 ## 03: In-Silico Reprogramming & Thermodynamic Rescue (`07_worm_gait_intervention.py`)

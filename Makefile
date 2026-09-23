@@ -82,7 +82,7 @@ worm-gait-transformer:
 
 .PHONY: worm-gait-optune
 worm-gait-optune:
-	python -m src.benchmarks.worm_gait.05_optune
+	python -m src.benchmarks.worm_gait.05_worm_gait_optune_ebm_architecture
 
 .PHONY: worm-gait-ebm
 worm-gait-ebm:
