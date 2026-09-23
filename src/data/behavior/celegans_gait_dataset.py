@@ -17,7 +17,7 @@ class RealEigenwormDataset(Dataset):
     Extracts random, contiguous, fixed-length crops.
     """
 
-    def __init__(self, data_path: str, seq_len: int = 500, is_aged: bool = False):
+    def __init__(self, data_path: str, seq_len: int = 500, inject_synthetic_degradation: bool = False):
         """
                 Initializes the dataset.
 
@@ -31,8 +31,8 @@ class RealEigenwormDataset(Dataset):
                              dataset
         will return when sampled, ensuring uniform and computationally manageable
                              inputs.
-        is_aged: If True, applies an OU/Gaussian noise process to simulate thermodynamic
-                    degradation.
+        inject_synthetic_degradation: If True, applies an OU/Gaussian noise process to simulate thermodynamic
+                    degradation. This is a synthetic positive control for testing the pipeline's detection capabilities, not real aged biology.
         """
         self.seq_len = seq_len
         self.data = []
@@ -81,7 +81,7 @@ class RealEigenwormDataset(Dataset):
         for traj in self.data:
             traj = (traj - global_mean) / (global_std + 1e-8)
 
-            if is_aged:
+            if inject_synthetic_degradation:
                 # Apply thermodynamic noise degradation
                 traj = traj * 0.5 + torch.randn_like(traj) * 0.2
 

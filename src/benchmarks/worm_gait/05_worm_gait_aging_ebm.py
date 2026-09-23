@@ -42,8 +42,8 @@ def plot_ablation_results(
 
     traj_young = eval_young_dataset_raw.data[0].numpy()
     traj_old = eval_old_dataset_raw.data[0].numpy()
-    axes[0].plot(traj_young[:500, 0], traj_young[:500, 1], label="Young (Day 1-3)")
-    axes[0].plot(traj_old[:500, 0], traj_old[:500, 1], label="Old (Day 9+)", alpha=0.7)
+    axes[0].plot(traj_young[:500, 0], traj_young[:500, 1], label="Clean Baseline")
+    axes[0].plot(traj_old[:500, 0], traj_old[:500, 1], label="Synthetically Degraded", alpha=0.7)
     axes[0].set_title("Panel A: The Limit Cycle")
     axes[0].set_xlabel("Sensor Dimension 0")
     axes[0].set_ylabel("Sensor Dimension 1")
@@ -53,23 +53,23 @@ def plot_ablation_results(
     trace_young_B_np = np.nan_to_num(np.array(trace_young_B), nan=1.0)
     trace_old_B_np = np.nan_to_num(np.array(trace_old_B), nan=1.0)
 
-    # Panel B: Frozen Identity Precision We use a thick line for Young and a dashed line
-    # for Old because the IdentityPrecisionEBM's Hessian is mathematically constant
+    # Panel B: Frozen Identity Precision We use a thick line for Clean Baseline and a dashed line
+    # for Synthetically Degraded because the IdentityPrecisionEBM's Hessian is mathematically constant
     # across the state space, causing perfect overlap.
-    axes[1].plot(trace_young_A_np, label="Young", color="blue", linewidth=4)
-    axes[1].plot(trace_old_A_np, label="Old", color="orange", linestyle="--", linewidth=2)
+    axes[1].plot(trace_young_A_np, label="Clean Baseline", color="blue", linewidth=4)
+    axes[1].plot(trace_old_A_np, label="Synthetically Degraded", color="orange", linestyle="--", linewidth=2)
     axes[1].set_title("Panel B: Frozen Identity Precision")
     axes[1].set_xlabel("Time Step")
     axes[1].set_ylabel("Hessian Trace (Curvature)")
     axes[1].legend()
 
     # Panel C: Waddington Basin Flattening
-    axes[2].hist(trace_young_B_np, bins=20, alpha=0.5, label="Young", color="blue", density=True)
+    axes[2].hist(trace_young_B_np, bins=20, alpha=0.5, label="Clean Baseline", color="blue", density=True)
     axes[2].hist(
         trace_old_B_np,
         bins=20,
         alpha=0.7,
-        label="Old",
+        label="Synthetically Degraded",
         color="orange",
         density=True,
         histtype="step",
@@ -108,7 +108,7 @@ def main():
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
 
-    logger.info("Initializing Young (Train) and Old (Eval) datasets.")
+    logger.info("Initializing Clean Baseline (Train) and Synthetically Degraded (Eval) datasets.")
     seed = config.get("experiment", {}).get("seed", 42)
     torch.manual_seed(seed)
     key = jax.random.PRNGKey(seed)
@@ -116,13 +116,13 @@ def main():
     try:
         seq_len = config["dataset"]["ebm_seq_len"]
         train_young_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=seq_len, is_aged=False
+            data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=seq_len, inject_synthetic_degradation=False
         )
         eval_young_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, is_aged=False
+            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, inject_synthetic_degradation=False
         )
         eval_old_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, is_aged=True
+            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, inject_synthetic_degradation=True
         )
     except FileNotFoundError:
         logger.warning("Local biological data not found. Falling back to SyntheticWormMockDataset.")
@@ -158,7 +158,7 @@ def main():
         args.config,
     )
 
-    logger.info("Serializing trained Young Worm engine to disk.")
+    logger.info("Serializing trained Clean Baseline Worm engine to disk.")
     os.makedirs("output/benchmarks/worm_gait", exist_ok=True)
     eqx.tree_serialise_leaves(
         "output/benchmarks/worm_gait/05_worm_gait_decline_trained_engine.eqx", graph_B

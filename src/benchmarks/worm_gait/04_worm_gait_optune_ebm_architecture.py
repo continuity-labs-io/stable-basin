@@ -93,13 +93,13 @@ def main():
     seq_len = base_config["dataset"]["ebm_seq_len"]
     try:
         train_young_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=seq_len, is_aged=False
+            data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=seq_len, inject_synthetic_degradation=False
         )
         eval_young_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, is_aged=False
+            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, inject_synthetic_degradation=False
         )
         eval_old_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, is_aged=True
+            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, inject_synthetic_degradation=True
         )
         logger.info("Loaded RealEigenwormDataset")
     except FileNotFoundError:

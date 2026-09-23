@@ -23,9 +23,9 @@ def main():
     )
     
     # 2. Data
-    train_dataset = RealEigenwormDataset("data/worm/EigenWorms_TRAIN.ts", seq_len=100, is_aged=False)
-    young_eval_dataset = RealEigenwormDataset("data/worm/EigenWorms_TEST.ts", seq_len=100, is_aged=False)
-    old_eval_dataset = RealEigenwormDataset("data/worm/EigenWorms_TEST.ts", seq_len=100, is_aged=True)
+    train_dataset = RealEigenwormDataset("data/worm/EigenWorms_TRAIN.ts", seq_len=100, inject_synthetic_degradation=False)
+    young_eval_dataset = RealEigenwormDataset("data/worm/EigenWorms_TEST.ts", seq_len=100, inject_synthetic_degradation=False)
+    old_eval_dataset = RealEigenwormDataset("data/worm/EigenWorms_TEST.ts", seq_len=100, inject_synthetic_degradation=True)
     
     train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
     young_eval_loader = DataLoader(young_eval_dataset, batch_size=8, shuffle=False)

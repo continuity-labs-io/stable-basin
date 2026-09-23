@@ -149,7 +149,7 @@ def main():
     seq_len = 100
     try:
         eval_old_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, is_aged=True
+            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, inject_synthetic_degradation=True
         )
     except FileNotFoundError:
         logger.error("Biological data not found. Ensure EigenWorms_TEST.ts exists.")

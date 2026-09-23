@@ -47,7 +47,7 @@ def create_worm_gait_animation(
     fps: int = 30
 ):
     """
-    Creates a split-screen animation comparing young vs old worm gait.
+    Creates a split-screen animation comparing clean baseline vs synthetically degraded worm gait.
     Left side: Physical 2D worm shape.
     Right side: 3D phase space (Strange Attractor) of the first 3 eigenworms.
     """
@@ -79,11 +79,11 @@ def create_worm_gait_animation(
         ax.set_xticks([])
         ax.set_yticks([])
 
-    ax_young_shape.set_title("Young Worm (Limit Cycle)", color='cyan', fontsize=16)
-    ax_young_phase.set_title("Young Attractor", color='cyan', fontsize=16)
+    ax_young_shape.set_title("Clean Baseline (Limit Cycle)", color='cyan', fontsize=16)
+    ax_young_phase.set_title("Clean Baseline Attractor", color='cyan', fontsize=16)
     
-    ax_old_shape.set_title("Aged Worm (Thermodynamic Degradation)", color='magenta', fontsize=16)
-    ax_old_phase.set_title("Aged Attractor", color='magenta', fontsize=16)
+    ax_old_shape.set_title("Synthetically Degraded Worm", color='magenta', fontsize=16)
+    ax_old_phase.set_title("Synthetically Degraded Attractor", color='magenta', fontsize=16)
 
     # Setup limits
     # Assuming z-scored data, range is approx -3 to 3 for phase

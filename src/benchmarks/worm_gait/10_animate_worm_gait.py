@@ -14,11 +14,11 @@ def main():
         logger.error(f"Biological data not found at {data_path}. Please ensure data is present.")
         return
 
-    logger.info("Loading young worm data (baseline)...")
-    ds_young = RealEigenwormDataset(data_path, seq_len=500, is_aged=False)
+    logger.info("Loading clean baseline worm data...")
+    ds_young = RealEigenwormDataset(data_path, seq_len=500, inject_synthetic_degradation=False)
     
-    logger.info("Loading aged worm data (thermodynamic degradation)...")
-    ds_old = RealEigenwormDataset(data_path, seq_len=500, is_aged=True)
+    logger.info("Loading synthetically degraded worm data...")
+    ds_old = RealEigenwormDataset(data_path, seq_len=500, inject_synthetic_degradation=True)
     
     # Take the first sequence from each
     # Shape: (500, 6)

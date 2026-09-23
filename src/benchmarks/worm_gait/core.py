@@ -165,7 +165,7 @@ def setup_experiment(config):
     dataset_path = config["dataset"].get("intervention_path", "data/worm/EigenWorms_TEST.ts")
     seq_len = config["dataset"].get("intervention_seq_len", 10)
     try:
-        dataset = RealEigenwormDataset(data_path=dataset_path, seq_len=seq_len, is_aged=True)
+        dataset = RealEigenwormDataset(data_path=dataset_path, seq_len=seq_len, inject_synthetic_degradation=True)
     except FileNotFoundError:
         logger.warning("Biological data not found. Falling back to synthetic dataset.")
         dataset = SyntheticWormMockDataset(seq_len=seq_len, num_samples=1)
