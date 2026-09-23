@@ -15,7 +15,7 @@ observer:
     d_sensory: 6
     d_active: 8
     d_external: 8
-    ebm_hidden_size: 32
+    ebm_hidden_size: 256
     ebm_depth: 2
     temperature: 1.0
   macro:
@@ -23,7 +23,7 @@ observer:
     d_sensory: 4
     d_active: 4
     d_external: 4
-    ebm_hidden_size: 16
+    ebm_hidden_size: 128
     ebm_depth: 2
     temperature: 1.0
 

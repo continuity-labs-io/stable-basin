@@ -89,4 +89,8 @@ worm-gait-pharmacology:
 worm-gait-ssm:
 	python -m src.benchmarks.11_worm_gait_aging_ssm
 
-worm-gait-experiments: worm-gait-baseline worm-gait-ebm worm-gait-intervention worm-gait-sweep worm-gait-pharmacology worm-gait-ssm
+.PHONY: worm-gait-transformer
+worm-gait-transformer:
+	python -m src.benchmarks.12_worm_gait_aging_transformer
+
+worm-gait-experiments: worm-gait-baseline worm-gait-ebm worm-gait-intervention worm-gait-sweep worm-gait-pharmacology worm-gait-ssm worm-gait-transformer
