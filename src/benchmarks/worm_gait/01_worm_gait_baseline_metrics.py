@@ -93,7 +93,7 @@ def run_baseline_metrics():
     # Save results
     out_dir = "output/benchmarks/worm_gait"
     os.makedirs(out_dir, exist_ok=True)
-    out_file = os.path.join(out_dir, "08_worm_gait_baseline_metrics.json")
+    out_file = os.path.join(out_dir, "01_worm_gait_baseline_metrics.json")
     
     with open(out_file, "w") as f:
         json.dump(results, f, indent=2)

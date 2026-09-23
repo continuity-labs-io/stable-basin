@@ -1,12 +1,12 @@
 # Worm Gait Benchmarks
 
-## 02: Worm Gait Decline (`02_worm_gait_aging_ebm.py`)
+## 02: Worm Gait Decline (`06_worm_gait_aging_ebm.py`)
 The ultimate integration benchmark operating on the *C. elegans* gait dataset, orchestrated via `configs/worm_gait_ebm.yaml`. It trains a full predictive coding graph using a joint Energy-Based Model (EBM). This script proves that the system successfully converges onto non-linear biological limit cycles and conclusively demonstrates our ability to measure the thermodynamic flattening (decline in the Hessian Curvature trace of the Joint EBM) of a Waddington basin caused by biological aging.
 
-## 01: Hyperparameter Optimization (`01_optune.py`)
-An automated `optuna` tuning script designed to search the hyperparameter space for the optimal network dimensions (e.g., hidden sizes and depths) for both the micro and macro observers in the `PredictiveCodingGraph`. Saves the best configuration to `output/benchmarks/worm_gait/01_worm_gait_ebm_best_params.json`.
+## 01: Hyperparameter Optimization (`05_optune.py`)
+An automated `optuna` tuning script designed to search the hyperparameter space for the optimal network dimensions (e.g., hidden sizes and depths) for both the micro and macro observers in the `PredictiveCodingGraph`. Saves the best configuration to `output/benchmarks/worm_gait/05_worm_gait_ebm_best_params.json`.
 
-## 03: In-Silico Reprogramming & Thermodynamic Rescue (`03_worm_gait_intervention.py`)
+## 03: In-Silico Reprogramming & Thermodynamic Rescue (`07_worm_gait_intervention.py`)
 Serves as the scientific climax of the project (Figure 4), driven by `configs/worm_gait_intervention.yaml`. It demonstrates mathematically that an erratic "old" biological trajectory can be rescued by applying a synthetic control force (Precision Injection). By directly modifying the precision topology of the Markov blanket during an Euler-Maruyama SDE rollout (via `jax.lax.scan`), it artificially steepens the Waddington basin, forcing the degraded system back into a youthful, tight biological limit cycle. The script serializes summary statistical metrics (KS-statistic, Wasserstein distance, Cohen's d) alongside 3D phase-space plots to precisely quantify the thermodynamic restoration.
 
 ## 04: Worm Gait Baseline Metrics (`04_worm_gait_baseline_metrics.py`)

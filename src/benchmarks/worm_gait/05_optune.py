@@ -11,14 +11,10 @@ import importlib
 import optuna
 import copy
 
-# Import necessary components using importlib since the filename starts with a number
-benchmark_module = importlib.import_module("src.benchmarks.worm_gait.02_worm_gait_aging_ebm")
-run_worm_gait_experiment = benchmark_module.run_worm_gait_experiment
-build_graph = benchmark_module.build_graph
-RealEigenwormDataset = benchmark_module.RealEigenwormDataset
-SyntheticWormMockDataset = benchmark_module.SyntheticWormMockDataset
-JAXDictDataset = benchmark_module.JAXDictDataset
-PrecisionWeightedEBM = benchmark_module.PrecisionWeightedEBM
+from src.benchmarks.worm_gait.core import run_worm_gait_experiment, build_graph
+from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
+from src.data.datasets import JAXDictDataset
+from src.echo.primitives.ebm import PrecisionWeightedEBM
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -141,7 +137,7 @@ def main():
 
     # Save best parameters to a JSON for easy extraction later
     os.makedirs("output/benchmarks/worm_gait", exist_ok=True)
-    with open("output/benchmarks/worm_gait/01_worm_gait_ebm_best_params.json", "w") as f:
+    with open("output/benchmarks/worm_gait/05_worm_gait_ebm_best_params.json", "w") as f:
         json.dump(study.best_trial.params, f, indent=2)
 
 

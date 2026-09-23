@@ -11,19 +11,15 @@ import seaborn as sns
 
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset
-from src.core.substrate import get_optimal_device
 
 def main():
-    device = get_optimal_device()
-    print(f"Using device: {device}")
-
     # 1. Architecture
     model = SensorFusionPredictor(
-        ssm_type="causal_transformer",
+        ssm_type="zero_padded_ssm",
         modality_dims=[6],
         d_model=64,
         out_dim=6
-    ).to(device)
+    )
     
     # 2. Data
     train_dataset = RealEigenwormDataset("data/worm/EigenWorms_TRAIN.ts", seq_len=100, is_aged=False)
@@ -40,14 +36,14 @@ def main():
     
     model.train()
     epochs = 50
-    print("Training BaselineTransformer...")
+    print("Training BaselineSSM...")
     for epoch in range(epochs):
         epoch_loss = 0.0
         for batch in train_loader:
             optimizer.zero_grad()
             # batch is [batch_size, seq_len, 6]
-            x_raw = batch.to(device)
-            mask = torch.ones_like(x_raw[:, :, :1]).to(device)
+            x_raw = batch
+            mask = torch.ones_like(x_raw[:, :, :1])
             
             y_true = x_raw[:, 1:, :]
             preds, _, _ = model(x_raw, mask=mask)
@@ -68,8 +64,8 @@ def main():
         mses = []
         with torch.no_grad():
             for batch in loader:
-                x_raw = batch.to(device)
-                mask = torch.ones_like(x_raw[:, :, :1]).to(device)
+                x_raw = batch
+                mask = torch.ones_like(x_raw[:, :, :1])
                 y_true = x_raw[:, 1:, :]
                 preds, _, _ = model(x_raw, mask=mask)
                 pred = preds[:, :-1, :]
@@ -108,18 +104,18 @@ def main():
         "old_mse_std": float(np.std(old_mses))
     }
     
-    with open(os.path.join(out_dir, "12_baseline_transformer_metrics.json"), "w") as f:
+    with open(os.path.join(out_dir, "03_baseline_ssm_metrics.json"), "w") as f:
         json.dump(metrics, f, indent=4)
         
     plt.figure(figsize=(8, 6))
     sns.kdeplot(young_mses, label="Young Eval", fill=True, alpha=0.5)
     sns.kdeplot(old_mses, label="Old Eval", fill=True, alpha=0.5)
-    plt.title("BaselineTransformer MSE Distributions (Young vs Old)")
+    plt.title("BaselineSSM MSE Distributions (Young vs Old)")
     plt.xlabel("Mean Squared Error")
     plt.ylabel("Density")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(os.path.join(out_dir, "12_baseline_transformer_mse.png"))
+    plt.savefig(os.path.join(out_dir, "03_baseline_ssm_mse.png"))
     plt.close()
     print("Saved metrics and plot.")
 

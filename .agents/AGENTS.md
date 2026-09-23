@@ -125,3 +125,16 @@ Whenever you author new code, add new logic, or modify existing functionality, y
 - **Class Structure & Method Ordering**: When authoring or modifying Python classes, strictly follow the method ordering defined by the Google Python Style Guide. 
   - `__init__` (and other dunder methods like `__new__`) must be the very first methods defined in the class, immediately following the class docstring and class-level attributes.
   - `@property` decorators, standard instance methods, and static/class methods must always come *after* the `__init__` method.
+
+### Codified ML Experiment Pipeline (SOP)
+
+All machine learning experiment suites must strictly follow a 6-phase linear pipeline to prevent technical debt and cyclical dependencies. Experiments must be numbered sequentially based on these phases:
+
+1. **Phase 0: Data Grounding & Baselines**: Extract empirical ground truth parameters, establish baseline metrics, and run naive control models (e.g., SSMs, Transformers) *before* introducing novel architecture.
+2. **Phase 1: Hyperparameter Optimization**: Sweep and fix architectural dimensions (e.g. using Optuna) before the primary training run.
+3. **Phase 2: Primary Model Training**: Train the core architecture using the optimized hyperparameters and grounded data priors.
+4. **Phase 3: Scientific Interventions**: Run single-shot tests or specific interventions (e.g., precision injection, knock-outs) on the trained engine.
+5. **Phase 4: Parameter Sweeps**: Perform comprehensive dose-response sweeps to gather gradient/trace data across continuous parameter ranges.
+6. **Phase 5: Translation & Visualization**: Translate abstract thermodynamic/mathematical metrics back into domain-specific contexts (e.g., EC50) and generate final visualizations for publication.
+
+**Shared Engine Logic**: NEVER import directly from one numbered script to another (e.g., importing `02_train.py` into `03_test.py`). All shared boilerplate (e.g., model instantiation, environment setup) must be extracted into a `core.py` or similar shared module.
