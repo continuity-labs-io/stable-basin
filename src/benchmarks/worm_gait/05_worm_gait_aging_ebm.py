@@ -99,7 +99,7 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/worm_gait_ebm.yaml",
+        default="configs/worm_gait_experiments.yaml",
         help="Path to the YAML configuration file.",
     )
     args = parser.parse_args()
@@ -113,7 +113,7 @@ def main():
     key = jax.random.PRNGKey(seed)
 
     try:
-        seq_len = config["dataset"]["seq_len"]
+        seq_len = config["dataset"]["ebm_seq_len"]
         train_young_dataset_raw = RealEigenwormDataset(
             data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=seq_len, is_aged=False
         )

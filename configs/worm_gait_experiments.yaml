@@ -1,17 +1,26 @@
-dataset:
-  batch_size: 2
-  seq_len: 100
 experiment:
   dt: 0.01
   seed: 42
   optuna_n_trials: 2
+  N_steps: 3000
+  num_runs: 5
+
+dataset:
+  batch_size: 2
+  ebm_seq_len: 100
+  intervention_seq_len: 10
+  intervention_path: "data/worm/EigenWorms_TEST.ts"
+
 graph:
   n_steps: 1
+
 logging:
   wandb_project: worm_gait
+
 model:
   hidden_dimensions: 128
   use_blanket_topology: false
+
 observer:
   macro:
     d_active: 4
@@ -31,9 +40,20 @@ observer:
     ebm_hidden_size: 256
     n_steps: 1
     temperature: 1.0
+
 optimization:
   early_stopping_patience: 4000
   learning_rate: 5.0e-05
   max_epochs: 100
   max_grad_norm: 0.1
   weight_decay: 0.0
+
+intervention:
+  lambda_A: 0.2
+  lambda_B: 3.0
+  lambda_sweep: [0.1, 0.2, 0.3, 0.4, 0.5, 1.0, 3.0]
+
+paths:
+  model_weights: "output/benchmarks/worm_gait/05_worm_gait_decline_trained_engine.eqx"
+  output_plot: "output/benchmarks/worm_gait/07_worm_gait_intervention_rescue.png"
+  output_metrics: "output/benchmarks/worm_gait/07_worm_gait_intervention_metrics.json"

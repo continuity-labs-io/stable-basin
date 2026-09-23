@@ -136,7 +136,7 @@ def train_step(lambda_model: LambdaModel, graph: PredictiveCodingGraph, x_init_b
 
 
 def main():
-    config_path = "configs/worm_gait_ebm.yaml"
+    config_path = "configs/worm_gait_experiments.yaml"
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 

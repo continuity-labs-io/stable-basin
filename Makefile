@@ -82,7 +82,7 @@ worm-gait-optune:
 
 .PHONY: worm-gait-ebm
 worm-gait-ebm:
-	python -m src.benchmarks.worm_gait.05_worm_gait_aging_ebm --config configs/worm_gait_ebm.yaml
+	python -m src.benchmarks.worm_gait.05_worm_gait_aging_ebm --config configs/worm_gait_experiments.yaml
 
 .PHONY: worm-gait-infer-lambda
 worm-gait-infer-lambda:
@@ -90,15 +90,15 @@ worm-gait-infer-lambda:
 
 .PHONY: worm-gait-intervention
 worm-gait-intervention:
-	python -m src.benchmarks.worm_gait.07_worm_gait_intervention --config configs/worm_gait_intervention.yaml
+	python -m src.benchmarks.worm_gait.07_worm_gait_intervention --config configs/worm_gait_experiments.yaml
 
 .PHONY: worm-gait-sweep
 worm-gait-sweep:
-	python -m src.benchmarks.worm_gait.08_worm_gait_lambda_sweep --config configs/worm_gait_intervention.yaml
+	python -m src.benchmarks.worm_gait.08_worm_gait_lambda_sweep --config configs/worm_gait_experiments.yaml
 
 .PHONY: worm-gait-pharmacology
 worm-gait-pharmacology:
-	python -m src.benchmarks.worm_gait.09_pharmacological_translation --config configs/worm_gait_intervention.yaml
+	python -m src.benchmarks.worm_gait.09_pharmacological_translation --config configs/worm_gait_experiments.yaml
 
 .PHONY: worm-gait-animate
 worm-gait-animate:

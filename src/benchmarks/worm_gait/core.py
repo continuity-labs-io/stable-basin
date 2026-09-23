@@ -161,8 +161,8 @@ def setup_experiment(config):
         logger.warning(f"Trained model not found at {model_path}! Proceeding with random initialization.")
 
     d_full = graph.d_micro + graph.d_macro
-    dataset_path = config["dataset"]["path"]
-    seq_len = config["dataset"]["seq_len"]
+    dataset_path = config["dataset"].get("intervention_path", "data/worm/EigenWorms_TEST.ts")
+    seq_len = config["dataset"].get("intervention_seq_len", 10)
     try:
         dataset = RealEigenwormDataset(data_path=dataset_path, seq_len=seq_len, is_aged=True)
     except FileNotFoundError:

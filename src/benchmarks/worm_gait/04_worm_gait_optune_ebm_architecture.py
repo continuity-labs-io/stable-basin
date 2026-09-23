@@ -79,7 +79,7 @@ def objective(trial, train_young_loader, eval_young_loader, eval_old_loader, bas
 
 
 def main():
-    config_path = "configs/worm_gait_ebm.yaml"
+    config_path = "configs/worm_gait_experiments.yaml"
     with open(config_path, "r") as f:
         base_config = yaml.safe_load(f)
 
@@ -90,7 +90,7 @@ def main():
     key = jax.random.PRNGKey(seed)
 
     # Load dataset once
-    seq_len = base_config["dataset"]["seq_len"]
+    seq_len = base_config["dataset"]["ebm_seq_len"]
     try:
         train_young_dataset_raw = RealEigenwormDataset(
             data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=seq_len, is_aged=False
