@@ -95,7 +95,7 @@ def main():
     # Bounds: bottom/top can be anything, ec50 bounded to reasonable dose range, hill_slope can be anything
     bounds = (
         [-np.inf, -np.inf, min(lambdas)*0.1, -np.inf], 
-        [np.inf, np.inf, max(lambdas)*10.0, np.inf]
+        [np.inf, np.inf, max(lambdas), np.inf]
     )
     
     try:

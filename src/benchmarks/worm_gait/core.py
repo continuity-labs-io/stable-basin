@@ -113,6 +113,7 @@ def simulate_sde(
     def scan_step(x, key_step):
         grad_E = jax.grad(energy_fn)(x)
         drift = -(Q_full + Gamma_full) @ grad_E
+        drift = jnp.clip(drift, -100.0, 100.0)  # prevent gradient explosion
         dW = jax.random.normal(key_step, (d_full,))
         diffusion = jnp.sqrt(2.0 * T_micro * dt) * (S_full @ dW)
         x_next = x + drift * dt + diffusion
