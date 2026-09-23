@@ -4,6 +4,7 @@ dataset:
 experiment:
   dt: 0.01
   seed: 42
+  optuna_n_trials: 2
 graph:
   n_steps: 1
 logging:

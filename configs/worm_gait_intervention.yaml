@@ -3,6 +3,7 @@ experiment:
   num_runs: 5
   dt: 0.01
   seed: 42
+  optuna_n_trials: 2
 
 intervention:
   lambda_A: 0.2

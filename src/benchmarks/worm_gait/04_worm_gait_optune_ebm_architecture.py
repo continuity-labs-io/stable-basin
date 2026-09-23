@@ -83,6 +83,8 @@ def main():
     with open(config_path, "r") as f:
         base_config = yaml.safe_load(f)
 
+    benchmark_module = importlib.import_module("src.benchmarks.worm_gait.05_worm_gait_aging_ebm")
+
     seed = base_config.get("experiment", {}).get("seed", 42)
     torch.manual_seed(seed)
     key = jax.random.PRNGKey(seed)
@@ -127,11 +129,13 @@ def main():
     wandb_kwargs = {"project": "worm_gait"}
     wandbc = WeightsAndBiasesCallback(metric_name="score", wandb_kwargs=wandb_kwargs)
 
-    logger.info(f"Starting Optuna search with timeout of {timeout_seconds} seconds")
+    n_trials = base_config.get("experiment", {}).get("optuna_n_trials", 2)
+    logger.info(f"Starting Optuna search with timeout of {timeout_seconds} seconds and max {n_trials} trials")
     study.optimize(
         lambda trial: objective(
             trial, train_young_loader, eval_young_loader, eval_old_loader, base_config
         ),
+        n_trials=n_trials,
         timeout=timeout_seconds,
         catch=(Exception,),
         callbacks=[wandbc]
