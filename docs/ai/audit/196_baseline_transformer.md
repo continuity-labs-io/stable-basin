@@ -38,3 +38,5 @@ Create a new benchmark script: `src/benchmarks/12_worm_gait_aging_transformer.py
 - To keep the codebase DRY, if you abstracted the PyTorch train/eval loop in the SSM script, reuse it here.
 
 Please execute this and report the final Cohen's $d$ and p-value between the Young and Old MSE distributions!
+
+Include this experiment in the overall makefile target.

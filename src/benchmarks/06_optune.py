@@ -141,7 +141,7 @@ def main():
 
     # Save best parameters to a JSON for easy extraction later
     os.makedirs("output/echo/benchmarks", exist_ok=True)
-    with open("output/echo/benchmarks/179_best_params.json", "w") as f:
+    with open("output/echo/benchmarks/06_worm_gait_ebm_best_params.json", "w") as f:
         json.dump(study.best_trial.params, f, indent=2)
 
 

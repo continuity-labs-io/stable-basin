@@ -67,6 +67,10 @@ ssm-experiments: baseline extrapolation density-sweep loss-ablation clinical-dia
 worm-gait-baseline:
 	python -m src.benchmarks.08_worm_gait_baseline_metrics
 
+.PHONY: worm-gait-optune
+worm-gait-optune:
+	python -m src.benchmarks.06_optune
+
 worm-gait-ebm:
 	python -m src.benchmarks.06_worm_gait_aging_ebm --config configs/worm_gait_ebm.yaml
 
@@ -81,4 +85,8 @@ worm-gait-sweep:
 worm-gait-pharmacology:
 	python -m src.benchmarks.10_pharmacological_translation --config configs/worm_gait_intervention.yaml
 
-worm-gait-experiments: worm-gait-baseline worm-gait-ebm worm-gait-intervention worm-gait-sweep worm-gait-pharmacology
+.PHONY: worm-gait-ssm
+worm-gait-ssm:
+	python -m src.benchmarks.11_worm_gait_aging_ssm
+
+worm-gait-experiments: worm-gait-baseline worm-gait-ebm worm-gait-intervention worm-gait-sweep worm-gait-pharmacology worm-gait-ssm
