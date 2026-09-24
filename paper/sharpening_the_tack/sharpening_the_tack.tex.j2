@@ -20,12 +20,17 @@
 \section{Introduction}
 \VAR{ meta.hypothesis }
 
+\section{Prior Work}
+% TODO: Discuss relevant literature of existing work.
+
 \section{Methods}
 \VAR{ ai_methods }
 
 \section{Results}
+\subsection{Baseline Characteristics of Aging}
 \VAR{ ai_results_baseline }
 
+\subsection{Mathematical Detection of Systemic Decline}
 The baseline Gaussian model yielded a KS-statistic of \VAR{ metrics_decline.IdentityPrecisionEBM.ks_statistic | sig_figs(meta.significant_figures) }. However, the Precision Weighted EBM detected significant flattening with a Cohen's d of \VAR{ metrics_decline.PrecisionWeightedEBM.cohens_d | sig_figs(meta.significant_figures) }.
 
 \VAR{ ai_results_pathology }
@@ -36,6 +41,7 @@ The baseline Gaussian model yielded a KS-statistic of \VAR{ metrics_decline.Iden
     \caption{\textbf{Worm Gait Decline Ablation Plot.} \VAR{ ai_caption_decline }}
 \end{figure}
 
+\subsection{Thermodynamic Intervention and Structural Rescue}
 Applying an intervention of $\lambda = \VAR{ metrics_intervention.RunB.lambda }$ steepened the basin to an energy distance of \VAR{ metrics_intervention.RunB.energy_distance | sig_figs(meta.significant_figures) }, yielding a rescue effect size of $R_\lambda = \VAR{ metrics_intervention.RunB.R_lambda | sig_figs(meta.significant_figures) }$.
 
 \VAR{ ai_results_intervention }
@@ -46,10 +52,14 @@ Applying an intervention of $\lambda = \VAR{ metrics_intervention.RunB.lambda }$
     \caption{\textbf{Thermodynamic Intervention Rescue Plot.} \VAR{ ai_caption_rescue }}
 \end{figure}
 
+\subsection{Dose-Response Dynamics of Precision Injection}
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{../../output/benchmarks/worm_gait/08_lambda_dose_response.png}
     \caption{\textbf{Lambda Dose-Response Sweep.} This figure demonstrates the dose-response effect of various precision injection gain ($\lambda$) values.}
 \end{figure}
+
+\section{Discussion}
+\VAR{ ai_discussion }
 
 \end{document}

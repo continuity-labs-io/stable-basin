@@ -95,6 +95,9 @@ def plot_results(traj_A, traj_B, dist_A, dist_B, R_lambda_B, config):
     lambda_A = config["intervention"]["lambda_A"]
     lambda_B = config["intervention"]["lambda_B"]
 
+    lambda_A_str = f"{lambda_A:.2f}"
+    lambda_B_str = f"{lambda_B:.2f}"
+
     os.makedirs(os.path.dirname(output_plot), exist_ok=True)
     fig = plt.figure(figsize=(18, 6))
 
@@ -103,7 +106,7 @@ def plot_results(traj_A, traj_B, dist_A, dist_B, R_lambda_B, config):
     tA_np = np.array(traj_A)
     ax1.plot(tA_np[:, 0], tA_np[:, 1], tA_np[:, 2], color="red", alpha=0.7, linewidth=1)
     ax1.scatter(tA_np[0, 0], tA_np[0, 1], tA_np[0, 2], color="black", s=50, label="x0 (Synthetically Degraded)")
-    ax1.set_title(f"Panel A: Degraded Pathology (λ={lambda_A})")
+    ax1.set_title(f"Panel A: Degraded Pathology (λ={lambda_A_str})")
     ax1.legend()
 
     # Panel B: The Phase Space Rescue
@@ -111,13 +114,13 @@ def plot_results(traj_A, traj_B, dist_A, dist_B, R_lambda_B, config):
     tB_np = np.array(traj_B)
     ax2.plot(tB_np[:, 0], tB_np[:, 1], tB_np[:, 2], color="green", alpha=0.7, linewidth=1)
     ax2.scatter(tB_np[0, 0], tB_np[0, 1], tB_np[0, 2], color="black", s=50, label="x0 (Synthetically Degraded)")
-    ax2.set_title(f"Panel B: Therapeutic Rescue (λ={lambda_B})")
+    ax2.set_title(f"Panel B: Therapeutic Rescue (λ={lambda_B_str})")
     ax2.legend()
 
     # Panel C: Energy Distance Metric
     ax3 = fig.add_subplot(133)
     
-    metrics_labels = [f"Baseline (λ={lambda_A})", f"Rescue (λ={lambda_B})"]
+    metrics_labels = [f"Baseline (λ={lambda_A_str})", f"Rescue (λ={lambda_B_str})"]
     R_values = [0.0, R_lambda_B]
     
     ax3.bar(metrics_labels, R_values, color=['gray', 'green'], alpha=0.7)
@@ -126,7 +129,7 @@ def plot_results(traj_A, traj_B, dist_A, dist_B, R_lambda_B, config):
     ax3.set_title("Panel C: Energy Distance Restoration")
     ax3.grid(axis='y', linestyle='--', alpha=0.5)
 
-    plt.tight_layout()
+    plt.tight_layout(w_pad=4.0)
     plt.savefig(output_plot, dpi=300)
     plt.close()
 

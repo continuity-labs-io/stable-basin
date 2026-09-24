@@ -58,7 +58,7 @@ def plot_ablation_results(
     # across the state space, causing perfect overlap.
     axes[1].plot(trace_young_A_np, label="Clean Baseline", color="blue", linewidth=4)
     axes[1].plot(trace_old_A_np, label="Synthetically Degraded", color="orange", linestyle="--", linewidth=2)
-    axes[1].set_title("Panel B: Frozen Identity Precision")
+    axes[1].set_title("Panel B: IdentityPrecisionEBM (Baseline)")
     axes[1].set_xlabel("Time Step")
     axes[1].set_ylabel("Hessian Trace (Curvature)")
     axes[1].legend()
@@ -75,7 +75,7 @@ def plot_ablation_results(
         histtype="step",
         linewidth=2,
     )
-    axes[2].set_title("Panel C: Waddington Basin Flattening")
+    axes[2].set_title("Panel C: PrecisionWeightedEBM")
     axes[2].set_xlabel("Hessian Trace (Curvature)")
     axes[2].set_ylabel("Density")
     axes[2].set_xlim(0, 300)

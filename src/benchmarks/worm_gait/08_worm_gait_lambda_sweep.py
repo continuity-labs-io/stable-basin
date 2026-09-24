@@ -129,10 +129,10 @@ def main():
     plt.figure(figsize=(10, 6))
     
     plt.plot(lambdas_for_plot, R_per_lambda, marker='o', color='blue', label=r'Therapeutic Rescue $R(\lambda)$')
-    plt.axhline(y=0.0, color='red', linestyle='--', label=f'Baseline Rescue (λ={lambda_baseline})')
+    plt.axhline(y=0.0, color='red', linestyle='--', label=f'Baseline Rescue (λ={lambda_baseline:.2f})')
     
     plt.xscale('log')
-    plt.xticks(lambdas, labels=[str(l) for l in lambdas])
+    plt.xticks(lambdas, labels=[f"{l:.2f}" for l in lambdas])
     
     plt.xlabel(r"Inverse-Temperature Scaling ($\lambda$)")
     plt.ylabel(r"Therapeutic Rescue $R(\lambda)$")
