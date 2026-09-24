@@ -10,8 +10,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset
-from src.metrics.time_domain import ThermodynamicMetrics
 from src.metrics.spectral import SpectralMetrics
+from src.benchmarks.synthetic_aging import amplitude_residual_stats
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -33,44 +33,58 @@ def run_baseline_metrics():
         "time_domain": {}
     }
     
-    time_metrics = ThermodynamicMetrics(alpha=1.0, beta=1.0)
+    time_metrics = None # no longer using ThermodynamicMetrics
     spec_metrics = SpectralMetrics()
 
     def evaluate_cohort(dataset):
-        ksm_list = []
+        ar1_list = []
+        var_list = []
         peak_freq_list = []
         for traj in dataset.data:
-            # Calculate KSM
-            ksm_scores = time_metrics.calculate_ksm(traj, window_size=50)
-            ksm_list.append(np.mean(ksm_scores))
+            # Calculate Amplitude Residual Stats (CSD proxy)
+            stats = amplitude_residual_stats(traj.numpy(), pair=(0, 1))
+            ar1_list.append(stats["amp_ar1"])
+            var_list.append(stats["amp_var"])
             
             # Calculate Peak Frequency (25.0 Hz biological framerate)
             freq, power = spec_metrics.calculate_psd(traj, sampling_rate=25.0)
             peak_idx = torch.argmax(power.mean(dim=1)) if len(power.shape) > 1 else 0
             peak_freq_list.append(float(freq[peak_idx]))
             
-        return ksm_list, peak_freq_list
+        return ar1_list, var_list, peak_freq_list
 
     logger.info("Evaluating Clean Baseline Cohort...")
-    ksm_y, freq_y = evaluate_cohort(ds_young)
+    ar1_y, var_y, freq_y = evaluate_cohort(ds_young)
     
     logger.info("Evaluating Synthetically Degraded Cohort...")
-    ksm_o, freq_o = evaluate_cohort(ds_old)
+    ar1_o, var_o, freq_o = evaluate_cohort(ds_old)
 
-    logger.info("\n--- 1. TIME DOMAIN METRICS (KSM) ---")
+    logger.info("\n--- 1. TIME DOMAIN METRICS (Amplitude CSD) ---")
     
-    mean_ksm_young = float(np.mean(ksm_y))
-    std_ksm_young = float(np.std(ksm_y))
-    mean_ksm_old = float(np.mean(ksm_o))
-    std_ksm_old = float(np.std(ksm_o))
+    mean_ar1_young = float(np.mean(ar1_y))
+    std_ar1_young = float(np.std(ar1_y))
+    mean_ar1_old = float(np.mean(ar1_o))
+    std_ar1_old = float(np.std(ar1_o))
     
-    results["time_domain"]["mean_ksm_baseline"] = mean_ksm_young
-    results["time_domain"]["std_ksm_baseline"] = std_ksm_young
-    results["time_domain"]["mean_ksm_degraded"] = mean_ksm_old
-    results["time_domain"]["std_ksm_degraded"] = std_ksm_old
+    mean_var_young = float(np.mean(var_y))
+    std_var_young = float(np.std(var_y))
+    mean_var_old = float(np.mean(var_o))
+    std_var_old = float(np.std(var_o))
     
-    logger.info(f"Clean Baseline KSM: {mean_ksm_young:.4f} ± {std_ksm_young:.4f}")
-    logger.info(f"Synthetically Degraded KSM: {mean_ksm_old:.4f} ± {std_ksm_old:.4f}")
+    results["time_domain"]["mean_ar1_baseline"] = mean_ar1_young
+    results["time_domain"]["std_ar1_baseline"] = std_ar1_young
+    results["time_domain"]["mean_ar1_degraded"] = mean_ar1_old
+    results["time_domain"]["std_ar1_degraded"] = std_ar1_old
+    
+    results["time_domain"]["mean_var_baseline"] = mean_var_young
+    results["time_domain"]["std_var_baseline"] = std_var_young
+    results["time_domain"]["mean_var_degraded"] = mean_var_old
+    results["time_domain"]["std_var_degraded"] = std_var_old
+    
+    logger.info(f"Clean Baseline AR(1): {mean_ar1_young:.4f} ± {std_ar1_young:.4f}")
+    logger.info(f"Synthetically Degraded AR(1): {mean_ar1_old:.4f} ± {std_ar1_old:.4f}")
+    logger.info(f"Clean Baseline Variance: {mean_var_young:.4f} ± {std_var_young:.4f}")
+    logger.info(f"Synthetically Degraded Variance: {mean_var_old:.4f} ± {std_var_old:.4f}")
 
     logger.info("\n--- 2. SPECTRAL METRICS (Peak Frequency) ---")
     
