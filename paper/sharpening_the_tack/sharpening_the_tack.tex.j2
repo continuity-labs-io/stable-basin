@@ -26,7 +26,7 @@
 \section{Results}
 \VAR{ ai_results_baseline }
 
-The baseline Gaussian model yielded a KS-statistic of \VAR{ metrics_decline.GaussianEBM.ks_statistic | sig_figs(meta.significant_figures) }. However, the Precision Weighted EBM detected significant flattening with a Cohen's d of \VAR{ metrics_decline.PrecisionWeightedEBM.cohens_d | sig_figs(meta.significant_figures) }.
+The baseline Gaussian model yielded a KS-statistic of \VAR{ metrics_decline.IdentityPrecisionEBM.ks_statistic | sig_figs(meta.significant_figures) }. However, the Precision Weighted EBM detected significant flattening with a Cohen's d of \VAR{ metrics_decline.PrecisionWeightedEBM.cohens_d | sig_figs(meta.significant_figures) }.
 
 \VAR{ ai_results_pathology }
 
@@ -36,7 +36,7 @@ The baseline Gaussian model yielded a KS-statistic of \VAR{ metrics_decline.Gaus
     \caption{\textbf{Worm Gait Decline Ablation Plot.} \VAR{ ai_caption_decline }}
 \end{figure}
 
-Applying an intervention of $\lambda = \VAR{ config_intervention.lambda_B }$ steepened the basin to a trace of \VAR{ metrics_intervention.RunB.overall_mean | sig_figs(meta.significant_figures) }, yielding a rescue effect size of $d = \VAR{ metrics_intervention.Comparisons.cohens_d | sig_figs(meta.significant_figures) }$.
+Applying an intervention of $\lambda = \VAR{ metrics_intervention.RunB.lambda }$ steepened the basin to an energy distance of \VAR{ metrics_intervention.RunB.energy_distance | sig_figs(meta.significant_figures) }, yielding a rescue effect size of $R_\lambda = \VAR{ metrics_intervention.RunB.R_lambda | sig_figs(meta.significant_figures) }$.
 
 \VAR{ ai_results_intervention }
 

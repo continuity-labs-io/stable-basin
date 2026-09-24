@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 from typing import Optional
-from src.benchmarks.synthetic_aging import slow_amplitude_relaxation
+from src.data.behavior.synthetic_aging import slow_amplitude_relaxation
 
 logger = logging.getLogger(__name__)
 

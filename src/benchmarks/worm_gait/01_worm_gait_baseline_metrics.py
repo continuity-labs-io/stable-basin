@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset
 from src.metrics.spectral import SpectralMetrics
-from src.benchmarks.synthetic_aging import amplitude_residual_stats
+from src.data.behavior.synthetic_aging import amplitude_residual_stats
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
