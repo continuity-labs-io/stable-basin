@@ -7,11 +7,6 @@ import yaml
 import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-import jax
-import jax.numpy as jnp
-import equinox as eqx
-
-from src.benchmarks.worm_gait.core import setup_experiment, simulate_sde
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -32,29 +27,6 @@ def hill_equation(x, bottom, top, ec50, hill_slope):
         The calculated response value for the given dose.
     """
     return bottom + (top - bottom) / (1 + (ec50 / x)**hill_slope)
-
-def calculate_energies(graph, traj_batch):
-    """
-    Calculates the joint energy for every state in a batch of trajectories.
-
-    Args:
-        graph: The PredictiveCodingGraph containing the flow factor and partition sizes.
-        traj_batch: A batch of simulated SDE trajectories.
-
-    Returns:
-        A numpy array containing the scalar joint energy for each state in the trajectories.
-    """
-    d_micro = graph.d_micro
-    
-    def joint_energy(x):
-        x_micro = x[:d_micro]
-        x_macro = x[d_micro:]
-        return graph.flow_factor.joint_energy_fn(x_micro, x_macro)
-    
-    vmap_energy = jax.vmap(joint_energy)
-    vmap_batch_energy = jax.vmap(vmap_energy)
-    
-    return np.array(vmap_batch_energy(traj_batch))
 
 def main():
     parser = argparse.ArgumentParser(description="Worm Gait Pharmacological Translation")
@@ -79,27 +51,27 @@ def main():
         sweep_data = json.load(f)
         
     lambdas = []
-    traces = []
+    R_values = []
     for k, v in sweep_data.items():
         lambdas.append(float(k))
-        traces.append(v["mean_trace_overall"])
+        R_values.append(v["R_lambda"])
         
     lambdas = np.array(lambdas)
-    traces = np.array(traces)
+    R_values = np.array(R_values)
     
     # 2. Fit Sigmoid Curve (Hill Equation)
     logger.info("Fitting 4PL Hill equation to Dose-Response curve...")
-    # Initial guesses: bottom = min trace, top = max trace, ec50 = median lambda, hill_slope = 1.0
-    p0 = [np.min(traces), np.max(traces), np.median(lambdas), 1.0]
+    # Initial guesses: bottom = min R, top = max R, ec50 = median lambda, hill_slope = 1.0
+    p0 = [np.min(R_values), np.max(R_values), np.median(lambdas), 1.0]
     
-    # Bounds: bottom/top can be anything, ec50 bounded to reasonable dose range, hill_slope can be anything
+    # Bounds: bottom/top can be anything, ec50 bounded to strictly fall between min(lambdas) and max(lambdas)
     bounds = (
-        [-np.inf, -np.inf, min(lambdas), -np.inf], 
-        [np.inf, np.inf, max(lambdas), np.inf]
+        [-np.inf, -np.inf, min(lambdas) + 1e-6, -np.inf], 
+        [np.inf, np.inf, max(lambdas) - 1e-6, np.inf]
     )
     
     try:
-        popt, pcov = curve_fit(hill_equation, lambdas, traces, p0=p0, bounds=bounds, maxfev=10000)
+        popt, pcov = curve_fit(hill_equation, lambdas, R_values, p0=p0, bounds=bounds, maxfev=10000)
         bottom, top, ec50, hill_slope = popt
         logger.info(f"Fitted EC50: {ec50:.4f}, Hill Slope: {hill_slope:.4f}")
     except RuntimeError as e:
@@ -107,69 +79,15 @@ def main():
         return
 
     wandb.init(project="worm_gait", name="09_pharmacological_translation", config=config)
-    wandb.run.use_artifact("05_worm_gait_decline_trained_engine:latest", type="model")
 
-    # 3. Setup Physics Engine
-    graph, x0, key = setup_experiment(config)
-
-    N_steps = config["experiment"]["N_steps"]
-    dt = config["experiment"]["dt"]
-    num_runs = config["experiment"]["num_runs"]
-
-    vmap_simulate = eqx.filter_jit(
-        jax.vmap(simulate_sde, in_axes=(None, None, None, None, None, 0))
-    )
-
-    # Dynamically inject lambda_A from inferred baseline
-    inferred_lambda_path = "output/benchmarks/worm_gait/06_inferred_biological_lambda.json"
-    if os.path.exists(inferred_lambda_path):
-        with open(inferred_lambda_path, "r") as f:
-            lambda_data = json.load(f)
-            inferred_lambda = lambda_data.get("biological_lambda")
-            if inferred_lambda is not None:
-                config["intervention"]["lambda_A"] = inferred_lambda
-    else:
-        logger.warning(f"Inferred lambda not found at {inferred_lambda_path}, falling back to config.")
-
-    lambda_base = config["intervention"]["lambda_A"]
-    lambda_rescue = float(ec50)
-    
-    # 4. The Trajectories
-    logger.info(f"Simulating Pathological Baseline (lambda={lambda_base})")
-    keys_base = jax.random.split(key, num_runs)
-    traj_base = vmap_simulate(graph, x0, lambda_base, N_steps, dt, keys_base)
-    
-    logger.info(f"Simulating Therapeutic Rescue (lambda={lambda_rescue})")
-    keys_rescue = jax.random.split(key, num_runs)
-    traj_rescue = vmap_simulate(graph, x0, lambda_rescue, N_steps, dt, keys_rescue)
-
-    # 5. Thermodynamic Translation (Delta G)
-    logger.info("Calculating Thermodynamic Translation (Delta G)...")
-    energy_base = calculate_energies(graph, traj_base)
-    energy_rescue = calculate_energies(graph, traj_rescue)
-    
-    mean_energy_base = float(np.mean(energy_base))
-    mean_energy_rescue = float(np.mean(energy_rescue))
-    
-    G_baseline = mean_energy_base
-    G_rescue = mean_energy_rescue
-    delta_G = abs(G_rescue - G_baseline)
-    
-    logger.info(f"G_baseline: {G_baseline:.4f}")
-    logger.info(f"G_rescue: {G_rescue:.4f}")
-    logger.info(f"Delta G: {delta_G:.4f}")
-
-    # 6. Serialization
+    # 3. Serialization
     output_metrics = "output/benchmarks/worm_gait/09_clinical_translation_metrics.json"
     os.makedirs(os.path.dirname(output_metrics), exist_ok=True)
     metrics_data = {
         "EC50": float(ec50),
         "Hill_Slope": float(hill_slope),
         "Maximum_Asymptote": float(top),
-        "Minimum_Asymptote": float(bottom),
-        "G_baseline": G_baseline,
-        "G_rescue": G_rescue,
-        "Delta_G": delta_G
+        "Minimum_Asymptote": float(bottom)
     }
     with open(output_metrics, "w") as f:
         json.dump(metrics_data, f, indent=2)
@@ -177,12 +95,12 @@ def main():
     wandb.log(metrics_data)
     logger.info(f"Metrics saved to {output_metrics}")
 
-    # 7. Visualization
+    # 4. Visualization
     output_plot = "output/benchmarks/worm_gait/09_pharmacological_curve.png"
     plt.figure(figsize=(10, 6))
     
     # Plot raw points
-    plt.scatter(lambdas, traces, color='blue', label='Measured Trace (SDE Rollout)', zorder=5)
+    plt.scatter(lambdas, R_values, color='blue', label=r'Measured $R(\lambda)$', zorder=5)
     
     # Plot smooth fitted curve
     x_smooth = np.logspace(np.log10(min(lambdas)*0.5), np.log10(max(lambdas)*1.5), 200)
@@ -192,15 +110,15 @@ def main():
     # Add vertical dashed line for EC50
     plt.axvline(x=ec50, color='green', linestyle='--', label=f'$EC_{{50}}$ = {ec50:.3f}')
     
-    # Add text box with Delta G
-    textstr = f'$EC_{{50}}$: {ec50:.3f}\n$\\Delta G$: {delta_G:.3f}'
+    # Add text box
+    textstr = f'$EC_{{50}}$: {ec50:.3f}'
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
     plt.gca().text(0.05, 0.95, textstr, transform=plt.gca().transAxes, fontsize=12,
             verticalalignment='top', bbox=props)
 
     plt.xscale('log')
-    plt.xlabel(r"Precision Injection Parameter ($\lambda$)")
-    plt.ylabel("Mean Effective Hessian Trace")
+    plt.xlabel(r"Inverse-Temperature Scaling ($\lambda$)")
+    plt.ylabel(r"Therapeutic Rescue $R(\lambda)$")
     plt.title("Pharmacological Translation & Dose-Response Curve")
     plt.legend()
     plt.grid(True, which="both", ls="--", alpha=0.5)

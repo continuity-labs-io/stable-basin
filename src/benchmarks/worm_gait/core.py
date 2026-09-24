@@ -207,8 +207,8 @@ def compute_full_trace(energy_fn, states, batch_size=1000):
 
 
 def compute_metrics(name, t_young, t_old):
-    ty = np.nan_to_num(np.array(t_young), nan=1.0)
-    to = np.nan_to_num(np.array(t_old), nan=1.0)
+    ty = np.nan_to_num(np.array(t_young), nan=0.0)
+    to = np.nan_to_num(np.array(t_old), nan=0.0)
     ks_stat, ks_pval = ks_2samp(ty, to)
     wd = wasserstein_distance(ty, to)
     d = pg.compute_effsize(ty, to, eftype="cohen")

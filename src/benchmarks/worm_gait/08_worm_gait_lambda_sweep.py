@@ -9,22 +9,14 @@ import jax.numpy as jnp
 import equinox as eqx
 import matplotlib.pyplot as plt
 import numpy as np
-import pingouin as pg
+from scipy.stats import energy_distance
 
 from src.benchmarks.worm_gait.core import setup_experiment, simulate_sde
-from src.echo.metrics.energy_landscape import batch_calculate_curvature
+from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
-
-def get_traces(graph, traj_batch, num_runs):
-    energy_fn = lambda x: graph.ebm(x)[0]
-    traces = []
-    for i in range(num_runs):
-        metrics = batch_calculate_curvature(energy_fn, traj_batch[i])
-        traces.append(np.array(metrics["hessian_trace"]))
-    return np.vstack(traces)
 
 def main():
     parser = argparse.ArgumentParser(description="Worm Gait Lambda Sweep Benchmark")
@@ -66,48 +58,59 @@ def main():
         jax.vmap(simulate_sde, in_axes=(None, None, None, None, None, 0))
     )
 
+    d_internal = graph.hull.d_internal
+    d_sensory = graph.hull.d_sensory
+
+    def get_sensory_flat(traj_batch):
+        sensory = traj_batch[:, :, d_internal : d_internal + d_sensory]
+        return np.array(sensory).flatten()
+
+    # Load clean biological data Y
+    dataset_path = config["dataset"].get("intervention_path", "data/worm/EigenWorms_TEST.ts")
+    try:
+        ds_young = RealEigenwormDataset(data_path=dataset_path, seq_len=1000, inject_synthetic_degradation=False)
+        import torch
+        Y = torch.cat(ds_young.data).numpy().flatten()
+    except FileNotFoundError:
+        logger.warning(f"Biological data not found at {dataset_path}, falling back to synthetic mock data.")
+        ds_young = SyntheticWormMockDataset(seq_len=1000, num_samples=5)
+        Y = np.stack([ds_young[i][0].numpy() for i in range(5)]).flatten()
+
+
     results = {}
-    mean_traces_per_lambda = []
+    R_per_lambda = []
     lambdas_for_plot = []
 
     # Calculate baseline
     logger.info(f"Simulating Baseline: lambda={lambda_baseline}")
     keys_baseline = jax.random.split(key, num_runs)
     traj_baseline_batch = vmap_simulate(graph, x0, lambda_baseline, N_steps, dt, keys_baseline)
-    trace_baseline_batch = get_traces(graph, traj_baseline_batch, num_runs)
+    M_baseline = get_sensory_flat(traj_baseline_batch)
     
-    if np.isnan(trace_baseline_batch).any():
-        logger.warning(f"NaNs detected in Baseline (lambda={lambda_baseline}) trace. Imputing with 0.0.")
-        trace_baseline_batch = np.nan_to_num(trace_baseline_batch, nan=0.0)
+    if np.isnan(M_baseline).any():
+        logger.warning(f"NaNs detected in Baseline (lambda={lambda_baseline}) trajectory. Imputing with 0.0.")
+        M_baseline = np.nan_to_num(M_baseline, nan=0.0)
         
-    baseline_flat = np.array(trace_baseline_batch).flatten()
-    baseline_mean_trace = np.mean(trace_baseline_batch, axis=0)
-    baseline_overall_mean = float(np.mean(baseline_flat))
+    dist_baseline = float(energy_distance(Y, M_baseline))
 
     for lam in lambdas:
         logger.info(f"Simulating Sweep: lambda={lam}")
         # Use same keys for fair comparison
         traj_lam_batch = vmap_simulate(graph, x0, lam, N_steps, dt, keys_baseline)
-        trace_lam_batch = get_traces(graph, traj_lam_batch, num_runs)
+        M_lam = get_sensory_flat(traj_lam_batch)
         
-        if np.isnan(trace_lam_batch).any():
-            logger.warning(f"NaNs detected in Sweep (lambda={lam}) trace. Imputing with 0.0.")
-            trace_lam_batch = np.nan_to_num(trace_lam_batch, nan=0.0)
+        if np.isnan(M_lam).any():
+            logger.warning(f"NaNs detected in Sweep (lambda={lam}) trajectory. Imputing with 0.0.")
+            M_lam = np.nan_to_num(M_lam, nan=0.0)
             
-        lam_flat = np.array(trace_lam_batch).flatten()
-        lam_mean_trace = np.mean(trace_lam_batch, axis=0)
-        overall_lam_mean = float(np.mean(lam_flat))
-        
-        # Calculate Cohen's d between baseline flat trace and current lam flat trace
-        # pingouin computes effect size based on two 1D arrays
-        d = pg.compute_effsize(baseline_flat, lam_flat, eftype="cohen")
+        dist_lam = float(energy_distance(Y, M_lam))
+        R_lam = 1.0 - (dist_lam / dist_baseline) if dist_baseline != 0 else 0.0
         
         results[float(lam)] = {
-            "mean_trace": np.array(lam_mean_trace).tolist(),
-            "mean_trace_overall": overall_lam_mean,
-            "cohens_d": float(d)
+            "energy_distance": dist_lam,
+            "R_lambda": R_lam
         }
-        mean_traces_per_lambda.append(overall_lam_mean)
+        R_per_lambda.append(R_lam)
         lambdas_for_plot.append(lam)
 
     output_metrics = "output/benchmarks/worm_gait/08_lambda_sweep_metrics.json"
@@ -117,7 +120,7 @@ def main():
     
     # Log numerical sweep results
     for lam, metric in results.items():
-        wandb.log({"lambda": lam, "mean_trace_overall": metric["mean_trace_overall"], "cohens_d": metric["cohens_d"]})
+        wandb.log({"lambda": lam, "energy_distance": metric["energy_distance"], "R_lambda": metric["R_lambda"]})
 
     logger.info(f"Metrics saved to {output_metrics}")
 
@@ -125,14 +128,14 @@ def main():
     os.makedirs(os.path.dirname(output_plot), exist_ok=True)
     plt.figure(figsize=(10, 6))
     
-    plt.plot(lambdas_for_plot, mean_traces_per_lambda, marker='o', color='blue', label='Mean Effective Hessian Trace')
-    plt.axhline(y=baseline_overall_mean, color='red', linestyle='--', label=f'Baseline (λ={lambda_baseline})')
+    plt.plot(lambdas_for_plot, R_per_lambda, marker='o', color='blue', label=r'Therapeutic Rescue $R(\lambda)$')
+    plt.axhline(y=0.0, color='red', linestyle='--', label=f'Baseline Rescue (λ={lambda_baseline})')
     
     plt.xscale('log')
     plt.xticks(lambdas, labels=[str(l) for l in lambdas])
     
-    plt.xlabel(r"Precision Injection Parameter ($\lambda$)")
-    plt.ylabel("Mean Effective Hessian Trace")
+    plt.xlabel(r"Inverse-Temperature Scaling ($\lambda$)")
+    plt.ylabel(r"Therapeutic Rescue $R(\lambda)$")
     plt.title("Clinical Dose-Response Sweep")
     plt.legend()
     plt.grid(True, which="both", ls="--", alpha=0.5)
