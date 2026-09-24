@@ -12,10 +12,12 @@ warnings.filterwarnings("ignore")
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset
 from src.metrics.spectral import SpectralMetrics
 from src.data.behavior.synthetic_aging import amplitude_residual_stats
+from src.metrics.baseline_statistics import compute_stats
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
+    
 def run_baseline_metrics():
     logger.info("   Baseline Biological Metrics Evaluation     ")
     
@@ -81,6 +83,14 @@ def run_baseline_metrics():
     results["time_domain"]["mean_var_degraded"] = mean_var_old
     results["time_domain"]["std_var_degraded"] = std_var_old
     
+    ar1_stats = compute_stats(ar1_y, ar1_o)
+    for k, v in ar1_stats.items():
+        results["time_domain"][f"ar1_{k}"] = v
+
+    var_stats = compute_stats(var_y, var_o)
+    for k, v in var_stats.items():
+        results["time_domain"][f"var_{k}"] = v
+    
     logger.info(f"Clean Baseline AR(1): {mean_ar1_young:.4f} ± {std_ar1_young:.4f}")
     logger.info(f"Synthetically Degraded AR(1): {mean_ar1_old:.4f} ± {std_ar1_old:.4f}")
     logger.info(f"Clean Baseline Variance: {mean_var_young:.4f} ± {std_var_young:.4f}")
@@ -97,6 +107,11 @@ def run_baseline_metrics():
     results["spectral"]["std_peak_freq_baseline"] = std_freq_young
     results["spectral"]["mean_peak_freq_degraded"] = mean_freq_old
     results["spectral"]["std_peak_freq_degraded"] = std_freq_old
+    
+    freq_stats = compute_stats(freq_y, freq_o)
+    for k, v in freq_stats.items():
+        results["spectral"][f"peak_freq_{k}"] = v
+
     
     logger.info(f"Clean Baseline Peak Frequency: {mean_freq_young:.4f} ± {std_freq_young:.4f} Hz")
     logger.info(f"Synthetically Degraded Peak Frequency: {mean_freq_old:.4f} ± {std_freq_old:.4f} Hz")

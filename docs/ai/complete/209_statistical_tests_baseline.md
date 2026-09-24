@@ -39,3 +39,5 @@ Implement formal statistical significance testing for the univariate baseline me
 7. **Testing & Constraints:**
    - **Do not remove or alter** the existing mean and standard deviation outputs; these new tests must be strictly additive.
    - Write a new unit test validating the statistical outputs, strictly adhering to the mandated `ARRANGE`, `ACT`, `ASSERT` block structure defined in `AGENTS.md`.
+
+   - Ensure that the `make paper` pipeline runs successfully
