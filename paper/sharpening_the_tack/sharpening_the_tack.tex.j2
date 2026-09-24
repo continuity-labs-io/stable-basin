@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts}
+\usepackage{float}
 \title{\VAR{ meta.title }}
 \author{\VAR{ meta.author }}
 \date{\today}
@@ -53,7 +54,7 @@ Applying an intervention of $\lambda = \VAR{ metrics_intervention.RunB.lambda }$
 \end{figure}
 
 \subsection{Dose-Response Dynamics}
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../../output/benchmarks/worm_gait/08_lambda_dose_response.png}
     \caption{\textbf{Lambda Dose-Response Sweep.} This figure demonstrates the dose-response effect of various precision injection gain ($\lambda$) values.}

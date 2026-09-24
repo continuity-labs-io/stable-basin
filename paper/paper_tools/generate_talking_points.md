@@ -7,7 +7,7 @@ generate exactly 4 'Beat Notes'. Do NOT write a script to memorize. Write
 conversational, punchy bullet points to act as a teleprompter. 
 
 Output your response strictly in Markdown format, generating the content for a
-file named `teleprompter.md` in the same directory as the paper.
+file named `talking_points.md` in the same directory as the paper.
 
 For each Beat, output exactly:
 1.  **Visual Target:** Explicitly state where to scroll in the PDF (e.g.,
