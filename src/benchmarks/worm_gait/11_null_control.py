@@ -44,6 +44,11 @@ try:
 except ImportError:  # running next to synthetic_aging.py outside the repo
     from synthetic_aging import amplitude_residual_stats, slow_amplitude_relaxation
 
+from src.data.utils import zscore_fit, stratified_split, window_starts
+from src.utils.io import sha256
+from src.echo.metrics.hessian import HessianTraceEvaluator
+from src.metrics.baseline_statistics import hedges_g, unpaired_stats, paired_stats, naive_timestep_ks, resplit_stats
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -70,35 +75,6 @@ def load_ts(path: str) -> tuple[list[np.ndarray], np.ndarray]:
     if not trajs:
         raise ValueError(f"No series parsed from {path}.")
     return trajs, np.asarray(labels)
-
-
-def zscore_fit(trajs: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
-    allx = np.concatenate(trajs, axis=0)
-    return allx.mean(axis=0), allx.std(axis=0, ddof=1)  # ddof=1 matches torch.std
-
-
-def stratified_split(labels: np.ndarray, rng: np.random.Generator, frac: float = 0.5):
-    idx_a, idx_b = [], []
-    for lab in np.unique(labels):
-        idx = rng.permutation(np.flatnonzero(labels == lab))
-        cut = int(round(frac * len(idx)))
-        idx_a.extend(idx[:cut])
-        idx_b.extend(idx[cut:])
-    return np.sort(idx_a), np.sort(idx_b)
-
-
-def window_starts(T: int, seq_len: int, k: int) -> np.ndarray:
-    if T < seq_len:
-        raise ValueError(f"Series length {T} < seq_len {seq_len}.")
-    return np.unique(np.linspace(0, T - seq_len, k).astype(int))
-
-
-def sha256(path: str) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
 
 
 # ============================================================================ model
@@ -158,58 +134,6 @@ def load_or_train_graph(config: dict, config_path: str, train_trajs, train_label
     return graph
 
 
-class HessianTraceEvaluator:
-    """Forced unroll over fixed windows, then exact Hessian trace of the joint energy.
-
-    Common random numbers: x_init and PRNG keys depend only on (worm_id, window), so
-    clean and degraded versions of the same worm see identical noise.
-    """
-
-    def __init__(self, graph, dt: float, seed: int, burn_in: int, trace_batch: int):
-        import equinox as eqx
-        import jax
-        import jax.numpy as jnp
-
-        self.jax, self.jnp = jax, jnp
-        self.graph, self.seed, self.burn_in, self.trace_batch = graph, seed, burn_in, trace_batch
-        self.d_state = graph.d_micro + graph.d_macro
-        d_micro = graph.d_micro
-
-        @eqx.filter_jit
-        def unroll(g, x_inits, seqs, keys):
-            return jax.vmap(lambda xi, s, k: g.forced_unroll(k, xi, dt, seq=s))(x_inits, seqs, keys)
-
-        @eqx.filter_jit
-        def traces(ff, X):
-            def energy(x):
-                return ff.joint_energy_fn(x[:d_micro], x[d_micro:])
-
-            return jax.vmap(lambda x: jnp.trace(jax.hessian(energy)(x)))(X)
-
-        self._unroll, self._traces = unroll, traces
-
-    def __call__(self, traj: np.ndarray, worm_id: int, starts: np.ndarray, seq_len: int):
-        jax, jnp = self.jax, self.jnp
-        seqs = np.stack([traj[s : s + seq_len] for s in starts]).astype(np.float32)
-        rngs = [np.random.default_rng([self.seed, worm_id, w]) for w in range(len(starts))]
-        x_inits = np.stack([0.01 * r.standard_normal(self.d_state) for r in rngs]).astype(np.float32)
-        base = jax.random.PRNGKey(self.seed)
-        keys = jnp.stack([jax.random.fold_in(base, worm_id * 10_000 + w) for w in range(len(starts))])
-
-        states = self._unroll(self.graph, jnp.asarray(x_inits), jnp.asarray(seqs), keys)
-        X = states[:, self.burn_in :, :].reshape(-1, self.d_state)
-        out = []
-        for i in range(0, X.shape[0], self.trace_batch):
-            chunk = X[i : i + self.trace_batch]
-            pad = self.trace_batch - chunk.shape[0]
-            if pad:
-                chunk = jnp.concatenate([chunk, jnp.repeat(chunk[-1:], pad, axis=0)], axis=0)
-            out.append(np.asarray(self._traces(self.graph.flow_factor, chunk))[: self.trace_batch - pad])
-        t = np.concatenate(out)
-        finite = np.isfinite(t)
-        return t[finite], int((~finite).sum())
-
-
 class StubEvaluator:
     """NOT A MODEL. Deterministic function of the input, for testing the stats plumbing."""
 
@@ -219,75 +143,6 @@ class StubEvaluator:
     def __call__(self, traj, worm_id, starts, seq_len):
         x = np.concatenate([traj[s + self.burn_in : s + seq_len] for s in starts])
         return 30.0 + 10.0 * np.tanh(x[:, 0] ** 2 + x[:, 1] ** 2 - 1.0), 0
-
-
-# ============================================================================ statistics
-
-def hedges_g(a: np.ndarray, b: np.ndarray) -> float:
-    """(mean(b) - mean(a)) / pooled SD, small-sample corrected."""
-    na, nb = len(a), len(b)
-    sp = np.sqrt(((na - 1) * a.var(ddof=1) + (nb - 1) * b.var(ddof=1)) / (na + nb - 2))
-    if sp == 0:
-        return float("nan")
-    return float((b.mean() - a.mean()) / sp * (1 - 3 / (4 * (na + nb) - 9)))
-
-
-def unpaired_stats(a, b, rng, n_perm: int, n_boot: int) -> dict:
-    a, b = np.asarray(a), np.asarray(b)
-    obs = b.mean() - a.mean()
-    pooled = np.concatenate([a, b])
-    perms = np.argsort(rng.random((n_perm, pooled.size)), axis=1)
-    diffs = pooled[perms[:, len(a) :]].mean(1) - pooled[perms[:, : len(a)]].mean(1)
-    boot = [hedges_g(rng.choice(a, len(a)), rng.choice(b, len(b))) for _ in range(n_boot)]
-    return {
-        "n_a": int(len(a)),
-        "n_b": int(len(b)),
-        "mean_a": float(a.mean()),
-        "mean_b": float(b.mean()),
-        "mean_diff": float(obs),
-        "perm_p": float((np.sum(np.abs(diffs) >= abs(obs)) + 1) / (n_perm + 1)),
-        "mannwhitney_p": float(mannwhitneyu(a, b).pvalue),
-        "hedges_g": hedges_g(a, b),
-        "hedges_g_ci95": [float(np.nanpercentile(boot, 2.5)), float(np.nanpercentile(boot, 97.5))],
-    }
-
-
-def paired_stats(clean, degraded, rng, n_perm: int, n_boot: int) -> dict:
-    d = np.asarray(degraded) - np.asarray(clean)
-    signs = rng.choice([-1.0, 1.0], size=(n_perm, d.size))
-    null = np.abs((signs * d).mean(1))
-    boot = [rng.choice(d, d.size).mean() for _ in range(n_boot)]
-    sd = d.std(ddof=1)
-    return {
-        "n_worms": int(d.size),
-        "mean_delta": float(d.mean()),
-        "mean_delta_ci95": [float(np.percentile(boot, 2.5)), float(np.percentile(boot, 97.5))],
-        "cohens_dz": float(d.mean() / sd) if sd > 0 else float("nan"),
-        "signflip_p": float((np.sum(null >= abs(d.mean())) + 1) / (n_perm + 1)),
-    }
-
-
-def naive_timestep_ks(steps_a: list[np.ndarray], steps_b: list[np.ndarray]) -> dict:
-    a, b = np.concatenate(steps_a), np.concatenate(steps_b)
-    ks = ks_2samp(a, b)
-    return {"n_a": int(a.size), "n_b": int(b.size), "ks": float(ks.statistic), "p": float(ks.pvalue),
-            "note": "pseudoreplicated: timesteps treated as independent; shown for comparison only"}
-
-
-def resplit_stats(clean_s, cond_s, labels, n_splits, seed) -> dict:
-    gs, ps = [], []
-    for r in range(n_splits):
-        ia, ib = stratified_split(labels, np.random.default_rng(seed + 1 + r))
-        gs.append(hedges_g(clean_s[ia], cond_s[ib]))
-        ps.append(mannwhitneyu(clean_s[ia], cond_s[ib]).pvalue)
-    gs, ps = np.asarray(gs), np.asarray(ps)
-    return {
-        "n_splits": int(n_splits),
-        "frac_p_lt_0.05": float(np.mean(ps < 0.05)),
-        "g_mean": float(np.nanmean(gs)),
-        "g_pct": {k: float(np.nanpercentile(gs, q)) for k, q in (("p2.5", 2.5), ("p50", 50), ("p97.5", 97.5))},
-        "abs_g_p95": float(np.nanpercentile(np.abs(gs), 95)),
-    }
 
 
 # ============================================================================ main
