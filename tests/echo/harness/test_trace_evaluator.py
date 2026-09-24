@@ -2,18 +2,17 @@ import pytest
 import numpy as np
 import jax
 import jax.numpy as jnp
-from src.echo.metrics.hessian import HessianTraceEvaluator
+import equinox as eqx
+from src.echo.harness.trace_evaluator import HessianTraceEvaluator
 
-class DummyFlowFactor:
-    def joint_energy_fn(self, x_micro, x_macro):
-        x = jnp.concatenate([x_micro, x_macro])
-        return jnp.sum(x**2)
+class DummyEBM(eqx.Module):
+    def __call__(self, x):
+        return jnp.sum(x**2), None
 
-class DummyGraph:
-    def __init__(self):
-        self.d_micro = 2
-        self.d_macro = 2
-        self.flow_factor = DummyFlowFactor()
+class DummyGraph(eqx.Module):
+    d_micro: int = 2
+    d_macro: int = 2
+    ebm: eqx.Module = DummyEBM()
 
     def forced_unroll(self, key, x_init, dt, seq):
         return jnp.repeat(x_init[None, :], seq.shape[0], axis=0)

@@ -5,7 +5,7 @@ import equinox as eqx
 import matplotlib.pyplot as plt
 
 from src.echo.architecture.observer import MarkovBlanketObserver
-from src.echo.metrics.energy_landscape import batch_calculate_curvature
+from src.echo.metrics.energy_landscape import batch_calculate_curvature, calculate_curvature, ScalarEnergy
 
 
 def main():
@@ -73,7 +73,7 @@ def main():
     div_B = compute_divergence(traj_B)
     div_C = compute_divergence(traj_C)
 
-    energy_fn = lambda x: observer.ebm(x)[0]
+    energy_fn = ScalarEnergy(observer.ebm)
 
     metrics_seq_A = batch_calculate_curvature(energy_fn, traj_A)
     metrics_seq_B = batch_calculate_curvature(energy_fn, traj_B)
@@ -87,9 +87,9 @@ def main():
     final_B = traj_B[-1]
     final_C = traj_C[-1]
 
-    metrics_A = tracker.calculate_curvature(final_A)
-    metrics_B = tracker.calculate_curvature(final_B)
-    metrics_C = tracker.calculate_curvature(final_C)
+    metrics_A = calculate_curvature(energy_fn, final_A)
+    metrics_B = calculate_curvature(energy_fn, final_B)
+    metrics_C = calculate_curvature(energy_fn, final_C)
 
     trace_A = metrics_A["hessian_trace"]
     trace_B = metrics_B["hessian_trace"]

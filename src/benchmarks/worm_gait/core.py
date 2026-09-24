@@ -2,7 +2,7 @@ import pingouin as pg
 from scipy.stats import ks_2samp, wasserstein_distance
 from src.echo.harness.echo_runner import EchoRunner
 from src.echo.harness.echo_trainer import EchoTrainer
-from src.echo.metrics.energy_landscape import batch_calculate_curvature
+from src.echo.metrics.energy_landscape import curvature_over_states, ScalarEnergy
 import logging
 import jax
 import jax.numpy as jnp
@@ -197,18 +197,14 @@ def get_full_states(graph, loader):
 
 
 def compute_full_trace(energy_fn, states, batch_size=1000):
-    num_states = states.shape[0]
-    traces = []
-    for i in range(0, num_states, batch_size):
-        batch = states[i : i + batch_size]
-        res = batch_calculate_curvature(energy_fn, batch)
-        traces.append(res["hessian_trace"])
-    return jnp.concatenate(traces, axis=0)
+    res = curvature_over_states(energy_fn, states, chunk_size=batch_size, nonfinite="drop")
+    logger.info(f"Dropped {res['n_nonfinite']} non-finite traces out of {states.shape[0]}.")
+    return res["hessian_trace"]
 
 
 def compute_metrics(name, t_young, t_old):
-    ty = np.nan_to_num(np.array(t_young), nan=0.0)
-    to = np.nan_to_num(np.array(t_old), nan=0.0)
+    ty = np.array(t_young)
+    to = np.array(t_old)
     ks_stat, ks_pval = ks_2samp(ty, to)
     wd = wasserstein_distance(ty, to)
     d = pg.compute_effsize(ty, to, eftype="cohen")
@@ -273,7 +269,7 @@ def run_worm_gait_experiment(
     full_states_old = get_full_states(graph, eval_old_loader)
 
     logger.info(f"Computing Hessian Traces for {ebm_class.__name__}.")
-    energy_fn = lambda x: graph.ebm(x)[0]
+    energy_fn = ScalarEnergy(graph.ebm)
     trace_young = compute_full_trace(energy_fn, full_states_young)
     trace_old = compute_full_trace(energy_fn, full_states_old)
 

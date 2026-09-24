@@ -46,14 +46,12 @@ except ImportError:  # running next to synthetic_aging.py outside the repo
 
 from src.data.utils import zscore_fit, stratified_split, window_starts
 from src.utils.io import sha256
-from src.echo.metrics.hessian import HessianTraceEvaluator
+from src.echo.harness.trace_evaluator import HessianTraceEvaluator
 from src.metrics.baseline_statistics import hedges_g, unpaired_stats, paired_stats, naive_timestep_ks, resplit_stats
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-
-# ============================================================================ data
 
 def load_ts(path: str) -> tuple[list[np.ndarray], np.ndarray]:
     """Parse a UEA .ts file, keeping the class label (the repo loader drops it)."""

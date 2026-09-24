@@ -15,7 +15,7 @@ except ImportError:
     RAY_AVAILABLE = False
 
 from src.echo.harness.echo_trainer import EchoTrainer
-from src.echo.metrics.energy_landscape import batch_calculate_curvature
+from src.echo.metrics.energy_landscape import batch_hessian_trace, ScalarEnergy
 from src.harness.pytorch_jax_bridge import torch_to_jax
 
 logger = logging.getLogger(__name__)
@@ -107,6 +107,7 @@ class EchoRunner:
         hessian_traces = []
         max_hessian_samples = 32
         hessian_computed = 0
+        energy_fn = ScalarEnergy(model.ebm, model.hull)
 
         for batch_idx, batch in enumerate(val_loader):
             s_true = torch_to_jax(batch["s_true"])
@@ -121,13 +122,8 @@ class EchoRunner:
                 samples_to_take = min(s_true.shape[0], max_hessian_samples - hessian_computed)
                 x_subset = x_init[:samples_to_take]
 
-                def energy_fn(x):
-                    state_obs = model.hull.apply_sensory_degradation(x)
-                    e, _ = model.ebm(state_obs)
-                    return e
-
-                metrics = batch_calculate_curvature(energy_fn, x_subset)
-                trace_val = jnp.mean(metrics["hessian_trace"])
+                trace_batch = batch_hessian_trace(energy_fn, x_subset)
+                trace_val = jnp.mean(trace_batch)
                 hessian_traces.append(trace_val.item())
                 hessian_computed += samples_to_take
 

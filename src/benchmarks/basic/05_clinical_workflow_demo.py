@@ -8,7 +8,7 @@ from src.echo.architecture.markov_hull import MarkovHull
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.echo.clinic.interventions import DigitalTwinAnnealer, DigitalTwinInterrogator
-from src.echo.metrics.energy_landscape import calculate_curvature
+from src.echo.metrics.energy_landscape import calculate_curvature, ScalarEnergy
 from src.echo.physics.dissipative import DissipativeFriction
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 
@@ -115,7 +115,7 @@ def main():
     # Drop a mathematical plumb bob into her neural network by computing the
     # trace of the 2nd derivative of her energy landscape.
     logging.info("\n=== Step 2: Measure Geometry (The Hessian) ===")
-    energy_fn = lambda x: alice_degraded.thermalizer.graph.sites[0].factor.base.macro_ebm(x)[0]
+    energy_fn = ScalarEnergy(alice_degraded.thermalizer.graph.sites[0].factor.base.macro_ebm)
     hessian_res = calculate_curvature(energy_fn, x_macro)
     hessian_trace = float(hessian_res["hessian_trace"])
 
@@ -202,7 +202,7 @@ def main():
     ax1.set_ylabel("Gradient Norm (L2)")
 
     # Subplot B
-    energy_fn_B = lambda x: alice_optimal.thermalizer.graph.sites[0].factor.base.macro_ebm(x)[0]
+    energy_fn_B = ScalarEnergy(alice_optimal.thermalizer.graph.sites[0].factor.base.macro_ebm)
     hessian_res_B = calculate_curvature(energy_fn_B, x_macro)
     hessian_trace_B = float(hessian_res_B["hessian_trace"])
 

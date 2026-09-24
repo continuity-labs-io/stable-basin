@@ -72,14 +72,6 @@ def calculate_metrics(graph, traj_A_batch, traj_B_batch, config):
     M_lambda_A = get_sensory_flat(traj_A_batch)
     M_lambda_B = get_sensory_flat(traj_B_batch)
     
-    if np.isnan(M_lambda_A).any():
-        logger.warning("NaNs detected in Run A trajectory. Imputing with 0.0.")
-        M_lambda_A = np.nan_to_num(M_lambda_A, nan=0.0)
-    
-    if np.isnan(M_lambda_B).any():
-        logger.warning("NaNs detected in Run B trajectory. Imputing with 0.0.")
-        M_lambda_B = np.nan_to_num(M_lambda_B, nan=0.0)
-
     dist_A = float(energy_distance(Y, M_lambda_A))
     dist_B = float(energy_distance(Y, M_lambda_B))
     

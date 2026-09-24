@@ -11,6 +11,24 @@ from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.hierarchical_factor import HierarchicalThermoFlowFactor
 
 
+class JointEBM(eqx.Module):
+    """
+    Joint free energy of the hierarchy over the concatenated [micro, macro] state.
+
+    Defined at module scope (not inside PredictiveCodingGraph.ebm) so that every access
+    returns the same class: a stable PyTree structure, hence one compiled program under
+    eqx.filter_jit instead of a recompile per access.
+    """
+
+    flow_factor: HierarchicalThermoFlowFactor
+    d_micro: int = eqx.field(static=True)
+
+    @jaxtyped(typechecker=beartype)
+    def __call__(self, x):
+        E = self.flow_factor.joint_energy_fn(x[: self.d_micro], x[self.d_micro :])
+        return E, jnp.eye(x.shape[0])
+
+
 class PredictiveCodingGraph(eqx.Module):
     """
     Couples a Micro and a Macro Markov Blanket Observer into a nested
@@ -79,21 +97,10 @@ class PredictiveCodingGraph(eqx.Module):
         )
 
     @property
-    def ebm(self):
-        # Return a mock module that satisfies the EBM interface (returns energy, None)
-        # and computes the joint free energy over the full concatenated state.
-        # This allows EchoRunner's HessianCurvatureTracker to compute the full 46x46 Hessian.
-        class JointEBM(eqx.Module):
-            flow_factor: HierarchicalThermoFlowFactor
-            d_micro: int
-
-            @jaxtyped(typechecker=beartype)
-            def __call__(self_, x):
-                x_micro = x[: self_.d_micro]
-                x_macro = x[self_.d_micro :]
-                E = self_.flow_factor.joint_energy_fn(x_micro, x_macro)
-                return E, jnp.eye(x.shape[0])
-
+    def ebm(self) -> "JointEBM":
+        """Joint free energy over the concatenated [micro, macro] state, with the EBM
+        interface (returns energy, precision). Wrap as ScalarEnergy(graph.ebm) for
+        curvature."""
         return JointEBM(flow_factor=self.flow_factor, d_micro=self.d_micro)
 
     @jaxtyped(typechecker=beartype)

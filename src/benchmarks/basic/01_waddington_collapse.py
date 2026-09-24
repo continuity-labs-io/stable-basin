@@ -26,7 +26,7 @@ from src.data.ephys.pharma_shock_dataset import PharmacologicalShockDataset
 from src.data.datasets import JAXDictDataset
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
-from src.echo.metrics.energy_landscape import batch_calculate_curvature
+from src.echo.metrics.energy_landscape import curvature_over_states, ScalarEnergy
 from src.echo.harness.echo_trainer import EchoTrainer
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 
@@ -153,19 +153,9 @@ def run_waddington_collapse_benchmark(
 
     # 5. Metric Extraction & EBET Calculation
     print("Calculating macro-state curvature...")
-    # Batch curvature calculation to avoid OOM
-    batch_size = 500
-    traces = []
-
-    energy_fn = lambda x: graph.flow_factor.macro_ebm(x)[0]
-
-    for i in range(0, macro_traj.shape[0], batch_size):
-        batch = macro_traj[i : i + batch_size]
-        res = batch_calculate_curvature(energy_fn, batch)
-        traces.append(res["hessian_trace"])
-    hessian_trace = jnp.concatenate(traces, axis=0)
-
-    trace_np = np.nan_to_num(np.array(hessian_trace), nan=1.0)
+    energy_fn = ScalarEnergy(graph.flow_factor.macro_ebm)
+    res = curvature_over_states(energy_fn, macro_traj, chunk_size=500, nonfinite="keep")
+    trace_np = np.array(res["hessian_trace"])
 
     # Compute rolling variance to find the physical crash
     rolling_var = np.array([np.var(data_np[max(0, i - 50) : i + 1]) for i in range(len(data_np))])
@@ -183,7 +173,7 @@ def run_waddington_collapse_benchmark(
         electrical_crash_frame = len(rolling_var) - 1
 
     # Find thermodynamic collapse
-    baseline_trace = np.mean(trace_np[:200]) if len(trace_np) >= 200 else np.mean(trace_np)
+    baseline_trace = np.nanmean(trace_np[:200]) if len(trace_np) >= 200 else np.nanmean(trace_np)
     collapse_threshold = 0.5 * baseline_trace
 
     thermodynamic_collapse_frame = -1
