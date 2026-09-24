@@ -104,8 +104,12 @@ worm-gait-pharmacology:
 worm-gait-animate:
 	python -m src.benchmarks.worm_gait.10_animate_worm_gait
 
+.PHONY: worm-gait-null-control
+worm-gait-null-control:
+	python -m src.benchmarks.worm_gait.11_null_control --config configs/worm_gait_experiments.yaml
+
 .PHONY: worm-gait-experiments
-worm-gait-experiments: worm-gait-baseline worm-gait-ssm worm-gait-transformer worm-gait-optune worm-gait-ebm worm-gait-infer-lambda worm-gait-intervention worm-gait-sweep worm-gait-pharmacology worm-gait-animate
+worm-gait-experiments: worm-gait-baseline worm-gait-ssm worm-gait-transformer worm-gait-optune worm-gait-ebm worm-gait-infer-lambda worm-gait-intervention worm-gait-sweep worm-gait-pharmacology worm-gait-animate worm-gait-null-control
 
 .PHONY: reproduce-paper
 reproduce-paper: worm-gait-experiments paper

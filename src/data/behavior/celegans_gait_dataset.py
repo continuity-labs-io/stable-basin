@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 from typing import Optional
+from src.benchmarks.synthetic_aging import slow_amplitude_relaxation
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ class RealEigenwormDataset(Dataset):
 
             if inject_synthetic_degradation:
                 # Apply thermodynamic noise degradation
-                traj = traj * 0.5 + torch.randn_like(traj) * 0.2
+                traj = torch.tensor(slow_amplitude_relaxation(traj.numpy(), slowdown=3.0, pair=(0, 1)), dtype=torch.float32)
 
             normalized_data.append(traj)
 

@@ -95,7 +95,7 @@ def plot_results(traj_A, traj_B, mean_trace_A, std_trace_A, mean_trace_B, std_tr
     ax1 = fig.add_subplot(131, projection="3d")
     tA_np = np.array(traj_A)
     ax1.plot(tA_np[:, 0], tA_np[:, 1], tA_np[:, 2], color="red", alpha=0.7, linewidth=1)
-    ax1.scatter(tA_np[0, 0], tA_np[0, 1], tA_np[0, 2], color="black", s=50, label="x0 (Old State)")
+    ax1.scatter(tA_np[0, 0], tA_np[0, 1], tA_np[0, 2], color="black", s=50, label="x0 (Synthetically Degraded)")
     ax1.set_title(f"Panel A: Degraded Pathology (λ={lambda_A})")
     ax1.legend()
 
@@ -103,7 +103,7 @@ def plot_results(traj_A, traj_B, mean_trace_A, std_trace_A, mean_trace_B, std_tr
     ax2 = fig.add_subplot(132, projection="3d")
     tB_np = np.array(traj_B)
     ax2.plot(tB_np[:, 0], tB_np[:, 1], tB_np[:, 2], color="green", alpha=0.7, linewidth=1)
-    ax2.scatter(tB_np[0, 0], tB_np[0, 1], tB_np[0, 2], color="black", s=50, label="x0 (Old State)")
+    ax2.scatter(tB_np[0, 0], tB_np[0, 1], tB_np[0, 2], color="black", s=50, label="x0 (Synthetically Degraded)")
     ax2.set_title(f"Panel B: Therapeutic Rescue (λ={lambda_B})")
     ax2.legend()
 

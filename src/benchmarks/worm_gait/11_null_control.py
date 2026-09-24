@@ -294,7 +294,7 @@ def resplit_stats(clean_s, cond_s, labels, n_splits, seed) -> dict:
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--config", default="configs/worm_gait_ebm.yaml")
+    ap.add_argument("--config", default="configs/worm_gait_experiments.yaml")
     ap.add_argument("--train-ts", default="data/worm/EigenWorms_TRAIN.ts")
     ap.add_argument("--test-ts", default="data/worm/EigenWorms_TEST.ts")
     ap.add_argument("--weights", default="output/benchmarks/worm_gait/05_worm_gait_decline_trained_engine.eqx")
