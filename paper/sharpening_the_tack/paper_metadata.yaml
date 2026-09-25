@@ -5,7 +5,7 @@ hypothesis: "Aging is a measurable geometric flattening of the macroscopic Waddi
 significant_figures: 3
 
 data_sources:
-  config_intervention: "configs/worm_gait_intervention.yaml"
+  config_intervention: "configs/worm_gait_experiments.yaml"
   metrics_decline: "output/benchmarks/worm_gait/05_worm_gait_metrics.json"
   metrics_intervention: "output/benchmarks/worm_gait/07_worm_gait_intervention_metrics.json"
   metrics_baseline: "output/benchmarks/worm_gait/01_worm_gait_baseline_metrics.json"

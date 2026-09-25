@@ -27,7 +27,7 @@ PAPER ?= sharpening_the_tack
 
 paper:
 	python tools/compile_paper.py --paper $(PAPER)
-	cd paper/$(PAPER) && pdflatex $(PAPER).tex
+	cd paper/$(PAPER) && pdflatex -interaction=batchmode $(PAPER).tex
 
 
 # ==========================================
