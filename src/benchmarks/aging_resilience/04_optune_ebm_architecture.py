@@ -78,11 +78,14 @@ def objective(trial, train_young_loader, eval_young_loader, eval_old_loader, bas
 
 
 def main():
-    config_path = "configs/aging_resilience.yaml"
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default="configs/aging_resilience.yaml")
+    args, _ = parser.parse_known_args()
+    config_path = args.config
     with open(config_path, "r") as f:
         base_config = yaml.safe_load(f)
 
-    benchmark_module = importlib.import_module("src.benchmarks.aging_resilience.05_worm_gait_aging_ebm")
 
     seed = base_config.get("experiment", {}).get("seed", 42)
     torch.manual_seed(seed)
@@ -90,7 +93,6 @@ def main():
 
     # Load dataset once
     # We need d_state which can be calculated using IdentityPrecisionEBM or PrecisionWeightedEBM
-    IdentityPrecisionEBM = benchmark_module.IdentityPrecisionEBM
     _, d_state = build_graph(key, base_config)
 
     task = get_benchmark_task(base_config)

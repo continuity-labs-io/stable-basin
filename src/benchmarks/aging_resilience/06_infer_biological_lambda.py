@@ -136,7 +136,11 @@ def train_step(lambda_model: LambdaModel, graph: PredictiveCodingGraph, x_init_b
 
 
 def main():
-    config_path = "configs/aging_resilience.yaml"
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default="configs/aging_resilience.yaml")
+    args, _ = parser.parse_known_args()
+    config_path = args.config
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 

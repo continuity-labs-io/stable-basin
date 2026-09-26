@@ -18,5 +18,7 @@ class JAXDictDataset(Dataset):
 
     def __getitem__(self, idx):
         s_true = self.base[idx]
-        x_init = torch.randn(self.d_state) * 0.01
-        return {"s_true": s_true, "x_init": x_init}
+        if self.d_state is not None:
+            x_init = torch.randn(self.d_state) * 0.01
+            return {"s_true": s_true, "x_init": x_init}
+        return s_true

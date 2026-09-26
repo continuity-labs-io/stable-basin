@@ -18,8 +18,17 @@ def main():
     device = get_optimal_device()
     print(f"Using device: {device}")
 
-    config = {"dataset": {"name": "worm_gait"}}
+    import argparse
+    import yaml
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default="configs/aging_resilience.yaml")
+    args, _ = parser.parse_known_args()
+    with open(args.config, "r") as f:
+        config = yaml.safe_load(f)
     task = get_benchmark_task(config)
+
+    # 2. Data
+    train_loader, young_eval_loader, old_eval_loader = task.get_dataloaders(config, None, 8)
 
     # 1. Architecture
     model = SensorFusionPredictor(
@@ -28,9 +37,6 @@ def main():
         d_model=64,
         out_dim=task.d_sensory
     ).to(device)
-    
-    # 2. Data
-    train_loader, young_eval_loader, old_eval_loader = task.get_dataloaders(config, None, 8)
     
     # 3. Objective (Next-Step Forecasting)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
@@ -44,7 +50,10 @@ def main():
         for batch in train_loader:
             optimizer.zero_grad()
             # batch is [batch_size, seq_len, 6]
-            x_raw = batch.to(device)
+            x_raw = batch
+            if not isinstance(x_raw, torch.Tensor):
+                x_raw = torch.tensor(x_raw, dtype=torch.float32)
+            x_raw = x_raw.to(device)
             mask = torch.ones_like(x_raw[:, :, :1]).to(device)
             
             y_true = x_raw[:, 1:, :]
@@ -66,7 +75,10 @@ def main():
         mses = []
         with torch.no_grad():
             for batch in loader:
-                x_raw = batch.to(device)
+                x_raw = batch
+                if not isinstance(x_raw, torch.Tensor):
+                    x_raw = torch.tensor(x_raw, dtype=torch.float32)
+                x_raw = x_raw.to(device)
                 mask = torch.ones_like(x_raw[:, :, :1]).to(device)
                 y_true = x_raw[:, 1:, :]
                 preds, _, _ = model(x_raw, mask=mask)

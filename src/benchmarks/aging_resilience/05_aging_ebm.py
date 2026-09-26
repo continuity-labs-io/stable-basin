@@ -41,8 +41,10 @@ def plot_ablation_results(
 ):
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
-    traj_young = eval_young_dataset_raw.data[0].numpy()
-    traj_old = eval_old_dataset_raw.data[0].numpy()
+    sample_young = eval_young_dataset_raw[0]
+    traj_young = sample_young[0].numpy() if isinstance(sample_young, (tuple, list)) else sample_young.numpy()
+    sample_old = eval_old_dataset_raw[0]
+    traj_old = sample_old[0].numpy() if isinstance(sample_old, (tuple, list)) else sample_old.numpy()
     axes[0].plot(traj_young[:500, 0], traj_young[:500, 1], label="Clean Baseline")
     axes[0].plot(traj_old[:500, 0], traj_old[:500, 1], label="Synthetically Degraded", alpha=0.7)
     axes[0].set_title("Panel A: The Limit Cycle")
@@ -160,6 +162,7 @@ def main():
         trace_old_B,
     )
     
+    wandb.init(project="stable_basin_aging", group=config.get("dataset", {}).get("name", "worm_gait"), name="05_aging_ebm")
     artifact = wandb.Artifact("05_worm_gait_decline_trained_engine", type="model")
     artifact.add_file("output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx")
     wandb.log_artifact(artifact)

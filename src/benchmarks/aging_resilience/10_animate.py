@@ -9,7 +9,11 @@ logger = logging.getLogger(__name__)
 def main():
     logger.info("Setting up Worm Gait Animation")
     
-    config_path = "configs/aging_resilience.yaml"
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default="configs/aging_resilience.yaml")
+    args, _ = parser.parse_known_args()
+    config_path = args.config
     if not os.path.exists(config_path):
         logger.error(f"Config file {config_path} not found.")
         return
