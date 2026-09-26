@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import equinox as eqx
 
-from src.benchmarks.worm_gait.core import build_graph, get_full_states, compute_full_trace, compute_metrics, run_worm_gait_experiment
+from src.benchmarks.worm_gait.core import build_graph, get_full_states, compute_full_trace, compute_metrics, run_aging_experiment
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
@@ -143,12 +143,12 @@ def main():
     eval_old_loader = DataLoader(eval_old_dataset, batch_size=batch_size, shuffle=False)
 
     key, kA = jax.random.split(key)
-    metrics_A, trace_young_A, trace_old_A, graph_A = run_worm_gait_experiment(
+    metrics_A, trace_young_A, trace_old_A, graph_A = run_aging_experiment(
         config, IdentityPrecisionEBM, kA, train_young_loader, eval_young_loader, eval_old_loader, args.config
     )
 
     key, kB = jax.random.split(key)
-    metrics_B, trace_young_B, trace_old_B, graph_B = run_worm_gait_experiment(
+    metrics_B, trace_young_B, trace_old_B, graph_B = run_aging_experiment(
         config,
         PrecisionWeightedEBM,
         kB,

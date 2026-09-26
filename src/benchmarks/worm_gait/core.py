@@ -9,7 +9,7 @@ import jax.numpy as jnp
 import equinox as eqx
 import numpy as np
 
-from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
+from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.echo.primitives.ebm import PrecisionWeightedEBM
@@ -125,7 +125,7 @@ def simulate_sde(
 
 
 def setup_experiment(config):
-    logger.info("Initializing the 'Young Worm' physics engine (PredictiveCodingGraph).")
+    logger.info("Initializing the physics engine (PredictiveCodingGraph).")
     seed = config["experiment"]["seed"]
     key = jax.random.PRNGKey(seed)
     k1, k2, k3, k4, k5 = jax.random.split(key, 5)
@@ -157,21 +157,21 @@ def setup_experiment(config):
     model_path = config["paths"]["model_weights"]
     try:
         graph = eqx.tree_deserialise_leaves(model_path, graph)
-        logger.info("Successfully loaded trained Young Worm engine.")
+        logger.info("Successfully loaded trained engine.")
     except Exception as e:
         logger.warning(f"Trained model not found at {model_path}! Proceeding with random initialization.")
 
     d_full = graph.d_micro + graph.d_macro
-    dataset_path = config["dataset"].get("intervention_path", "data/worm/EigenWorms_TEST.ts")
-    seq_len = config["dataset"].get("intervention_seq_len", 10)
-    try:
-        dataset = RealEigenwormDataset(data_path=dataset_path, seq_len=seq_len, inject_synthetic_degradation=True)
-    except FileNotFoundError:
-        logger.warning("Biological data not found. Falling back to synthetic dataset.")
-        dataset = SyntheticWormMockDataset(seq_len=seq_len, num_samples=1)
-
-    bio_frame = dataset[0][0].numpy()
-    logger.info("Extracting pathological initial state (x0) from 'Old Worm' fallback.")
+    task = get_benchmark_task(config)
+    _, _, eval_old_dataset_raw = task.get_raw_datasets(config)
+    
+    sample = eval_old_dataset_raw[0]
+    if isinstance(sample, (tuple, list)):
+        bio_frame = sample[0].numpy()
+    else:
+        bio_frame = sample.numpy()
+        
+    logger.info("Extracting pathological initial state (x0) from 'Old' fallback.")
     x0_noise = jax.random.normal(k4, (d_full,)) * 2.0
     x0_np = np.array(x0_noise)
     idx_s = micro.hull.d_internal
@@ -227,12 +227,12 @@ def compute_metrics(name, t_young, t_old):
     return metrics
 
 
-def run_worm_gait_experiment(
+def run_aging_experiment(
     config, ebm_class, key, train_young_loader, eval_young_loader, eval_old_loader, config_path
 ):
     """
         Executes a complete training and evaluation pipeline for a given Energy-Based Model class
-        on the worm gait aging dataset.
+        on the aging benchmark dataset.
 
         Args:
             config (dict): The configuration dictionary.

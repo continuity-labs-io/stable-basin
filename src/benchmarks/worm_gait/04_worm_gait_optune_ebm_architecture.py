@@ -12,7 +12,7 @@ import optuna
 from optuna.integration.wandb import WeightsAndBiasesCallback
 import copy
 import wandb
-from src.benchmarks.worm_gait.core import run_worm_gait_experiment, build_graph
+from src.benchmarks.worm_gait.core import run_aging_experiment, build_graph
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
 from src.data.datasets import JAXDictDataset
 from src.echo.primitives.ebm import PrecisionWeightedEBM
@@ -56,7 +56,7 @@ def objective(trial, train_young_loader, eval_young_loader, eval_old_loader, bas
         key, kB = jax.random.split(key)
 
         # We run the experiment for PrecisionWeightedEBM only
-        metrics, trace_young, trace_old, graph = run_worm_gait_experiment(
+        metrics, trace_young, trace_old, graph = run_aging_experiment(
             config=config,
             ebm_class=PrecisionWeightedEBM,
             key=kB,
