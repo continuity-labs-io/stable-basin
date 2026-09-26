@@ -44,5 +44,8 @@ def get_benchmark_task(config: Dict[str, Any]) -> AgingBenchmarkTask:
         # Import inside here to prevent circular imports if the task imports from registry
         from src.benchmarks.aging_resilience.tasks.worm_task import WormGaitTask
         return WormGaitTask()
+    elif dataset_name == "killifish":
+        from src.benchmarks.aging_resilience.tasks.killifish_task import KillifishTask
+        return KillifishTask()
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}")

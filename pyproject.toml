@@ -18,6 +18,9 @@ dependencies = [
     "jaxtyping",
     "beartype",
     "optuna",
+    "torch>=2.14.0",
+    "pandas>=3.0.6",
+    "h5py>=3.16.0",
 ]
 
 [tool.ruff]

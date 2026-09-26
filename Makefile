@@ -1,4 +1,5 @@
 MODELS ?= zero_padded_ssm forward_fill_ssm mask_concat_ssm causal_transformer masr_ssm masr_mamba gru_d ode_rnn
+DATASET ?= aging_resilience
 
 .PHONY: baseline extrapolation loss-ablation density-sweep ssm-experiments clinical-diagnostic aging-resilience-ebm aging-resilience-intervention aging-resilience-experiments lint-pytorch preflight audit coverage paper
 
@@ -82,7 +83,7 @@ aging-resilience-optune:
 
 .PHONY: aging-resilience-ebm
 aging-resilience-ebm:
-	python -m src.benchmarks.aging_resilience.05_aging_ebm --config configs/aging_resilience.yaml
+	python -m src.benchmarks.aging_resilience.05_aging_ebm --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-infer-lambda
 aging-resilience-infer-lambda:
@@ -90,15 +91,15 @@ aging-resilience-infer-lambda:
 
 .PHONY: aging-resilience-intervention
 aging-resilience-intervention:
-	python -m src.benchmarks.aging_resilience.07_intervention --config configs/aging_resilience.yaml
+	python -m src.benchmarks.aging_resilience.07_intervention --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-sweep
 aging-resilience-sweep:
-	python -m src.benchmarks.aging_resilience.08_lambda_sweep --config configs/aging_resilience.yaml
+	python -m src.benchmarks.aging_resilience.08_lambda_sweep --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-pharmacology
 aging-resilience-pharmacology:
-	python -m src.benchmarks.aging_resilience.09_pharmacological_translation --config configs/aging_resilience.yaml
+	python -m src.benchmarks.aging_resilience.09_pharmacological_translation --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-animate
 aging-resilience-animate:
@@ -106,7 +107,7 @@ aging-resilience-animate:
 
 .PHONY: aging-resilience-null-control
 aging-resilience-null-control:
-	python -m src.benchmarks.aging_resilience.11_null_control --config configs/aging_resilience.yaml
+	python -m src.benchmarks.aging_resilience.11_null_control --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-experiments
 aging-resilience-experiments: aging-resilience-baseline aging-resilience-ssm aging-resilience-transformer aging-resilience-optune aging-resilience-ebm aging-resilience-infer-lambda aging-resilience-intervention aging-resilience-sweep aging-resilience-pharmacology aging-resilience-animate aging-resilience-null-control
