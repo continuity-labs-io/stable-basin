@@ -1,6 +1,6 @@
 MODELS ?= zero_padded_ssm forward_fill_ssm mask_concat_ssm causal_transformer masr_ssm masr_mamba gru_d ode_rnn
 
-.PHONY: baseline extrapolation loss-ablation density-sweep ssm-experiments clinical-diagnostic worm-gait-ebm worm-gait-intervention worm-gait-experiments lint-pytorch preflight audit coverage paper
+.PHONY: baseline extrapolation loss-ablation density-sweep ssm-experiments clinical-diagnostic aging-resilience-ebm aging-resilience-intervention aging-resilience-experiments lint-pytorch preflight audit coverage paper
 
 # ==========================================
 # General Software Engineering Tools
@@ -64,52 +64,52 @@ ssm-experiments: baseline extrapolation density-sweep loss-ablation clinical-dia
 # Scientific Experiments (Worm Gait Suite)
 # ==========================================
 
-.PHONY: worm-gait-baseline
-worm-gait-baseline:
-	python -m src.benchmarks.worm_gait.01_worm_gait_baseline_metrics
+.PHONY: aging-resilience-baseline
+aging-resilience-baseline:
+	python -m src.benchmarks.aging_resilience.01_baseline_metrics
 
-.PHONY: worm-gait-ssm
-worm-gait-ssm:
-	python -m src.benchmarks.worm_gait.02_worm_gait_aging_ssm
+.PHONY: aging-resilience-ssm
+aging-resilience-ssm:
+	python -m src.benchmarks.aging_resilience.02_aging_ssm
 
-.PHONY: worm-gait-transformer
-worm-gait-transformer:
-	python -m src.benchmarks.worm_gait.03_worm_gait_aging_transformer
+.PHONY: aging-resilience-transformer
+aging-resilience-transformer:
+	python -m src.benchmarks.aging_resilience.03_aging_transformer
 
-.PHONY: worm-gait-optune
-worm-gait-optune:
-	python -m src.benchmarks.worm_gait.04_worm_gait_optune_ebm_architecture
+.PHONY: aging-resilience-optune
+aging-resilience-optune:
+	python -m src.benchmarks.aging_resilience.04_optune_ebm_architecture
 
-.PHONY: worm-gait-ebm
-worm-gait-ebm:
-	python -m src.benchmarks.worm_gait.05_worm_gait_aging_ebm --config configs/worm_gait_experiments.yaml
+.PHONY: aging-resilience-ebm
+aging-resilience-ebm:
+	python -m src.benchmarks.aging_resilience.05_aging_ebm --config configs/aging_resilience.yaml
 
-.PHONY: worm-gait-infer-lambda
-worm-gait-infer-lambda:
-	python -m src.benchmarks.worm_gait.06_infer_biological_lambda
+.PHONY: aging-resilience-infer-lambda
+aging-resilience-infer-lambda:
+	python -m src.benchmarks.aging_resilience.06_infer_biological_lambda
 
-.PHONY: worm-gait-intervention
-worm-gait-intervention:
-	python -m src.benchmarks.worm_gait.07_worm_gait_intervention --config configs/worm_gait_experiments.yaml
+.PHONY: aging-resilience-intervention
+aging-resilience-intervention:
+	python -m src.benchmarks.aging_resilience.07_intervention --config configs/aging_resilience.yaml
 
-.PHONY: worm-gait-sweep
-worm-gait-sweep:
-	python -m src.benchmarks.worm_gait.08_worm_gait_lambda_sweep --config configs/worm_gait_experiments.yaml
+.PHONY: aging-resilience-sweep
+aging-resilience-sweep:
+	python -m src.benchmarks.aging_resilience.08_lambda_sweep --config configs/aging_resilience.yaml
 
-.PHONY: worm-gait-pharmacology
-worm-gait-pharmacology:
-	python -m src.benchmarks.worm_gait.09_pharmacological_translation --config configs/worm_gait_experiments.yaml
+.PHONY: aging-resilience-pharmacology
+aging-resilience-pharmacology:
+	python -m src.benchmarks.aging_resilience.09_pharmacological_translation --config configs/aging_resilience.yaml
 
-.PHONY: worm-gait-animate
-worm-gait-animate:
-	python -m src.benchmarks.worm_gait.10_animate_worm_gait
+.PHONY: aging-resilience-animate
+aging-resilience-animate:
+	python -m src.benchmarks.aging_resilience.10_animate
 
-.PHONY: worm-gait-null-control
-worm-gait-null-control:
-	python -m src.benchmarks.worm_gait.11_null_control --config configs/worm_gait_experiments.yaml
+.PHONY: aging-resilience-null-control
+aging-resilience-null-control:
+	python -m src.benchmarks.aging_resilience.11_null_control --config configs/aging_resilience.yaml
 
-.PHONY: worm-gait-experiments
-worm-gait-experiments: worm-gait-baseline worm-gait-ssm worm-gait-transformer worm-gait-optune worm-gait-ebm worm-gait-infer-lambda worm-gait-intervention worm-gait-sweep worm-gait-pharmacology worm-gait-animate worm-gait-null-control
+.PHONY: aging-resilience-experiments
+aging-resilience-experiments: aging-resilience-baseline aging-resilience-ssm aging-resilience-transformer aging-resilience-optune aging-resilience-ebm aging-resilience-infer-lambda aging-resilience-intervention aging-resilience-sweep aging-resilience-pharmacology aging-resilience-animate aging-resilience-null-control
 
 .PHONY: reproduce-paper
-reproduce-paper: worm-gait-experiments paper
+reproduce-paper: aging-resilience-experiments paper

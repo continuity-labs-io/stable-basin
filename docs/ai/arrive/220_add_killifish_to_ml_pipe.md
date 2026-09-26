@@ -15,4 +15,8 @@ Now let's add the new Killifish dataset and its Task adapter.
 5. Implement `d_sensory`: dynamically return the feature dimension by checking `self.train_dataset.samples[0]['trajectory_chunk'].shape[-1]`.
 6. Implement `get_dataloaders` identically to `WormGaitTask` (wrapping in `JAXDictDataset` and `DataLoader`).
 7. For `apply_dataset_change`, `compute_domain_metrics`, and `render_animation`, provide safe, generic stubs for now (e.g., computing basic variance for metrics, returning `change_fn(trajectory, **kwargs)` if provided else the trajectory, and skipping animation with a `logger.warning`).
+8. **Config & Makefile**:
+   - Create `configs/killifish_experiments.yaml` with `dataset.name: "killifish"` and add the paths to your Killifish CSV/HDF5 data.
 
+Testing
+- ensure `make aging-resilience-ebm DATASET=killifish_experiments` works end to end

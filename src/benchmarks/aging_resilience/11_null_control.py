@@ -22,8 +22,8 @@ Pre-registered direction: if Hessian trace tracks loss of resilience ("flattenin
 degraded worms should show LOWER trace, i.e. negative Hedges' g (degraded minus clean).
 
 Usage
-  python -m src.benchmarks.worm_gait.11_null_control --config configs/worm_gait_ebm.yaml
-  python -m src.benchmarks.worm_gait.11_null_control --retrain          # fresh model, held-out val
+  python -m src.benchmarks.aging_resilience.11_null_control --config configs/aging_resilience.yaml
+  python -m src.benchmarks.aging_resilience.11_null_control --retrain          # fresh model, held-out val
   python 11_null_control.py --stub --train-ts a.ts --test-ts b.ts       # stats plumbing only, no JAX
 """
 
@@ -82,7 +82,7 @@ def load_ts(path: str) -> tuple[list[np.ndarray], np.ndarray]:
 def load_or_train_graph(config: dict, config_path: str, train_trajs, train_labels, args):
     import equinox as eqx
     import jax
-    from src.benchmarks.worm_gait.core import build_graph
+    from src.benchmarks.aging_resilience.core import build_graph
     from src.echo.primitives.ebm import PrecisionWeightedEBM
 
     seed = config.get("experiment", {}).get("seed", 42)
@@ -149,12 +149,12 @@ class StubEvaluator:
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--config", default="configs/worm_gait_experiments.yaml")
+    ap.add_argument("--config", default="configs/aging_resilience.yaml")
     ap.add_argument("--train-ts", default="data/worm/EigenWorms_TRAIN.ts")
     ap.add_argument("--test-ts", default="data/worm/EigenWorms_TEST.ts")
-    ap.add_argument("--weights", default="output/benchmarks/worm_gait/05_worm_gait_decline_trained_engine.eqx")
+    ap.add_argument("--weights", default="output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx")
     ap.add_argument("--retrain", action="store_true", help="train a fresh engine with a held-out val split")
-    ap.add_argument("--out-dir", default="output/benchmarks/worm_gait")
+    ap.add_argument("--out-dir", default="output/benchmarks/aging_resilience")
     ap.add_argument("--severities", type=float, nargs="+", default=[1.0, 1.25, 1.5, 2.0, 3.0])
     ap.add_argument("--pair", type=int, nargs=2, default=[0, 1], help="eigenworm channels forming the gait oscillator")
     ap.add_argument("--windows-per-worm", type=int, default=4)

@@ -6,6 +6,7 @@ experiment:
   num_runs: 5
 
 dataset:
+  name: "worm_gait"
   batch_size: 2
   ebm_seq_len: 100
   intervention_seq_len: 10
@@ -54,6 +55,6 @@ intervention:
   lambda_sweep: [0.1, 0.2, 0.3, 0.4, 0.5, 1.0, 3.0]
 
 paths:
-  model_weights: "output/benchmarks/worm_gait/05_worm_gait_decline_trained_engine.eqx"
-  output_plot: "output/benchmarks/worm_gait/07_worm_gait_intervention_rescue.png"
-  output_metrics: "output/benchmarks/worm_gait/07_worm_gait_intervention_metrics.json"
+  model_weights: "output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx"
+  output_plot: "output/benchmarks/aging_resilience/07_worm_gait_intervention_rescue.png"
+  output_metrics: "output/benchmarks/aging_resilience/07_worm_gait_intervention_metrics.json"

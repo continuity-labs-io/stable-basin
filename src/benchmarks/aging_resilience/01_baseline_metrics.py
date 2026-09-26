@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 def run_baseline_metrics():
     logger.info("   Baseline Biological Metrics Evaluation     ")
     
-    config_path = "configs/worm_gait_experiments.yaml"
+    config_path = "configs/aging_resilience.yaml"
     if not os.path.exists(config_path):
         logger.error(f"Config file {config_path} not found.")
         return
@@ -78,7 +78,7 @@ def run_baseline_metrics():
         logger.info(f"Synthetically Degraded {key}: {mean_o:.4f} ± {std_o:.4f}")
 
     # Save results
-    out_dir = "output/benchmarks/worm_gait"
+    out_dir = "output/benchmarks/aging_resilience"
     os.makedirs(out_dir, exist_ok=True)
     out_file = os.path.join(out_dir, "01_worm_gait_baseline_metrics.json")
     

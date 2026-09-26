@@ -21,7 +21,7 @@ An automated `optuna` tuning script designed to search the hyperparameter space
 for the optimal network dimensions (e.g., hidden sizes and depths) for both the
 micro and macro observers in the `PredictiveCodingGraph`. Saves the best
 configuration to
-`output/benchmarks/worm_gait/04_worm_gait_ebm_best_params.json`.
+`output/benchmarks/aging_resilience/04_worm_gait_ebm_best_params.json`.
 
 ## 05: Worm Gait Decline (`05_worm_gait_aging_ebm.py`)
 The ultimate integration benchmark operating on the *C. elegans* gait dataset,

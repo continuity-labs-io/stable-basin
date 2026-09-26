@@ -17,7 +17,7 @@ from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 
-from src.benchmarks.worm_gait.core import setup_experiment, simulate_sde
+from src.benchmarks.aging_resilience.core import setup_experiment, simulate_sde
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -167,7 +167,7 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/worm_gait_experiments.yaml",
+        default="configs/aging_resilience.yaml",
         help="Path to config file",
     )
     args = parser.parse_args()
@@ -176,7 +176,7 @@ def main():
         config = yaml.safe_load(f)
 
     # Dynamically inject lambda_A from inferred baseline
-    inferred_lambda_path = "output/benchmarks/worm_gait/06_inferred_biological_lambda.json"
+    inferred_lambda_path = "output/benchmarks/aging_resilience/06_inferred_biological_lambda.json"
     if os.path.exists(inferred_lambda_path):
         with open(inferred_lambda_path, "r") as f:
             lambda_data = json.load(f)

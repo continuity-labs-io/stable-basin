@@ -12,7 +12,7 @@ import torch
 
 from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 from src.data.datasets import JAXDictDataset
-from src.benchmarks.worm_gait.core import build_graph
+from src.benchmarks.aging_resilience.core import build_graph
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 from src.echo.architecture.hierarchical_factor import HierarchicalThermoFlowFactor
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
@@ -136,7 +136,7 @@ def train_step(lambda_model: LambdaModel, graph: PredictiveCodingGraph, x_init_b
 
 
 def main():
-    config_path = "configs/worm_gait_experiments.yaml"
+    config_path = "configs/aging_resilience.yaml"
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
@@ -151,7 +151,7 @@ def main():
     task = get_benchmark_task(config)
     _, _, loader = task.get_dataloaders(config, d_state, batch_size=8)
 
-    model_path = "output/benchmarks/worm_gait/05_worm_gait_decline_trained_engine.eqx"
+    model_path = "output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx"
     if not os.path.exists(model_path):
         logger.error(f"Pre-trained model not found at {model_path}. Please run benchmark 05 first.")
         return
@@ -188,7 +188,7 @@ def main():
     final_lambda = float(jnp.exp(lambda_model.log_lambda))
     logger.info(f"Optimization complete. Final inferred biological lambda: {final_lambda:.4f}")
 
-    out_path = "output/benchmarks/worm_gait/06_inferred_biological_lambda.json"
+    out_path = "output/benchmarks/aging_resilience/06_inferred_biological_lambda.json"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as f:
         json.dump({"biological_lambda": final_lambda}, f, indent=4)

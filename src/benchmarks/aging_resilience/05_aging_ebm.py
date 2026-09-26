@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import equinox as eqx
 
-from src.benchmarks.worm_gait.core import build_graph, get_full_states, compute_full_trace, compute_metrics, run_aging_experiment
+from src.benchmarks.aging_resilience.core import build_graph, get_full_states, compute_full_trace, compute_metrics, run_aging_experiment
 from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
@@ -82,15 +82,15 @@ def plot_ablation_results(
     axes[2].legend()
 
     plt.tight_layout()
-    os.makedirs("output/benchmarks/worm_gait", exist_ok=True)
-    plt.savefig("output/benchmarks/worm_gait/05_worm_gait_decline_ablation.png")
+    os.makedirs("output/benchmarks/aging_resilience", exist_ok=True)
+    plt.savefig("output/benchmarks/aging_resilience/05_worm_gait_decline_ablation.png")
     
     if wandb.run is not None:
-        wandb.log({"05_worm_gait_decline_ablation": wandb.Image("output/benchmarks/worm_gait/05_worm_gait_decline_ablation.png")})
+        wandb.log({"05_worm_gait_decline_ablation": wandb.Image("output/benchmarks/aging_resilience/05_worm_gait_decline_ablation.png")})
     plt.close()
 
     logger.info(
-        "Benchmark complete. Plot saved to output/benchmarks/worm_gait/05_worm_gait_decline_ablation.png"
+        "Benchmark complete. Plot saved to output/benchmarks/aging_resilience/05_worm_gait_decline_ablation.png"
     )
 
 
@@ -100,7 +100,7 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/worm_gait_experiments.yaml",
+        default="configs/aging_resilience.yaml",
         help="Path to the YAML configuration file.",
     )
     args = parser.parse_args()
@@ -138,14 +138,14 @@ def main():
     )
 
     logger.info("Serializing trained Clean Baseline Worm engine to disk.")
-    os.makedirs("output/benchmarks/worm_gait", exist_ok=True)
+    os.makedirs("output/benchmarks/aging_resilience", exist_ok=True)
     eqx.tree_serialise_leaves(
-        "output/benchmarks/worm_gait/05_worm_gait_decline_trained_engine.eqx", graph_B
+        "output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx", graph_B
     )
 
     all_metrics = {"IdentityPrecisionEBM": metrics_A, "PrecisionWeightedEBM": metrics_B}
 
-    metrics_path = "output/benchmarks/worm_gait/05_worm_gait_metrics.json"
+    metrics_path = "output/benchmarks/aging_resilience/05_worm_gait_metrics.json"
     with open(metrics_path, "w") as f:
         json.dump(all_metrics, f, indent=2)
     logger.info(f"Serialized full statistical metrics to {metrics_path}")
@@ -160,7 +160,7 @@ def main():
     )
     
     artifact = wandb.Artifact("05_worm_gait_decline_trained_engine", type="model")
-    artifact.add_file("output/benchmarks/worm_gait/05_worm_gait_decline_trained_engine.eqx")
+    artifact.add_file("output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx")
     wandb.log_artifact(artifact)
     
     metrics_artifact = wandb.Artifact("05_worm_gait_metrics", type="metrics")

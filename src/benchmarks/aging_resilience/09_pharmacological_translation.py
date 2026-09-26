@@ -16,7 +16,7 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/worm_gait_experiments.yaml",
+        default="configs/aging_resilience.yaml",
         help="Path to config file",
     )
     args = parser.parse_args()
@@ -25,7 +25,7 @@ def main():
         config = yaml.safe_load(f)
 
     # 1. Load JSON Data
-    sweep_metrics_path = "output/benchmarks/worm_gait/08_lambda_sweep_metrics.json"
+    sweep_metrics_path = "output/benchmarks/aging_resilience/08_lambda_sweep_metrics.json"
     if not os.path.exists(sweep_metrics_path):
         logger.error(f"Sweep metrics file not found: {sweep_metrics_path}")
         return
@@ -52,7 +52,7 @@ def main():
     wandb.init(project="stable_basin_aging", group=config.get("dataset", {}).get("name", "worm_gait"), name="09_pharmacological_translation", config=config)
 
     # 3. Serialization
-    output_metrics = "output/benchmarks/worm_gait/09_clinical_translation_metrics.json"
+    output_metrics = "output/benchmarks/aging_resilience/09_clinical_translation_metrics.json"
     os.makedirs(os.path.dirname(output_metrics), exist_ok=True)
     metrics_data = {
         "Optimal_Lambda": float(optimal_lambda),
@@ -65,7 +65,7 @@ def main():
     logger.info(f"Metrics saved to {output_metrics}")
 
     # 4. Visualization
-    output_plot = "output/benchmarks/worm_gait/09_pharmacological_curve.png"
+    output_plot = "output/benchmarks/aging_resilience/09_pharmacological_curve.png"
     plt.figure(figsize=(10, 6))
     
     # Plot raw points

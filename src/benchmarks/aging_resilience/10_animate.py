@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 def main():
     logger.info("Setting up Worm Gait Animation")
     
-    config_path = "configs/worm_gait_experiments.yaml"
+    config_path = "configs/aging_resilience.yaml"
     if not os.path.exists(config_path):
         logger.error(f"Config file {config_path} not found.")
         return
@@ -26,7 +26,7 @@ def main():
     young_data = ds_young[0].numpy() if hasattr(ds_young[0], 'numpy') else ds_young[0]
     old_data = ds_old[0].numpy() if hasattr(ds_old[0], 'numpy') else ds_old[0]
     
-    output_dir = "output/benchmarks/worm_gait"
+    output_dir = "output/benchmarks/aging_resilience"
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, "10_worm_gait_animation.gif")
     

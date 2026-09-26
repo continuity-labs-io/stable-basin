@@ -12,7 +12,7 @@ import optuna
 from optuna.integration.wandb import WeightsAndBiasesCallback
 import copy
 import wandb
-from src.benchmarks.worm_gait.core import run_aging_experiment, build_graph
+from src.benchmarks.aging_resilience.core import run_aging_experiment, build_graph
 from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 from src.data.datasets import JAXDictDataset
 from src.echo.primitives.ebm import PrecisionWeightedEBM
@@ -79,11 +79,11 @@ def objective(trial, train_young_loader, eval_young_loader, eval_old_loader, bas
 
 
 def main():
-    config_path = "configs/worm_gait_experiments.yaml"
+    config_path = "configs/aging_resilience.yaml"
     with open(config_path, "r") as f:
         base_config = yaml.safe_load(f)
 
-    benchmark_module = importlib.import_module("src.benchmarks.worm_gait.05_worm_gait_aging_ebm")
+    benchmark_module = importlib.import_module("src.benchmarks.aging_resilience.05_worm_gait_aging_ebm")
 
     seed = base_config.get("experiment", {}).get("seed", 42)
     torch.manual_seed(seed)
@@ -122,13 +122,13 @@ def main():
     logger.info(f"Best Params: {study.best_trial.params}")
 
     # Save best parameters to a JSON for easy extraction later
-    os.makedirs("output/benchmarks/worm_gait", exist_ok=True)
-    with open("output/benchmarks/worm_gait/04_worm_gait_ebm_best_params.json", "w") as f:
+    os.makedirs("output/benchmarks/aging_resilience", exist_ok=True)
+    with open("output/benchmarks/aging_resilience/04_worm_gait_ebm_best_params.json", "w") as f:
         json.dump(study.best_trial.params, f, indent=2)
         
     wandb.summary["best_params"] = study.best_trial.params
     artifact = wandb.Artifact("04_optune_best_params", type="metrics")
-    artifact.add_file("output/benchmarks/worm_gait/04_worm_gait_ebm_best_params.json")
+    artifact.add_file("output/benchmarks/aging_resilience/04_worm_gait_ebm_best_params.json")
     wandb.log_artifact(artifact)
     wandb.finish()
 
