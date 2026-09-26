@@ -53,7 +53,13 @@ class KillifishContinuousDataset(Dataset):
         logger.info("Scanning for kinematic files in %s", self.kinematics_dir)
         if self.kinematics_dir.exists():
             for h5_file in self.kinematics_dir.rglob("*.h5"):
-                fish_num = h5_file.parent.name
+                raw_fish_name = h5_file.parent.name
+                # Parse '0' from 'fish0_137'
+                if raw_fish_name.startswith("fish"):
+                    fish_num = raw_fish_name.split('_')[0].replace('fish', '')
+                else:
+                    fish_num = raw_fish_name
+                
                 if fish_num in self.fish_to_lifespan:
                     # Parse features
                     features = self._load_and_normalize_h5(h5_file)
