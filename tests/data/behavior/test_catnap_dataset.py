@@ -5,9 +5,9 @@ import numpy as np
 import torch
 from pathlib import Path
 
-from src.data.behavior.catnip_dataset import CatnipContinuousDataset
+from src.data.behavior.catnap_dataset import CatnapContinuousDataset
 
-def test_catnip_dataset_parsing_and_filtering():
+def test_catnap_dataset_parsing_and_filtering():
     # ARRANGE
     with tempfile.TemporaryDirectory() as tmpdir:
         h5_path = Path(tmpdir) / "test_features.h5"
@@ -38,7 +38,7 @@ def test_catnip_dataset_parsing_and_filtering():
         mouse_meta_df.to_hdf(h5_path, key="mouse metadata")
         
         # ACT - "all" cohort
-        dataset_all = CatnipContinuousDataset(h5_path=str(h5_path), sequence_length=5, cohort="all")
+        dataset_all = CatnapContinuousDataset(h5_path=str(h5_path), sequence_length=5, cohort="all")
         
         # ASSERT
         assert len(dataset_all) == 6  # 30 samples / 5 = 6 chunks
@@ -47,28 +47,28 @@ def test_catnip_dataset_parsing_and_filtering():
         assert tensor.shape == (5, 5)
         
         # ACT - "young" cohort
-        dataset_young = CatnipContinuousDataset(h5_path=str(h5_path), sequence_length=5, cohort="young")
+        dataset_young = CatnapContinuousDataset(h5_path=str(h5_path), sequence_length=5, cohort="young")
         
         # ASSERT - m1 (first 5 = 1 chunk), m3 (10 = 2 chunks) -> 3 chunks
         assert len(dataset_young) == 3
         
         # ACT - "old" cohort
-        dataset_old = CatnipContinuousDataset(h5_path=str(h5_path), sequence_length=5, cohort="old")
+        dataset_old = CatnapContinuousDataset(h5_path=str(h5_path), sequence_length=5, cohort="old")
         
         # ASSERT - m1 (last 5 = 1 chunk), m2 (10 = 2 chunks) -> 3 chunks
         assert len(dataset_old) == 3
 
-def test_catnip_dataset_missing_file():
+def test_catnap_dataset_missing_file():
     # ARRANGE
     missing_path = "non_existent_file.h5"
     
     # ACT
-    dataset = CatnipContinuousDataset(h5_path=missing_path)
+    dataset = CatnapContinuousDataset(h5_path=missing_path)
     
     # ASSERT
     assert len(dataset) == 0
 
-def test_catnip_dataset_zscore_normalization():
+def test_catnap_dataset_zscore_normalization():
     # ARRANGE
     with tempfile.TemporaryDirectory() as tmpdir:
         h5_path = Path(tmpdir) / "test_features.h5"
@@ -96,7 +96,7 @@ def test_catnip_dataset_zscore_normalization():
         mouse_meta_df.to_hdf(h5_path, key="mouse metadata")
         
         # ACT
-        dataset = CatnipContinuousDataset(h5_path=str(h5_path), sequence_length=10, cohort="all")
+        dataset = CatnapContinuousDataset(h5_path=str(h5_path), sequence_length=10, cohort="all")
         
         # ASSERT
         chunk = dataset[0]

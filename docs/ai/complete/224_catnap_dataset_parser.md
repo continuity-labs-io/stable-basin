@@ -1,9 +1,9 @@
-We are implementing "Phase 1: Data Engineering" for Project Catnip. We need to create a PyTorch Dataset to parse the Calico CATNAP HDF5 data.
+We are implementing "Phase 1: Data Engineering" for Project Catnap. We need to create a PyTorch Dataset to parse the Calico CATNAP HDF5 data.
 
-1. Create a new file `src/data/behavior/catnip_dataset.py`.
+1. Create a new file `src/data/behavior/catnap_dataset.py`.
 2. Add the required imports: `logging`, `pathlib`, `pandas as pd`, `numpy as np`, `torch`, `from torch.utils.data import Dataset`, `from torch import Tensor`, `from jaxtyping import Float, jaxtyped`, and `from beartype import beartype`.
 3. Set up a module logger: `logger = logging.getLogger(__name__)`.
-4. Create the `CatnipContinuousDataset(Dataset)` class.
+4. Create the `CatnapContinuousDataset(Dataset)` class.
 5. In the `__init__` method, accept: `h5_path: str = "data/catnap/trace_features.h5"`, `sequence_length: int = 10`, and `cohort: str = "all"` (options: "all", "young", "old", "train").
 6. Implement the data loading logic inside `__init__`:
    - Wrap the loading in a `try/except Exception` block to gracefully handle missing files. If the file doesn't exist, log a warning and initialize an empty `self.samples = []` list so CI tests don't break.

@@ -10,7 +10,7 @@ from beartype import beartype
 
 logger = logging.getLogger(__name__)
 
-class CatnipContinuousDataset(Dataset):
+class CatnapContinuousDataset(Dataset):
     """Dataset for Calico CATNAP HDF5 data."""
     def __init__(self, h5_path: str = "data/catnap/trace_features.h5", sequence_length: int = 10, cohort: str = "all"):
         self.samples = []
