@@ -18,6 +18,13 @@ preflight: lint-pytorch
 audit:
 	python -m tools.code_auditor.multi_agent_auditor --mode "repo"
 
+n ?= 1
+N ?= $(n)
+
+.PHONY: prompts
+prompts:
+	python -m tools.make_prompts -n $(N)
+
 coverage:
 	@echo "Running unit tests with coverage analysis..."
 	pytest --cov=src --cov-report=term-missing tests/
