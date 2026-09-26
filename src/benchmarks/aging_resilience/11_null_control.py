@@ -86,7 +86,7 @@ def load_or_train_graph(config: dict, config_path: str, train_trajs, train_label
     from src.echo.primitives.ebm import PrecisionWeightedEBM
 
     seed = config.get("experiment", {}).get("seed", 42)
-    graph, d_state = build_graph(PrecisionWeightedEBM, jax.random.PRNGKey(seed), config)
+    graph, d_state = build_graph(jax.random.PRNGKey(seed), config)
 
     if not args.retrain:
         if not os.path.exists(args.weights):

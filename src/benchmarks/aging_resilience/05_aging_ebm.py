@@ -20,6 +20,7 @@ from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.data.datasets import JAXDictDataset
+import copy
 from src.echo.primitives.ebm import IdentityPrecisionEBM, PrecisionWeightedEBM
 from src.echo.harness.echo_runner import EchoRunner
 from src.echo.harness.echo_trainer import EchoTrainer
@@ -114,7 +115,7 @@ def main():
     key = jax.random.PRNGKey(seed)
 
     # Determine d_state
-    _, d_state = build_graph(IdentityPrecisionEBM, key, config)
+    _, d_state = build_graph(key, config)
 
     task = get_benchmark_task(config)
     batch_size = config.get("dataset", {}).get("batch_size", 2)
@@ -122,19 +123,19 @@ def main():
     _, eval_young_dataset_raw, eval_old_dataset_raw = task.get_raw_datasets(config)
 
     key, kA = jax.random.split(key)
+    config_A = copy.deepcopy(config)
+    config_A["observer"]["micro"]["ebm_type"] = "identity"
+    config_A["observer"]["macro"]["ebm_type"] = "identity"
     metrics_A, trace_young_A, trace_old_A, graph_A = run_aging_experiment(
-        config, IdentityPrecisionEBM, kA, train_young_loader, eval_young_loader, eval_old_loader, args.config
+        config_A, kA, train_young_loader, eval_young_loader, eval_old_loader, args.config
     )
 
     key, kB = jax.random.split(key)
+    config_B = copy.deepcopy(config)
+    config_B["observer"]["micro"]["ebm_type"] = "dense"
+    config_B["observer"]["macro"]["ebm_type"] = "dense"
     metrics_B, trace_young_B, trace_old_B, graph_B = run_aging_experiment(
-        config,
-        PrecisionWeightedEBM,
-        kB,
-        train_young_loader,
-        eval_young_loader,
-        eval_old_loader,
-        args.config,
+        config_B, kB, train_young_loader, eval_young_loader, eval_old_loader, args.config
     )
 
     logger.info("Serializing trained Clean Baseline Worm engine to disk.")

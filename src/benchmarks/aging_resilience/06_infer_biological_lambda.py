@@ -146,7 +146,7 @@ def main():
     dt = config.get("experiment", {}).get("dt", 0.01)
 
     key, subkey = jax.random.split(key)
-    dummy_graph, d_state = build_graph(PrecisionWeightedEBM, subkey, config)
+    dummy_graph, d_state = build_graph(subkey, config)
 
     task = get_benchmark_task(config)
     _, _, loader = task.get_dataloaders(config, d_state, batch_size=8)

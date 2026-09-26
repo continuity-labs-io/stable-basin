@@ -15,7 +15,7 @@ except ImportError:
     RAY_AVAILABLE = False
 
 from src.echo.harness.echo_trainer import EchoTrainer
-from src.echo.metrics.energy_landscape import batch_hessian_trace, ScalarEnergy
+from src.echo.metrics.energy_landscape import batch_hessian_trace, batch_hutchinson_trace, ScalarEnergy
 from src.harness.pytorch_jax_bridge import torch_to_jax
 
 logger = logging.getLogger(__name__)
@@ -109,6 +109,10 @@ class EchoRunner:
         hessian_computed = 0
         energy_fn = ScalarEnergy(model.ebm, model.hull)
 
+        eval_cfg = self.config.get("evaluation", {})
+        estimator = eval_cfg.get("curvature_estimator", "exact_hessian")
+        n_probes = eval_cfg.get("hutchinson_probes", 15)
+
         for batch_idx, batch in enumerate(val_loader):
             s_true = torch_to_jax(batch["s_true"])
             x_init = torch_to_jax(batch["x_init"])
@@ -122,7 +126,14 @@ class EchoRunner:
                 samples_to_take = min(s_true.shape[0], max_hessian_samples - hessian_computed)
                 x_subset = x_init[:samples_to_take]
 
-                trace_batch = batch_hessian_trace(energy_fn, x_subset)
+                if estimator == "exact_hessian":
+                    trace_batch = batch_hessian_trace(energy_fn, x_subset)
+                elif estimator == "hutchinson":
+                    key, hutch_key = jax.random.split(key)
+                    trace_batch = batch_hutchinson_trace(energy_fn, x_subset, key=hutch_key, n_probes=n_probes)
+                else:
+                    raise ValueError(f"Unknown curvature estimator: {estimator}")
+                
                 trace_val = jnp.mean(trace_batch)
                 hessian_traces.append(trace_val.item())
                 hessian_computed += samples_to_take

@@ -27,6 +27,8 @@ model:
 
 observer:
   macro:
+    ebm_type: "structured_low_rank"
+    precision_rank: 4
     d_active: 4
     d_external: 4
     d_internal: 4
@@ -36,6 +38,8 @@ observer:
     n_steps: 1
     temperature: 1.0
   micro:
+    ebm_type: "structured_low_rank"
+    precision_rank: 4
     d_active: 8
     d_external: 8
     d_internal: 8
@@ -44,6 +48,10 @@ observer:
     ebm_hidden_size: 256
     n_steps: 1
     temperature: 1.0
+
+evaluation:
+  curvature_estimator: "hutchinson"
+  hutchinson_probes: 15
 
 optimization:
   early_stopping_patience: 4000

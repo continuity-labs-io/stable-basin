@@ -12,12 +12,13 @@ import numpy as np
 from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
-from src.echo.primitives.ebm import PrecisionWeightedEBM
+from src.echo.primitives.ebm_structured import StructuredPrecisionEBM
+from src.echo.primitives.ebm import IdentityPrecisionEBM, PrecisionWeightedEBM
 from jaxtyping import PRNGKeyArray
 
 logger = logging.getLogger(__name__)
 
-def build_graph(ebm_class, key, config):
+def build_graph(key, config):
     k1, k2, k3 = jax.random.split(key, 3)
 
     d_internal_micro = config["observer"]["micro"]["d_internal"]
@@ -52,13 +53,26 @@ def build_graph(ebm_class, key, config):
         key=k2,
     )
 
+    micro_ebm_type = micro_cfg.get("ebm_type", "dense")
+    macro_ebm_type = macro_cfg.get("ebm_type", "dense")
+
+    def get_ebm_instance(ebm_type, d_state, hidden_size, depth, k, cfg):
+        if ebm_type == "dense":
+            return PrecisionWeightedEBM(d_state=d_state, hidden_size=hidden_size, depth=depth, key=k)
+        elif ebm_type == "structured_low_rank":
+            return StructuredPrecisionEBM(d_state=d_state, hidden_size=hidden_size, depth=depth, key=k, rank=cfg.get("precision_rank", 4))
+        elif ebm_type == "identity":
+            return IdentityPrecisionEBM(d_state=d_state, hidden_size=hidden_size, depth=depth, key=k)
+        else:
+            raise ValueError(f"Unknown ebm_type: {ebm_type}")
+
     micro = eqx.tree_at(
         lambda m: m.ebm, micro,
-        ebm_class(d_state=d_micro, hidden_size=micro_cfg["ebm_hidden_size"], depth=micro_cfg["ebm_depth"], key=k3),
+        get_ebm_instance(micro_ebm_type, d_micro, micro_cfg["ebm_hidden_size"], micro_cfg["ebm_depth"], k3, micro_cfg),
     )
     macro = eqx.tree_at(
         lambda m: m.ebm, macro,
-        ebm_class(d_state=macro.hull.d_state, hidden_size=macro_cfg["ebm_hidden_size"], depth=macro_cfg["ebm_depth"], key=k3),
+        get_ebm_instance(macro_ebm_type, macro.hull.d_state, macro_cfg["ebm_hidden_size"], macro_cfg["ebm_depth"], k3, macro_cfg),
     )
 
     graph = PredictiveCodingGraph(micro, macro, n_steps=config["graph"]["n_steps"], key=k3)
@@ -196,8 +210,15 @@ def get_full_states(graph, loader):
     return jnp.concatenate(full_traj_list, axis=0)
 
 
-def compute_full_trace(energy_fn, states, batch_size=1000):
-    res = curvature_over_states(energy_fn, states, chunk_size=batch_size, nonfinite="drop")
+def compute_full_trace(energy_fn, states, config, key=None, batch_size=1000):
+    eval_cfg = config.get("evaluation", {})
+    estimator = eval_cfg.get("curvature_estimator", "exact_hessian")
+    n_probes = eval_cfg.get("hutchinson_probes", 15)
+
+    res = curvature_over_states(
+        energy_fn, states, chunk_size=batch_size, nonfinite="drop",
+        estimator=estimator, hutchinson_key=key, hutchinson_probes=n_probes
+    )
     logger.info(f"Dropped {res['n_nonfinite']} non-finite traces out of {states.shape[0]}.")
     return res["hessian_trace"]
 
@@ -228,7 +249,7 @@ def compute_metrics(name, t_young, t_old):
 
 
 def run_aging_experiment(
-    config, ebm_class, key, train_young_loader, eval_young_loader, eval_old_loader, config_path
+    config, key, train_young_loader, eval_young_loader, eval_old_loader, config_path
 ):
     """
         Executes a complete training and evaluation pipeline for a given Energy-Based Model class
@@ -256,23 +277,25 @@ def run_aging_experiment(
     max_grad_norm = opt_cfg.get("max_grad_norm", 0.1)
     dt = config.get("experiment", {}).get("dt", 0.01)
 
-    logger.info(f"Training Run: {ebm_class.__name__}")
-    graph, _ = build_graph(ebm_class, key, config)
+    logger.info("Training Run with Configured EBM")
+    graph, _ = build_graph(key, config)
     trainer = EchoTrainer(graph, learning_rate=lr, max_grad_norm=max_grad_norm)
 
     runner = EchoRunner(config_path)
     runner.setup(trainer)
     graph = runner.run(graph, train_young_loader, eval_young_loader, key, dt=dt)
 
-    logger.info(f"Evaluating {ebm_class.__name__} on biological population.")
+    logger.info("Evaluating EBM on biological population.")
     full_states_young = get_full_states(graph, eval_young_loader)
     full_states_old = get_full_states(graph, eval_old_loader)
 
-    logger.info(f"Computing Hessian Traces for {ebm_class.__name__}.")
+    logger.info("Computing Hessian Traces for EBM.")
     energy_fn = ScalarEnergy(graph.ebm)
-    trace_young = compute_full_trace(energy_fn, full_states_young)
-    trace_old = compute_full_trace(energy_fn, full_states_old)
+    
+    k1, k2 = jax.random.split(key)
+    trace_young = compute_full_trace(energy_fn, full_states_young, config, key=k1)
+    trace_old = compute_full_trace(energy_fn, full_states_old, config, key=k2)
 
-    metrics = compute_metrics(ebm_class.__name__, trace_young, trace_old)
+    metrics = compute_metrics("Configured EBM", trace_young, trace_old)
     return metrics, trace_young, trace_old, graph
 

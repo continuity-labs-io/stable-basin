@@ -58,7 +58,6 @@ def objective(trial, train_young_loader, eval_young_loader, eval_old_loader, bas
         # We run the experiment for PrecisionWeightedEBM only
         metrics, trace_young, trace_old, graph = run_aging_experiment(
             config=config,
-            ebm_class=PrecisionWeightedEBM,
             key=kB,
             train_young_loader=train_young_loader,
             eval_young_loader=eval_young_loader,
@@ -92,7 +91,7 @@ def main():
     # Load dataset once
     # We need d_state which can be calculated using IdentityPrecisionEBM or PrecisionWeightedEBM
     IdentityPrecisionEBM = benchmark_module.IdentityPrecisionEBM
-    _, d_state = build_graph(IdentityPrecisionEBM, key, base_config)
+    _, d_state = build_graph(key, base_config)
 
     task = get_benchmark_task(base_config)
     batch_size = base_config.get("dataset", {}).get("batch_size", 2)
