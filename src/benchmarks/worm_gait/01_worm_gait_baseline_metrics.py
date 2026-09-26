@@ -5,14 +5,13 @@ import numpy as np
 import logging
 import os
 import warnings
+import yaml
 
 # Suppress warnings from scipy/pytorch during evaluation for clean console output
 warnings.filterwarnings("ignore")
 
-from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset
-from src.metrics.spectral import SpectralMetrics
-from src.data.behavior.synthetic_aging import amplitude_residual_stats
 from src.metrics.baseline_statistics import compute_stats
+from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -21,100 +20,62 @@ logger = logging.getLogger(__name__)
 def run_baseline_metrics():
     logger.info("   Baseline Biological Metrics Evaluation     ")
     
-    logger.info("Loading C. elegans biological datasets...")
-    try:
-        # Load the test dataset for both baseline and degraded populations
-        ds_young = RealEigenwormDataset("data/worm/EigenWorms_TEST.ts", seq_len=1000, inject_synthetic_degradation=False)
-        ds_old = RealEigenwormDataset("data/worm/EigenWorms_TEST.ts", seq_len=1000, inject_synthetic_degradation=True)
-    except FileNotFoundError:
-        logger.error("Biological data not found. Please ensure data is present in 'data/worm/'.")
+    config_path = "configs/worm_gait_experiments.yaml"
+    if not os.path.exists(config_path):
+        logger.error(f"Config file {config_path} not found.")
         return
-
-    results = {
-        "spectral": {},
-        "time_domain": {}
-    }
+        
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+        
+    task = get_benchmark_task(config)
     
-    time_metrics = None # no longer using ThermodynamicMetrics
-    spec_metrics = SpectralMetrics()
+    logger.info("Loading C. elegans biological datasets via task...")
+    _, ds_young, ds_old = task.get_raw_datasets(config)
 
     def evaluate_cohort(dataset):
-        ar1_list = []
-        var_list = []
-        peak_freq_list = []
-        for traj in dataset.data:
-            # Calculate Amplitude Residual Stats (CSD proxy)
-            stats = amplitude_residual_stats(traj.numpy(), pair=(0, 1))
-            ar1_list.append(stats["amp_ar1"])
-            var_list.append(stats["amp_var"])
-            
-            # Calculate Peak Frequency (25.0 Hz biological framerate)
-            freq, power = spec_metrics.calculate_psd(traj, sampling_rate=25.0)
-            peak_idx = torch.argmax(power.mean(dim=1)) if len(power.shape) > 1 else 0
-            peak_freq_list.append(float(freq[peak_idx]))
-            
-        return ar1_list, var_list, peak_freq_list
+        aggregated = {}
+        for traj in dataset:
+            metrics = task.compute_domain_metrics(traj.numpy() if hasattr(traj, "numpy") else traj)
+            for k, v in metrics.items():
+                if k not in aggregated:
+                    aggregated[k] = []
+                aggregated[k].append(v)
+        return aggregated
 
     logger.info("Evaluating Clean Baseline Cohort...")
-    ar1_y, var_y, freq_y = evaluate_cohort(ds_young)
+    metrics_young = evaluate_cohort(ds_young)
     
     logger.info("Evaluating Synthetically Degraded Cohort...")
-    ar1_o, var_o, freq_o = evaluate_cohort(ds_old)
+    metrics_old = evaluate_cohort(ds_old)
 
-    logger.info("\n--- 1. TIME DOMAIN METRICS (Amplitude CSD) ---")
+    logger.info("\n--- METRICS COMPARISON ---")
+    results = {}
     
-    mean_ar1_young = float(np.mean(ar1_y))
-    std_ar1_young = float(np.std(ar1_y))
-    mean_ar1_old = float(np.mean(ar1_o))
-    std_ar1_old = float(np.std(ar1_o))
-    
-    mean_var_young = float(np.mean(var_y))
-    std_var_young = float(np.std(var_y))
-    mean_var_old = float(np.mean(var_o))
-    std_var_old = float(np.std(var_o))
-    
-    results["time_domain"]["mean_ar1_baseline"] = mean_ar1_young
-    results["time_domain"]["std_ar1_baseline"] = std_ar1_young
-    results["time_domain"]["mean_ar1_degraded"] = mean_ar1_old
-    results["time_domain"]["std_ar1_degraded"] = std_ar1_old
-    
-    results["time_domain"]["mean_var_baseline"] = mean_var_young
-    results["time_domain"]["std_var_baseline"] = std_var_young
-    results["time_domain"]["mean_var_degraded"] = mean_var_old
-    results["time_domain"]["std_var_degraded"] = std_var_old
-    
-    ar1_stats = compute_stats(ar1_y, ar1_o)
-    for k, v in ar1_stats.items():
-        results["time_domain"][f"ar1_{k}"] = v
-
-    var_stats = compute_stats(var_y, var_o)
-    for k, v in var_stats.items():
-        results["time_domain"][f"var_{k}"] = v
-    
-    logger.info(f"Clean Baseline AR(1): {mean_ar1_young:.4f} ± {std_ar1_young:.4f}")
-    logger.info(f"Synthetically Degraded AR(1): {mean_ar1_old:.4f} ± {std_ar1_old:.4f}")
-    logger.info(f"Clean Baseline Variance: {mean_var_young:.4f} ± {std_var_young:.4f}")
-    logger.info(f"Synthetically Degraded Variance: {mean_var_old:.4f} ± {std_var_old:.4f}")
-
-    logger.info("\n--- 2. SPECTRAL METRICS (Peak Frequency) ---")
-    
-    mean_freq_young = float(np.mean(freq_y))
-    std_freq_young = float(np.std(freq_y))
-    mean_freq_old = float(np.mean(freq_o))
-    std_freq_old = float(np.std(freq_o))
-    
-    results["spectral"]["mean_peak_freq_baseline"] = mean_freq_young
-    results["spectral"]["std_peak_freq_baseline"] = std_freq_young
-    results["spectral"]["mean_peak_freq_degraded"] = mean_freq_old
-    results["spectral"]["std_peak_freq_degraded"] = std_freq_old
-    
-    freq_stats = compute_stats(freq_y, freq_o)
-    for k, v in freq_stats.items():
-        results["spectral"][f"peak_freq_{k}"] = v
-
-    
-    logger.info(f"Clean Baseline Peak Frequency: {mean_freq_young:.4f} ± {std_freq_young:.4f} Hz")
-    logger.info(f"Synthetically Degraded Peak Frequency: {mean_freq_old:.4f} ± {std_freq_old:.4f} Hz")
+    for key in metrics_young.keys():
+        val_y = metrics_young[key]
+        val_o = metrics_old.get(key, [])
+        if not val_o:
+            continue
+            
+        mean_y = float(np.mean(val_y))
+        std_y = float(np.std(val_y))
+        mean_o = float(np.mean(val_o))
+        std_o = float(np.std(val_o))
+        
+        results[key] = {
+            "mean_baseline": mean_y,
+            "std_baseline": std_y,
+            "mean_degraded": mean_o,
+            "std_degraded": std_o
+        }
+        
+        stats = compute_stats(val_y, val_o)
+        for k, v in stats.items():
+            results[key][k] = v
+            
+        logger.info(f"Clean Baseline {key}: {mean_y:.4f} ± {std_y:.4f}")
+        logger.info(f"Synthetically Degraded {key}: {mean_o:.4f} ± {std_o:.4f}")
 
     # Save results
     out_dir = "output/benchmarks/worm_gait"

@@ -1,29 +1,30 @@
 import os
 import logging
-from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset
-from src.utils.animation import create_worm_gait_animation
+import yaml
+from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 def main():
     logger.info("Setting up Worm Gait Animation")
-    data_path = "data/worm/EigenWorms_TEST.ts"
     
-    if not os.path.exists(data_path):
-        logger.error(f"Biological data not found at {data_path}. Please ensure data is present.")
+    config_path = "configs/worm_gait_experiments.yaml"
+    if not os.path.exists(config_path):
+        logger.error(f"Config file {config_path} not found.")
         return
-
-    logger.info("Loading clean baseline worm data...")
-    ds_young = RealEigenwormDataset(data_path, seq_len=500, inject_synthetic_degradation=False)
+        
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+        
+    task = get_benchmark_task(config)
     
-    logger.info("Loading synthetically degraded worm data...")
-    ds_old = RealEigenwormDataset(data_path, seq_len=500, inject_synthetic_degradation=True)
+    logger.info("Loading data via task...")
+    _, ds_young, ds_old = task.get_raw_datasets(config)
     
     # Take the first sequence from each
-    # Shape: (500, 6)
-    young_data = ds_young[0].numpy()
-    old_data = ds_old[0].numpy()
+    young_data = ds_young[0].numpy() if hasattr(ds_young[0], 'numpy') else ds_young[0]
+    old_data = ds_old[0].numpy() if hasattr(ds_old[0], 'numpy') else ds_old[0]
     
     output_dir = "output/benchmarks/worm_gait"
     os.makedirs(output_dir, exist_ok=True)
@@ -31,7 +32,7 @@ def main():
     
     logger.info("Rendering animation (this may take a minute)...")
     
-    create_worm_gait_animation(
+    task.render_animation(
         young_data=young_data,
         old_data=old_data,
         output_path=output_path,
@@ -41,3 +42,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

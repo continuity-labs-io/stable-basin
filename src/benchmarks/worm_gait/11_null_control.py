@@ -40,9 +40,11 @@ import numpy as np
 from scipy.stats import ks_2samp, mannwhitneyu
 
 try:
-    from src.data.behavior.synthetic_aging import amplitude_residual_stats, slow_amplitude_relaxation
+    from src.data.behavior.synthetic_aging import slow_amplitude_relaxation
 except ImportError:  # running next to synthetic_aging.py outside the repo
-    from synthetic_aging import amplitude_residual_stats, slow_amplitude_relaxation
+    from synthetic_aging import slow_amplitude_relaxation
+
+from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 
 from src.data.utils import zscore_fit, stratified_split, window_starts
 from src.utils.io import sha256
@@ -179,6 +181,9 @@ def main():
             config = yaml.safe_load(f)
     elif not args.stub:
         raise FileNotFoundError(args.config)
+        
+    task = get_benchmark_task(config)
+    
     seq_len = config.get("dataset", {}).get("seq_len", 500)
     dt = config.get("experiment", {}).get("dt", 0.01)
     seed = config.get("experiment", {}).get("seed", 42)
@@ -214,8 +219,8 @@ def main():
     for s in severities:
         logger.info(f"Evaluating severity s = {s}")
         for w, traj in enumerate(test_trajs):
-            x = traj if s == 1.0 else slow_amplitude_relaxation(traj, s, pair)
-            manip[s].append(amplitude_residual_stats(x, pair))
+            x = task.apply_dataset_change(traj, change_fn=slow_amplitude_relaxation, slowdown=s, pair=pair) if s != 1.0 else traj
+            manip[s].append(task.compute_domain_metrics(x))
             t, n_nan = evaluate(x, w, window_starts(x.shape[0], seq_len, args.windows_per_worm), seq_len)
             nan_counts[s] += n_nan
             steps[s][w] = t
@@ -253,11 +258,13 @@ def main():
 
     for s in severities:
         m = manip[s]
+        mc_dict = {}
+        if m:
+            for k in m[0].keys():
+                mc_dict[f"{k}_median"] = float(np.median([d[k] for d in m]))
+                
         entry = {
-            "manipulation_check": {
-                "amp_ar1_median": float(np.median([d["amp_ar1"] for d in m])),
-                "amp_var_median": float(np.median([d["amp_var"] for d in m])),
-            }
+            "manipulation_check": mc_dict
         }
         if s != 1.0:
             entry["unpaired_primary"] = unpaired_stats(clean[ia], S[s][ib], rng, args.n_perm, args.n_boot)
@@ -284,15 +291,21 @@ def main():
     print(f"false-positive rate over {r['n_splits']} re-splits: {r['frac_p_lt_0.05']:.3f} (nominal 0.05); "
           f"95th pct |g| under null: {r['abs_g_p95']:.3f}")
     print("\n================ POSITIVE (amplitude relaxation slowed by s) ================")
-    print("  s     amp AR1   amp var   power(unpaired)   g_unpaired [2.5,97.5]      paired dz   paired p")
+    
+    # Dynamically build header for manipulation check keys
+    mc_keys = list(results["positive"][str(severities[0])]["manipulation_check"].keys()) if severities else []
+    mc_header = "   ".join([f"{k[:12]:<12}" for k in mc_keys])
+    print(f"  s     {mc_header}   power(unpaired)   g_unpaired [2.5,97.5]      paired dz   paired p")
     for s in severities:
         e = results["positive"][str(s)]
         mc = e["manipulation_check"]
+        mc_vals = "   ".join([f"{mc.get(k, 0):<12.4f}" for k in mc_keys])
+        
         if s == 1.0:
-            print(f"  {s:<5} {mc['amp_ar1_median']:.4f}   {mc['amp_var_median']:.4f}   (sham / clean reference)")
+            print(f"  {s:<5} {mc_vals}   (sham / clean reference)")
             continue
         u, pr = e["unpaired_resplits"], e["paired_all_worms"]
-        print(f"  {s:<5} {mc['amp_ar1_median']:.4f}   {mc['amp_var_median']:.4f}   {u['frac_p_lt_0.05']:>9.3f}        "
+        print(f"  {s:<5} {mc_vals}   {u['frac_p_lt_0.05']:>9.3f}        "
               f"{u['g_mean']:+.3f} [{u['g_pct']['p2.5']:+.2f},{u['g_pct']['p97.5']:+.2f}]   "
               f"{pr['cohens_dz']:+8.3f}   {pr['signflip_p']:.4f}")
     print("\nRead-out:")
