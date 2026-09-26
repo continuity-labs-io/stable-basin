@@ -47,5 +47,8 @@ def get_benchmark_task(config: Dict[str, Any]) -> AgingBenchmarkTask:
     elif dataset_name == "killifish":
         from src.benchmarks.aging_resilience.tasks.killifish_task import KillifishTask
         return KillifishTask()
+    elif dataset_name == "catnap":
+        from src.benchmarks.aging_resilience.tasks.catnap_task import CatnapTask
+        return CatnapTask()
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}")
