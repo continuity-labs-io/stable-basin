@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import torch.optim as optim
-from src.models.ssm.masr_mamba import MaskAwareMamba
+from src.harness.sensor_fusion_predictor import SensorFusionPredictor
 from src.metrics.spectral import SpectralMetrics
 
 
@@ -33,8 +33,7 @@ def main():
     X_input = x[:, :-1, :]
     Y_target = x[:, 1:, :]
 
-    # 3. Instantiate MaskAwareMamba with small latent space
-    model = MaskAwareMamba(input_dim=features, d_model=16, d_state=8, mask_aware=False)
+    model = SensorFusionPredictor(ssm_type="masr_ssm", modality_dims=[features], d_model=16, out_dim=features)
 
     # 4. Minimal training loop (100 epochs) using AdamW and MSE
     optimizer = optim.AdamW(model.parameters(), lr=1e-2)
@@ -45,8 +44,7 @@ def main():
     for epoch in range(100):
         optimizer.zero_grad()
 
-        # model returns (pred_t_plus_1, reconstructed_t)
-        preds, _ = model(X_input)
+        preds, _, _ = model(X_input)
 
         loss = criterion(preds, Y_target)
         loss.backward()
@@ -58,7 +56,7 @@ def main():
     # 5. Evaluate and plot
     model.eval()
     with torch.no_grad():
-        preds, _ = model(X_input)
+        preds, _, _ = model(X_input)
 
     preds = preds.squeeze(0).numpy()
     targets = Y_target.squeeze(0).numpy()

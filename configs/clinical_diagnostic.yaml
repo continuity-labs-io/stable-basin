@@ -1,6 +1,5 @@
 experiment_name: "Clinical Diagnostic (Pharmacological Shock)"
 models:
-  - "masr_mamba"
   - "zero_padded_ssm"
   - "causal_transformer"
   - "masr_ssm"

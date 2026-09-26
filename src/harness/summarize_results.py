@@ -11,7 +11,7 @@ with open(out_path, "w") as out:
     if os.path.exists(json_path):
         with open(json_path) as f:
             all_data = json.load(f)
-            for model in ["zero_padded_ssm", "causal_transformer", "masr_ssm", "masr_mamba"]:
+            for model in ["zero_padded_ssm", "causal_transformer", "masr_ssm"]:
                 if model in all_data:
                     data = all_data[model]
                     out.write(f"Model: {model}\n")

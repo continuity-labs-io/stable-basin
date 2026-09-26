@@ -3,7 +3,7 @@ tasks:
     epochs: 30
     train_seq_len: 200
     test_seq_len: 500
-    models: ["gru_d","masr_ssm", "masr_mamba"]
+    models: ["gru_d","masr_ssm"]
     densities: [0.1]
     seeds: [42, 43, 44]
     loss_fns: ["mse", "meld"]
@@ -14,7 +14,7 @@ tasks:
     epochs: 40
     train_seq_len: 500
     test_seq_len: 500
-    models: ["zero_padded_ssm", "forward_fill_ssm", "mask_concat_ssm", "causal_transformer", "masr_ssm", "masr_mamba", "gru_d"]
+    models: ["zero_padded_ssm", "forward_fill_ssm", "mask_concat_ssm", "causal_transformer", "masr_ssm", "gru_d"]
     densities: [0.1]
     seeds: [42]
     csv_name: "01_baseline_interpolation.csv"
@@ -24,7 +24,7 @@ tasks:
     epochs: 40
     train_seq_len: 500
     test_seq_len: 5000
-    models: ["zero_padded_ssm", "forward_fill_ssm", "mask_concat_ssm", "causal_transformer", "masr_ssm", "masr_mamba", "gru_d"]
+    models: ["zero_padded_ssm", "forward_fill_ssm", "mask_concat_ssm", "causal_transformer", "masr_ssm", "gru_d"]
     densities: [0.1]
     seeds: [42]
     csv_name: "02_extrapolation_test.csv"
@@ -34,7 +34,7 @@ tasks:
     epochs: 25
     train_seq_len: 500
     test_seq_len: 500
-    models: ["zero_padded_ssm", "forward_fill_ssm", "mask_concat_ssm", "causal_transformer", "masr_ssm", "masr_mamba", "gru_d"]
+    models: ["zero_padded_ssm", "forward_fill_ssm", "mask_concat_ssm", "causal_transformer", "masr_ssm", "gru_d"]
     densities: [0.1, 0.01, 0.001]
     seeds: [42, 100, 256, 512, 1024]
     csv_name: "03_sensor_density_sweep.csv"

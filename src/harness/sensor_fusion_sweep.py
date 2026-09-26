@@ -183,7 +183,6 @@ def save_benchmark_plot(df_results, config, task_name, png_name):
         "mask_concat_ssm": "y-",
         "causal_transformer": "g:",
         "masr_ssm": "b-",
-        "masr_mamba": "c--",
         "gru_d": "c-",
         "ode_rnn": "m-",
     }
@@ -193,7 +192,6 @@ def save_benchmark_plot(df_results, config, task_name, png_name):
         "mask_concat_ssm": "Mask-Concat SSM",
         "causal_transformer": "Causal Transformer",
         "masr_ssm": "MASR_SSM (Ours)",
-        "masr_mamba": "MASR_Mamba",
         "gru_d": "GRU-D",
         "ode_rnn": "ODE-RNN",
     }
@@ -259,7 +257,6 @@ def save_density_plot(df_results, config, png_name):
         "gru_d": "cyan",
         "ode_rnn": "orange",
         "masr_ssm": "lime",
-        "masr_mamba": "green",
     }
 
     for m in models:

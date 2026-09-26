@@ -5,7 +5,6 @@ import torch.nn as nn
 from src.models.encoders.orthogonal_modality_encoder import OrthogonalModalityEncoder
 from src.models.ssm.baseline_ssm import BaselineSSM
 from src.models.ssm.masr_ssm import MaskAwareSSM
-from src.models.ssm.masr_mamba import MaskAwareMamba
 from src.models.attention.baseline_transformer import BaselineTransformer
 from src.models.rnn.gru_d import GRUDModel
 from src.models.rnn.ode_rnn import ODERNNModel
@@ -27,8 +26,6 @@ class SSMType(str, Enum):
     """Causal Transformer baseline."""
     MASR_SSM = "masr_ssm"
     """MASR (Mask-Aware State-Space Representation) model."""
-    MASR_MAMBA = "masr_mamba"
-    """Mask-Aware Mamba-2 model."""
     GRU_D = "gru_d"
     """GRU-D model."""
     ODE_RNN = "ode_rnn"
@@ -78,10 +75,6 @@ class SensorFusionPredictor(nn.Module):
             self.ssm = BaselineSSM(d_model=d_model, a_init_type=a_init_type)
         elif ssm_type == "masr_ssm":
             self.ssm = MaskAwareSSM(d_model=d_model, a_init_type=a_init_type)
-        elif ssm_type == "masr_mamba":
-            self.ssm = MaskAwareMamba(
-                input_dim=d_model, d_model=d_model, mask_aware=True, a_init_type=a_init_type
-            )
         elif ssm_type == "causal_transformer":
             self.ssm = BaselineTransformer(d_model)
         elif ssm_type == "gru_d":
@@ -142,9 +135,6 @@ class SensorFusionPredictor(nn.Module):
                 h = self.ssm(latent_x)
             elif self.ssm_type == "masr_ssm":
                 h = self.ssm(latent_x, latent_gate)
-            elif self.ssm_type == "masr_mamba":
-                _, reconstructed_t, h = self.ssm(latent_x, mask=latent_gate, return_hidden=True)
-                reconstructed_t = self.readout(reconstructed_t)
             elif self.ssm_type == "causal_transformer":
                 h = self.ssm(latent_x)
 

@@ -1,12 +1,12 @@
 import pytest
 from src.core.rejuvenation_controller import RejuvenationFlightController
 from src.metrics import ThermodynamicMetrics
-from src.models.ssm.masr_mamba import MaskAwareMamba
+from src.harness.sensor_fusion_predictor import SensorFusionPredictor
 
 
 def test_rejuvenation_controller_state_machine():
     # Initialize components
-    engine = MaskAwareMamba(input_dim=6, d_model=32, mask_aware=True)
+    engine = SensorFusionPredictor("masr_ssm", modality_dims=[6], d_model=32)
     metrics = ThermodynamicMetrics()
     controller = RejuvenationFlightController(engine, metrics, hysteresis_frames=3)
 

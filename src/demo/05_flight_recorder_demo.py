@@ -12,7 +12,7 @@ import torch
 import numpy as np
 import logging
 
-from src.models.ssm.masr_mamba import MaskAwareMamba
+from src.harness.sensor_fusion_predictor import SensorFusionPredictor
 from src.metrics import ThermodynamicMetrics, SpectralMetrics
 from src.system.telemetry_logger import TelemetryLogger
 from src.core.substrate import get_optimal_device
@@ -26,7 +26,7 @@ def main():
     logger.info("\n[*] BOOTING DEMO 05: THE FLIGHT RECORDER")
 
     # 1. Initialize our engine
-    engine = MaskAwareMamba(input_dim=114, d_model=256, mask_aware=False).to(device)
+    engine = SensorFusionPredictor(ssm_type="masr_ssm", modality_dims=[114], d_model=256, out_dim=114).to(device)
     engine.eval()
 
     # 2. Initialize the metrics extractor and telemetry bridge
@@ -67,8 +67,8 @@ def main():
             batch_base = baseline_data[:t].unsqueeze(0)
             batch_pert = perturbed_data[:t].unsqueeze(0)
 
-            _, _, hidden_base = engine.forward(batch_base, return_hidden=True)
-            _, _, hidden_pert = engine.forward(batch_pert, return_hidden=True)
+            _, hidden_base, _ = engine.forward(batch_base)
+            _, hidden_pert, _ = engine.forward(batch_pert)
 
             # The hidden state is [Batch, Seq, d_model]. We want the latest state.
             z_base_t = hidden_base[0, -1, :]  # [d_model]

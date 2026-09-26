@@ -18,7 +18,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import logging
 
-from src.models.ssm.masr_mamba import MaskAwareMamba
+from src.harness.sensor_fusion_predictor import SensorFusionPredictor
 from src.metrics.mamba_lrp import MambaLRPEpsilon
 from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
 from src.core.substrate import get_optimal_device
@@ -77,7 +77,7 @@ def main():
     device = torch.device("cpu")
 
     print("\n[*] BOOTING DEMO 3: THE MULTIMODAL DIAGNOSTIC")
-    engine = MaskAwareMamba(input_dim=114, d_model=256, mask_aware=False).to(device)
+    engine = SensorFusionPredictor(ssm_type="masr_ssm", modality_dims=[114], d_model=256, out_dim=114).to(device)
 
     logger.info("[*] Generating baseline biology and running burn-in...")
     clean_data = (torch.randn(1, 200, 114).abs() * 0.5).to(device)
@@ -86,7 +86,7 @@ def main():
     engine.train()
     for _i in range(15):
         optimizer.zero_grad()
-        preds, _ = engine(clean_data[:, :-1, :])
+        preds, _, _ = engine(clean_data[:, :-1, :])
         loss = F.mse_loss(preds, clean_data[:, 1:, :])
         loss.backward()
         optimizer.step()

@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("IndestructibleEdge")
 
 
-from src.models.ssm.masr_mamba import MaskAwareMamba
+from src.harness.sensor_fusion_predictor import SensorFusionPredictor
 
 
 # --- Data Generator ---
@@ -145,7 +145,7 @@ def main():
 
     print("\n[*] BOOTING DEMO 2: THE INDESTRUCTIBLE EDGE")
 
-    engine = MaskAwareMamba(input_dim=114, d_model=256, mask_aware=True).to(device)
+    engine = SensorFusionPredictor(ssm_type="masr_ssm", modality_dims=[114], d_model=256, out_dim=114).to(device)
     simulator = WetLabDisasterSimulator(seq_len=200, input_dim=114)
     optimizer = optim.AdamW(engine.parameters(), lr=1e-3)
 
@@ -155,7 +155,7 @@ def main():
         corrupt_batch, clean_batch = simulator.generate_batch(8, scenario="training", device=device)
         optimizer.zero_grad()
 
-        preds, _ = engine(corrupt_batch[:, :-1, :])
+        preds, _, _ = engine(corrupt_batch[:, :-1, :])
         targets = clean_batch[:, 1:, :]
 
         loss = F.mse_loss(preds, targets)
@@ -171,7 +171,7 @@ def main():
         logger.info("[*] Injecting 2Hz microfluidic pump vibration...")
         corrupt_test, clean_test = simulator.generate_batch(1, scenario="disaster", device=device)
 
-        preds, _ = engine(corrupt_test)
+        preds, _, _ = engine(corrupt_test)
 
         output_dir = "output/demo"
     os.makedirs(output_dir, exist_ok=True)

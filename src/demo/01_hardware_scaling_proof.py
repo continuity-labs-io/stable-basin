@@ -17,7 +17,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from src.data.ephys.maxwell_dataset import MaxWellHDMEADataset
-from src.models.ssm.masr_mamba import MaskAwareMamba
+from src.harness.sensor_fusion_predictor import SensorFusionPredictor
 from src.metrics import ThermodynamicMetrics
 from src.core.substrate import get_optimal_device
 
@@ -195,7 +195,7 @@ def main():
     batch = val_seq[:, :SEQ_LEN, :].expand(BATCH_SIZE, -1, -1).contiguous()
 
     logger.info("[*] Initializing MaskAwareMamba...")
-    model = MaskAwareMamba(input_dim=TARGET_CHANNELS, d_model=256, mask_aware=False).to(device)
+    model = SensorFusionPredictor(ssm_type="masr_ssm", modality_dims=[TARGET_CHANNELS], d_model=256, out_dim=TARGET_CHANNELS).to(device)
     model.eval()
 
     logger.info("[*] Running Edge Inference Benchmark...")
