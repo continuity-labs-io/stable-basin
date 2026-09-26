@@ -1,18 +1,21 @@
-Next, let's implement Fix 2: Matrix-Free Curvature Estimation using Hutchinson's trace estimator to avoid O(d^3) operations and O(d^2) memory footprints when evaluating the Hessian trace.
+I am implementing "Roadmap Level 2: Breaking the Dimensionality Wall". First, we need to create an O(d*r) parameter alternative to the dense precision matrix in the EBM.
 
-1. Open `src/echo/metrics/energy_landscape.py`.
-2. Add a new function: `@eqx.filter_jit def hutchinson_hessian_trace(energy_fn: Callable, x: jax.Array, key: jax.Array, n_probes: int = 15) -> jax.Array`.
-3. Inside `hutchinson_hessian_trace`:
-   - Define `grad_fn = jax.grad(energy_fn)`.
-   - Generate Rademacher vectors: `keys = jax.random.split(key, n_probes)`. Generate `zs` of shape `[n_probes, x.shape[0]]` using `jax.vmap(lambda k: jax.random.rademacher(k, x.shape, dtype=x.dtype))(keys)`. (If `jax.random.rademacher` is unavailable, use `jax.random.choice(k, jnp.array([-1.0, 1.0], dtype=x.dtype), shape=x.shape)`).
-   - Define an inner function `def hvp(z_i): _, hvp_out = jax.jvp(grad_fn, (x,), (z_i,)); return jnp.dot(z_i, hvp_out)`.
-   - Use `trace_estimates = jax.vmap(hvp)(zs)` and return `jnp.mean(trace_estimates)`.
-4. Add the vmapped batch version: `@eqx.filter_jit def batch_hutchinson_trace(energy_fn: Callable, x_seq: jax.Array, key: jax.Array, n_probes: int = 15) -> jax.Array`.
-   - Split `key` into `x_seq.shape[0]` subkeys.
-   - Return `jax.vmap(lambda x, k: hutchinson_hessian_trace(energy_fn, x, k, n_probes))(x_seq, keys)`.
-5. Modify the driver function `curvature_over_states(...)`:
-   - Add new kwargs to the signature (after `rank_tol`): `estimator: Literal["exact_hessian", "hutchinson"] = "exact_hessian"`, `hutchinson_key: jax.Array | None = None`, and `hutchinson_probes: int = 15`.
-   - Inside the chunk loop where `if full_spectrum` is evaluated, update the `else` branch:
-     - If `estimator == "exact_hessian"`, use the existing `batch_hessian_trace(energy_fn, chunk)`.
-     - If `estimator == "hutchinson"`, you need a PRNG key. If `hutchinson_key` is None, raise a ValueError. Otherwise, split `hutchinson_key` to get a `chunk_key` and a new `hutchinson_key`. Call `batch_hutchinson_trace(energy_fn, chunk, chunk_key, hutchinson_probes)`.
-     - Raise a ValueError if the `estimator` string is not recognized.
+1. Open `src/echo/primitives/ebm_structured.py` (create it).
+2. Add necessary imports: `jax`, `jax.numpy as jnp`, `equinox as eqx`, `jaxtyping` imports (`Float`, `Array`, `PRNGKeyArray`, `jaxtyped`), `beartype`, and `typing.Tuple`.
+3. Define `class StructuredPrecisionEBM(eqx.Module):`
+4. This class should mimic `PrecisionWeightedEBM` but predict a structured precision matrix: $\Pi(x) = \text{diag}(\mathbf{v}(x)) + \mathbf{U}(x) \mathbf{U}(x)^T$.
+5. Add attributes: `mlp: eqx.nn.MLP`, `energy_head: eqx.nn.Linear`, `diag_head: eqx.nn.Linear`, `low_rank_head: eqx.nn.Linear`, `d_state: int = eqx.field(static=True)`, `rank: int = eqx.field(static=True)`, `epsilon: float = eqx.field(static=True)`.
+6. The constructor `__init__(self, d_state: int, hidden_size: int, depth: int, key: PRNGKeyArray, rank: int = 4, epsilon: float = 1e-4)` should initialize:
+   - `self.d_state = d_state`, `self.rank = rank`, `self.epsilon = epsilon`.
+   - Split `key` into 4 keys (`key_mlp`, `key_energy`, `key_diag`, `key_low_rank`).
+   - `self.mlp` as `eqx.nn.MLP(in_size=d_state, out_size=hidden_size, width_size=hidden_size, depth=depth, activation=jax.nn.gelu, key=key_mlp)`.
+   - `self.energy_head` as `eqx.nn.Linear(hidden_size, 1, key=key_energy)`.
+   - `self.diag_head` as `eqx.nn.Linear(hidden_size, d_state, key=key_diag)`.
+   - `self.low_rank_head` as `eqx.nn.Linear(hidden_size, d_state * rank, key=key_low_rank)`.
+7. The `__call__(self, x: Float[Array, "d_state"]) -> Tuple[Float[Array, ""], Float[Array, "d_state d_state"]]` method should:
+   - Run `h = self.mlp(x)`.
+   - Compute `energy`: `energy_raw = self.energy_head(h)`, `e_mlp = jnp.squeeze(jax.nn.softplus(energy_raw))`, `e_prior = 0.5 * 0.001 * jnp.sum(x**2)`, `energy = e_prior + e_mlp`.
+   - Compute the diagonal: `v_diag = jax.nn.softplus(self.diag_head(h)) + self.epsilon`.
+   - Compute the low-rank component: `U = self.low_rank_head(h).reshape((self.d_state, self.rank))`.
+   - Construct and return the dense representation (we materialize it here for backward compatibility with the current ODE unroller, but the parameter footprint is drastically reduced): `precision = jnp.diag(v_diag) + U @ U.T`.
+   - Return `energy, precision`.
