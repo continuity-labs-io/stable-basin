@@ -7,7 +7,7 @@ experiment:
 
 dataset:
   name: "killifish"
-  metadata_csv: "data/killifish/data/a1_20241119/26441580/df_reformat_10_20241119.csv"
+  metadata_csv: "data/killifish/data/a1_20241119/26441580/df_reformat_10_20241119_join_edit.csv"
   kinematics_dir: "data/killifish/data/p3_20230526/test/standardization/"
   sequence_length: 100
   batch_size: 2

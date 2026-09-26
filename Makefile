@@ -74,19 +74,19 @@ ssm-experiments: baseline extrapolation density-sweep loss-ablation clinical-dia
 
 .PHONY: aging-resilience-baseline
 aging-resilience-baseline:
-	python -m src.benchmarks.aging_resilience.01_baseline_metrics
+	python -m src.benchmarks.aging_resilience.01_baseline_metrics --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-ssm
 aging-resilience-ssm:
-	python -m src.benchmarks.aging_resilience.02_aging_ssm
+	python -m src.benchmarks.aging_resilience.02_aging_ssm --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-transformer
 aging-resilience-transformer:
-	python -m src.benchmarks.aging_resilience.03_aging_transformer
+	python -m src.benchmarks.aging_resilience.03_aging_transformer --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-optune
 aging-resilience-optune:
-	python -m src.benchmarks.aging_resilience.04_optune_ebm_architecture
+	python -m src.benchmarks.aging_resilience.04_optune_ebm_architecture --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-ebm
 aging-resilience-ebm:
@@ -94,7 +94,7 @@ aging-resilience-ebm:
 
 .PHONY: aging-resilience-infer-lambda
 aging-resilience-infer-lambda:
-	python -m src.benchmarks.aging_resilience.06_infer_biological_lambda
+	python -m src.benchmarks.aging_resilience.06_infer_biological_lambda --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-intervention
 aging-resilience-intervention:
@@ -110,7 +110,7 @@ aging-resilience-pharmacology:
 
 .PHONY: aging-resilience-animate
 aging-resilience-animate:
-	python -m src.benchmarks.aging_resilience.10_animate
+	python -m src.benchmarks.aging_resilience.10_animate --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-null-control
 aging-resilience-null-control:

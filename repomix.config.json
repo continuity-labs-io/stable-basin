@@ -1,10 +1,16 @@
 {
     "output": {
-        "filePath": "cache/stable-basin-repomix.xml"
+        "filePath": "output/stable-basin-repomix.xml"
     },
     "include": [
         "src/**/*.py",
         "Makefile",
         "*.md"
-    ]
+    ],
+    "ignore": {
+        "customPatterns": [
+            "src/demo/**/*.py",
+            "src/icebox/**/*.py"
+        ]
+    }
 }
