@@ -10,7 +10,7 @@ import logging
 from torch.utils.data import DataLoader
 import torch
 
-from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset
+from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 from src.data.datasets import JAXDictDataset
 from src.benchmarks.worm_gait.core import build_graph
 from src.echo.primitives.ebm import PrecisionWeightedEBM
@@ -145,21 +145,11 @@ def main():
     key = jax.random.PRNGKey(seed)
     dt = config.get("experiment", {}).get("dt", 0.01)
 
-    logger.info("Loading Old Worm dataset...")
-    seq_len = 100
-    try:
-        eval_old_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, inject_synthetic_degradation=True
-        )
-    except FileNotFoundError:
-        logger.error("Biological data not found. Ensure EigenWorms_TEST.ts exists.")
-        return
-
     key, subkey = jax.random.split(key)
     dummy_graph, d_state = build_graph(PrecisionWeightedEBM, subkey, config)
 
-    dataset = JAXDictDataset(eval_old_dataset_raw, d_state)
-    loader = DataLoader(dataset, batch_size=8, shuffle=True)
+    task = get_benchmark_task(config)
+    _, _, loader = task.get_dataloaders(config, d_state, batch_size=8)
 
     model_path = "output/benchmarks/worm_gait/05_worm_gait_decline_trained_engine.eqx"
     if not os.path.exists(model_path):
@@ -176,7 +166,7 @@ def main():
     logger.info("Starting inference optimization for log_lambda...")
     
     epochs = 30
-    wandb.init(project="worm_gait", name="06_infer_biological_lambda")
+    wandb.init(project="stable_basin_aging", group=config.get("dataset", {}).get("name", "worm_gait"), name="06_infer_biological_lambda")
     for epoch in range(epochs):
         epoch_loss = 0.0
         batches = 0

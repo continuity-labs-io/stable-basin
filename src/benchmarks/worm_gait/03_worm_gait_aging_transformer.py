@@ -11,29 +11,26 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor
-from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset
+from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 from src.core.substrate import get_optimal_device
 
 def main():
     device = get_optimal_device()
     print(f"Using device: {device}")
 
+    config = {"dataset": {"name": "worm_gait"}}
+    task = get_benchmark_task(config)
+
     # 1. Architecture
     model = SensorFusionPredictor(
         ssm_type="causal_transformer",
-        modality_dims=[6],
+        modality_dims=[task.d_sensory],
         d_model=64,
-        out_dim=6
+        out_dim=task.d_sensory
     ).to(device)
     
     # 2. Data
-    train_dataset = RealEigenwormDataset("data/worm/EigenWorms_TRAIN.ts", seq_len=100, inject_synthetic_degradation=False)
-    young_eval_dataset = RealEigenwormDataset("data/worm/EigenWorms_TEST.ts", seq_len=100, inject_synthetic_degradation=False)
-    old_eval_dataset = RealEigenwormDataset("data/worm/EigenWorms_TEST.ts", seq_len=100, inject_synthetic_degradation=True)
-    
-    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
-    young_eval_loader = DataLoader(young_eval_dataset, batch_size=8, shuffle=False)
-    old_eval_loader = DataLoader(old_eval_dataset, batch_size=8, shuffle=False)
+    train_loader, young_eval_loader, old_eval_loader = task.get_dataloaders(config, None, 8)
     
     # 3. Objective (Next-Step Forecasting)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
@@ -109,7 +106,7 @@ def main():
         "old_mse_std": float(np.std(old_mses))
     }
     
-    wandb.init(project="worm_gait", name="03_aging_transformer", config=metrics)
+    wandb.init(project="stable_basin_aging", group=config.get("dataset", {}).get("name", "worm_gait"), name="03_aging_transformer", config=metrics)
     wandb.log(metrics)
     
     with open(os.path.join(out_dir, "03_baseline_transformer_metrics.json"), "w") as f:

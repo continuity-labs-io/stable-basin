@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import energy_distance
 
-from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
+from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.echo.primitives.ebm import PrecisionWeightedEBM
@@ -47,18 +47,16 @@ def run_experiment(graph, x0, key, config):
 def calculate_metrics(graph, traj_A_batch, traj_B_batch, config):
     logger.info("Computing energy distance rescue metric R(lambda).")
     
-    # Load clean biological data Y
-    dataset_path = config["dataset"].get("intervention_path", "data/worm/EigenWorms_TEST.ts")
-    try:
-        ds_young = RealEigenwormDataset(data_path=dataset_path, seq_len=1000, inject_synthetic_degradation=False)
-        # Flatten the sensory dimensions (0-5) across the dataset sequences
-        # ds_young.data shape: [num_sequences, seq_len, 6] (assuming 6 is the original dimension, which aligns with d_sensory)
-        import torch
-        Y = torch.cat(ds_young.data).numpy().flatten()
-    except FileNotFoundError:
-        logger.warning(f"Biological data not found at {dataset_path}, falling back to synthetic mock data.")
-        ds_young = SyntheticWormMockDataset(seq_len=1000, num_samples=5)
-        Y = np.stack([ds_young[i][0].numpy() for i in range(5)]).flatten()
+    task = get_benchmark_task(config)
+    _, young_eval_loader, _ = task.get_dataloaders(config, None, batch_size=8)
+    
+    Y_list = []
+    for batch in young_eval_loader:
+        if isinstance(batch, dict) and "s_true" in batch:
+            Y_list.append(batch["s_true"].numpy().flatten())
+        else:
+            Y_list.append(batch.numpy().flatten())
+    Y = np.concatenate(Y_list)
 
     d_internal = graph.hull.d_internal
     d_sensory = graph.hull.d_sensory
@@ -188,7 +186,7 @@ def main():
     else:
         logger.warning(f"Inferred lambda not found at {inferred_lambda_path}, falling back to config.")
 
-    wandb.init(project="worm_gait", name="07_worm_gait_intervention", config=config)
+    wandb.init(project="stable_basin_aging", group=config.get("dataset", {}).get("name", "worm_gait"), name="07_worm_gait_intervention", config=config)
     
     # Establish lineage
     weights_path = config["paths"]["model_weights"]

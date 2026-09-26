@@ -49,7 +49,7 @@ def main():
     max_rescue_r = R_values[max_idx]
     logger.info(f"Optimal Lambda: {optimal_lambda:.4f}, Max Rescue R: {max_rescue_r:.4f}")
 
-    wandb.init(project="worm_gait", name="09_pharmacological_translation", config=config)
+    wandb.init(project="stable_basin_aging", group=config.get("dataset", {}).get("name", "worm_gait"), name="09_pharmacological_translation", config=config)
 
     # 3. Serialization
     output_metrics = "output/benchmarks/worm_gait/09_clinical_translation_metrics.json"

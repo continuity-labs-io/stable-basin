@@ -16,7 +16,7 @@ import numpy as np
 import equinox as eqx
 
 from src.benchmarks.worm_gait.core import build_graph, get_full_states, compute_full_trace, compute_metrics, run_aging_experiment
-from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
+from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.data.datasets import JAXDictDataset
@@ -113,34 +113,13 @@ def main():
     torch.manual_seed(seed)
     key = jax.random.PRNGKey(seed)
 
-    try:
-        seq_len = config["dataset"]["ebm_seq_len"]
-        train_young_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=seq_len, inject_synthetic_degradation=False
-        )
-        eval_young_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, inject_synthetic_degradation=False
-        )
-        eval_old_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, inject_synthetic_degradation=True
-        )
-    except FileNotFoundError:
-        logger.warning("Local biological data not found. Falling back to SyntheticWormMockDataset.")
-        train_young_dataset_raw = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
-        eval_young_dataset_raw = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
-        eval_old_dataset_raw = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
-
     # Determine d_state
     _, d_state = build_graph(IdentityPrecisionEBM, key, config)
 
-    train_young_dataset = JAXDictDataset(train_young_dataset_raw, d_state)
-    eval_young_dataset = JAXDictDataset(eval_young_dataset_raw, d_state)
-    eval_old_dataset = JAXDictDataset(eval_old_dataset_raw, d_state)
-
+    task = get_benchmark_task(config)
     batch_size = config.get("dataset", {}).get("batch_size", 2)
-    train_young_loader = DataLoader(train_young_dataset, batch_size=batch_size, shuffle=True)
-    eval_young_loader = DataLoader(eval_young_dataset, batch_size=batch_size, shuffle=False)
-    eval_old_loader = DataLoader(eval_old_dataset, batch_size=batch_size, shuffle=False)
+    train_young_loader, eval_young_loader, eval_old_loader = task.get_dataloaders(config, d_state, batch_size)
+    _, eval_young_dataset_raw, eval_old_dataset_raw = task.get_raw_datasets(config)
 
     key, kA = jax.random.split(key)
     metrics_A, trace_young_A, trace_old_A, graph_A = run_aging_experiment(

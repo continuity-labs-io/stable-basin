@@ -13,7 +13,7 @@ from optuna.integration.wandb import WeightsAndBiasesCallback
 import copy
 import wandb
 from src.benchmarks.worm_gait.core import run_aging_experiment, build_graph
-from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
+from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
 from src.data.datasets import JAXDictDataset
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 
@@ -90,43 +90,20 @@ def main():
     key = jax.random.PRNGKey(seed)
 
     # Load dataset once
-    seq_len = base_config["dataset"]["ebm_seq_len"]
-    try:
-        train_young_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TRAIN.ts", seq_len=seq_len, inject_synthetic_degradation=False
-        )
-        eval_young_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, inject_synthetic_degradation=False
-        )
-        eval_old_dataset_raw = RealEigenwormDataset(
-            data_path="data/worm/EigenWorms_TEST.ts", seq_len=seq_len, inject_synthetic_degradation=True
-        )
-        logger.info("Loaded RealEigenwormDataset")
-    except FileNotFoundError:
-        logger.warning("Local biological data not found. Falling back to SyntheticWormMockDataset.")
-        train_young_dataset_raw = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
-        eval_young_dataset_raw = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
-        eval_old_dataset_raw = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
-
     # We need d_state which can be calculated using IdentityPrecisionEBM or PrecisionWeightedEBM
     IdentityPrecisionEBM = benchmark_module.IdentityPrecisionEBM
     _, d_state = build_graph(IdentityPrecisionEBM, key, base_config)
 
-    train_young_dataset = JAXDictDataset(train_young_dataset_raw, d_state)
-    eval_young_dataset = JAXDictDataset(eval_young_dataset_raw, d_state)
-    eval_old_dataset = JAXDictDataset(eval_old_dataset_raw, d_state)
-
+    task = get_benchmark_task(base_config)
     batch_size = base_config.get("dataset", {}).get("batch_size", 2)
-    train_young_loader = DataLoader(train_young_dataset, batch_size=batch_size, shuffle=True)
-    eval_young_loader = DataLoader(eval_young_dataset, batch_size=batch_size, shuffle=False)
-    eval_old_loader = DataLoader(eval_old_dataset, batch_size=batch_size, shuffle=False)
+    train_young_loader, eval_young_loader, eval_old_loader = task.get_dataloaders(base_config, d_state, batch_size)
 
     study = optuna.create_study(direction="maximize", study_name="worm_gait_aging_ebm")
 
     # 1 hour timeout limit
     timeout_seconds = 3600
 
-    wandb_kwargs = {"project": "worm_gait"}
+    wandb_kwargs = {"project": "stable_basin_aging", "group": base_config.get("dataset", {}).get("name", "worm_gait")}
     wandbc = WeightsAndBiasesCallback(metric_name="score", wandb_kwargs=wandb_kwargs)
 
     n_trials = base_config.get("experiment", {}).get("optuna_n_trials", 2)
