@@ -15,7 +15,7 @@ preflight: lint-pytorch
 	pytest
 
 audit:
-	python tools/multi_agent_auditor.py --mode "repo"
+	python tools/code_auditor/multi_agent_auditor.py --mode "repo"
 
 coverage:
 	@echo "Running unit tests with coverage analysis..."
@@ -26,7 +26,7 @@ coverage:
 PAPER ?= sharpening_the_tack
 
 paper:
-	python tools/compile_paper.py --paper $(PAPER)
+	python tools/paper/compile_paper.py --paper $(PAPER)
 	cd paper/$(PAPER) && pdflatex -interaction=batchmode $(PAPER).tex
 
 

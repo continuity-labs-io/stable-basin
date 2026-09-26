@@ -6,7 +6,7 @@ import subprocess
 from google import genai
 from google.genai import types
 
-from personas import PHYSICIST_PROMPT, ARCHITECT_PROMPT, STRATEGIC_LEAD_PROMPT
+from tools.code_auditor.personas import PHYSICIST_PROMPT, ARCHITECT_PROMPT, STRATEGIC_LEAD_PROMPT
 
 
 class MultiAgentAuditor:

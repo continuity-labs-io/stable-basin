@@ -9,7 +9,7 @@ import logging
 import argparse
 import math
 from pathlib import Path
-from llm_ghostwriter import LLMGhostwriter
+from tools.paper.llm_ghostwriter import LLMGhostwriter
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

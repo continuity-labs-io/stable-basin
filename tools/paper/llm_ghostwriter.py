@@ -31,7 +31,7 @@ class LLMGhostwriter:
         """
         if model is None:
             try:
-                from genai_client import get_client, get_best_model
+                from tools.genai_client import get_client, get_best_model
                 client = get_client()
                 model = get_best_model(client)
             except Exception as e:
