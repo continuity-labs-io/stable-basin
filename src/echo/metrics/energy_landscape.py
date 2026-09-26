@@ -41,9 +41,11 @@ from __future__ import annotations
 
 from typing import Callable, Dict, Literal
 
+from beartype import beartype
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from jaxtyping import Array, Float, PRNGKeyArray, jaxtyped
 import numpy as np
 
 __all__ = [
@@ -52,6 +54,8 @@ __all__ = [
     "hessian_trace",
     "batch_calculate_curvature",
     "batch_hessian_trace",
+    "hutchinson_hessian_trace",
+    "batch_hutchinson_trace",
     "curvature_over_states",
 ]
 
@@ -131,6 +135,41 @@ def batch_hessian_trace(energy_fn: Callable, x_seq: jax.Array) -> jax.Array:
     return jax.vmap(lambda x: jnp.trace(_hessian(energy_fn, x)))(x_seq)
 
 
+@eqx.filter_jit
+@jaxtyped(typechecker=beartype)
+def hutchinson_hessian_trace(
+    energy_fn: Callable, x: Float[Array, " d_state"], key: PRNGKeyArray, n_probes: int = 15
+) -> Float[Array, ""]:
+    """Matrix-free Hessian trace estimation using Hutchinson's method."""
+    grad_fn = jax.grad(energy_fn)
+    keys = jax.random.split(key, n_probes)
+    
+    def generate_rademacher(k):
+        if hasattr(jax.random, "rademacher"):
+            return jax.random.rademacher(k, x.shape, dtype=x.dtype)
+        else:
+            return jax.random.choice(k, jnp.array([-1.0, 1.0], dtype=x.dtype), shape=x.shape)
+            
+    zs = jax.vmap(generate_rademacher)(keys)
+    
+    def hvp(z_i):
+        _, hvp_out = jax.jvp(grad_fn, (x,), (z_i,))
+        return jnp.dot(z_i, hvp_out)
+        
+    trace_estimates = jax.vmap(hvp)(zs)
+    return jnp.mean(trace_estimates)
+
+
+@eqx.filter_jit
+@jaxtyped(typechecker=beartype)
+def batch_hutchinson_trace(
+    energy_fn: Callable, x_seq: Float[Array, "batch d_state"], key: PRNGKeyArray, n_probes: int = 15
+) -> Float[Array, " batch"]:
+    """Vmapped batch version of Hutchinson's trace estimator."""
+    keys = jax.random.split(key, x_seq.shape[0])
+    return jax.vmap(lambda x, k: hutchinson_hessian_trace(energy_fn, x, k, n_probes))(x_seq, keys)
+
+
 def curvature_over_states(
     energy_fn: Callable,
     states,
@@ -139,6 +178,9 @@ def curvature_over_states(
     full_spectrum: bool = False,
     nonfinite: Literal["drop", "keep", "raise"] = "drop",
     rank_tol: float = 1e-4,
+    estimator: Literal["exact_hessian", "hutchinson"] = "exact_hessian",
+    hutchinson_key: PRNGKeyArray | None = None,
+    hutchinson_probes: int = 15,
 ) -> Dict[str, np.ndarray | int]:
     """
     Curvature over many states, in fixed-shape chunks, returned as NumPy.
@@ -174,7 +216,15 @@ def curvature_over_states(
         if full_spectrum:
             res = batch_calculate_curvature(energy_fn, chunk, rank_tol)
         else:
-            res = {"hessian_trace": batch_hessian_trace(energy_fn, chunk)}
+            if estimator == "exact_hessian":
+                res = {"hessian_trace": batch_hessian_trace(energy_fn, chunk)}
+            elif estimator == "hutchinson":
+                if hutchinson_key is None:
+                    raise ValueError("hutchinson_key must be provided when using hutchinson estimator.")
+                chunk_key, hutchinson_key = jax.random.split(hutchinson_key)
+                res = {"hessian_trace": batch_hutchinson_trace(energy_fn, chunk, chunk_key, hutchinson_probes)}
+            else:
+                raise ValueError(f"Unknown estimator: {estimator!r}")
         pieces.append({k: np.asarray(v)[:m] for k, v in res.items()})
 
     out: Dict[str, np.ndarray | int] = {k: np.concatenate([p[k] for p in pieces]) for k in pieces[0]}
