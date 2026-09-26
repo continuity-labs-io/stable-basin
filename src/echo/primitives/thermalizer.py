@@ -1,4 +1,4 @@
-from jaxtyping import PRNGKeyArray
+from jaxtyping import Float, Array, PRNGKeyArray
 from jaxtyping import jaxtyped
 from beartype import beartype
 import jax
@@ -178,8 +178,8 @@ class TorxThermalizer(eqx.Module):
     @eqx.filter_jit
     @jaxtyped(typechecker=beartype)
     def __call__(
-        self, key: PRNGKeyArray, x_init: jax.Array, dt: float, factor_params: dict | None = None
-    ) -> jax.Array:
+        self, key: PRNGKeyArray, x_init: Float[Array, "d_state"], dt: float, factor_params: dict | None = None
+    ) -> Float[Array, "d_state"]:
         """
         Executes the unrolled simulation.
         """
@@ -218,14 +218,14 @@ class ForcedTorxThermalizer(eqx.Module):
     def __call__(
         self,
         key: PRNGKeyArray,
-        x_init: jax.Array,
+        x_init: Float[Array, "d_state"],
         dt: float,
-        seq: jax.Array | None = None,
-        omega_seq: jax.Array | None = None,
+        seq: Float[Array, "seq_len d_seq"] | None = None,
+        omega_seq: Float[Array, "seq_len d_omega"] | None = None,
         q_gain: float = 0.0,
-        q_mask: jax.Array | None = None,
+        q_mask: Float[Array, "d_state"] | None = None,
         factor_params: dict | None = None,
-    ) -> jax.Array:
+    ) -> Float[Array, "seq_len d_state"]:
         """
         Executes the unrolled simulation with external forcing and closed-loop control.
         """

@@ -1,7 +1,8 @@
-from jaxtyping import jaxtyped
+from jaxtyping import Float, jaxtyped
 from beartype import beartype
 import torch
 import torch.nn as nn
+from torch import Tensor
 from src.models.encoders.orthogonal_modality_encoder import OrthogonalModalityEncoder
 from src.models.ssm.baseline_ssm import BaselineSSM
 from src.models.ssm.masr_ssm import MaskAwareSSM
@@ -87,7 +88,9 @@ class SensorFusionPredictor(nn.Module):
         self.readout = nn.Linear(d_model, out_dim)
 
     @jaxtyped(typechecker=beartype)
-    def forward(self, x_raw: torch.Tensor, mask: Optional[torch.Tensor] = None):
+    def forward(
+        self, x_raw: Float[Tensor, "batch seq dim"], mask: Float[Tensor, "batch seq mask_dim"] | None = None
+    ) -> tuple[Float[Tensor, "batch seq out_dim"], Float[Tensor, "batch seq d_model"], Float[Tensor, "batch seq dim"] | None]:
         reconstructed_t = None
         if self.ssm_type == "forward_fill_ssm":
             # Apply Forward-Fill (Hold-Last-Value) to the sparse modality
@@ -141,7 +144,10 @@ class SensorFusionPredictor(nn.Module):
         preds = self.readout(h)
         return preds, h, reconstructed_t
 
-    def get_hidden_states(self, x, mask=None):
+    @jaxtyped(typechecker=beartype)
+    def get_hidden_states(
+        self, x: Float[Tensor, "batch seq dim"], mask: Float[Tensor, "batch seq mask_dim"] | None = None
+    ) -> Float[Tensor, "batch seq d_model"]:
         """Convenience method for cleanly extracting the thermodynamic manifold."""
         _, hidden_states, _ = self.forward(x, mask=mask)
         return hidden_states

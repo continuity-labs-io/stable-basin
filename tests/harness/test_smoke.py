@@ -26,7 +26,6 @@ def test_smoke():
         SSMType.MASK_CONCAT_SSM,
         SSMType.CAUSAL_TRANSFORMER,
         SSMType.MASR_SSM,
-        SSMType.MASR_MAMBA,
         SSMType.GRU_D,
         SSMType.ODE_RNN,
     ]

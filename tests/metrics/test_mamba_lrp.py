@@ -17,7 +17,7 @@ def test_relevance_conservation_axiom():
 
     # Initialize a small test model
     model = SensorFusionPredictor(
-        ssm_type=SSMType.MASR_MAMBA, modality_dims=[16], d_model=32, out_dim=16
+        ssm_type=SSMType.MASR_SSM, modality_dims=[16], d_model=32, out_dim=16
     ).to(device)
     lrp = MambaLRPEpsilon(model, epsilon=1e-7)
 

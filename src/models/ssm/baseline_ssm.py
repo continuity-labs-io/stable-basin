@@ -51,17 +51,16 @@ class BaselineSSM(nn.Module):
 
         A = self.A_init()
 
+        # Vectorized precomputation over the entire sequence
+        dt = torch.nn.functional.softplus(self.dt_proj(latent_x))
+        B = self.B_proj(latent_x)
+
+        A_bar = torch.exp(A * dt)
+        B_bar = (A_bar - 1.0) / (A - 1e-8) * B
+
         hidden_states = []
         for t in range(seq_len):
-            x_t = latent_x[:, t, :]
-
-            dt = torch.nn.functional.softplus(self.dt_proj(x_t))
-            B = self.B_proj(x_t)
-
-            A_bar = torch.exp(A * dt)
-            B_bar = (A_bar - 1.0) / (A - 1e-8) * B
-
-            h_prev = A_bar * h_prev + B_bar
+            h_prev = A_bar[:, t, :] * h_prev + B_bar[:, t, :]
             hidden_states.append(h_prev)
 
         return torch.stack(hidden_states, dim=1)

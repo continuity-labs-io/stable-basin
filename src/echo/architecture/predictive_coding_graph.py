@@ -1,4 +1,4 @@
-from jaxtyping import PRNGKeyArray
+from jaxtyping import Float, Array, PRNGKeyArray
 from jaxtyping import jaxtyped
 from beartype import beartype
 import jax
@@ -24,7 +24,7 @@ class JointEBM(eqx.Module):
     d_micro: int = eqx.field(static=True)
 
     @jaxtyped(typechecker=beartype)
-    def __call__(self, x):
+    def __call__(self, x: Float[Array, "d_state"]) -> tuple[Float[Array, ""], Float[Array, "d_state d_state"]]:
         E = self.flow_factor.joint_energy_fn(x[: self.d_micro], x[self.d_micro :])
         return E, jnp.eye(x.shape[0])
 
@@ -104,23 +104,24 @@ class PredictiveCodingGraph(eqx.Module):
         return JointEBM(flow_factor=self.flow_factor, d_micro=self.d_micro)
 
     @jaxtyped(typechecker=beartype)
-    def __call__(self, key: PRNGKeyArray, x_init: jax.Array, dt: float) -> jax.Array:
+    def __call__(self, key: PRNGKeyArray, x_init: Float[Array, "d_state"], dt: float) -> Float[Array, "d_state"]:
         """
         Executes the unrolled joint simulation over n_steps.
         """
         factor_params = self.thermalizer.graph.sites[0].factor.base.precompute()
         return self.thermalizer(key, x_init, dt, factor_params=factor_params)
 
+    @jaxtyped(typechecker=beartype)
     def forced_unroll(
         self,
         key: PRNGKeyArray,
-        x_init: jax.Array,
+        x_init: Float[Array, "d_state"],
         dt: float,
-        seq: jax.Array | None = None,
-        omega_seq: jax.Array | None = None,
+        seq: Float[Array, "seq_len d_seq"] | None = None,
+        omega_seq: Float[Array, "seq_len d_omega"] | None = None,
         q_gain: float = 0.0,
-        q_mask: jax.Array | None = None,
-    ) -> jax.Array:
+        q_mask: Float[Array, "d_state"] | None = None,
+    ) -> Float[Array, "seq_len d_state"]:
         """
         Executes the unrolled joint simulation over an external sequence.
         """

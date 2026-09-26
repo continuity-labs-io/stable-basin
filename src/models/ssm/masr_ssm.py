@@ -60,21 +60,19 @@ class MaskAwareSSM(nn.Module):
 
         A = self.A_init()
 
+        # Vectorized precomputation over the entire sequence
+        dt_base = torch.nn.functional.softplus(self.dt_proj(latent_x))
+        B_base = self.B_proj(latent_x)
+
+        dt_gated, B = self._apply_masking(dt_base, B_base, latent_gate)
+
+        # Resumed SSM update
+        A_bar = torch.exp(A * dt_gated)
+        B_bar = (A_bar - 1.0) / (A - 1e-8) * B
+
         hidden_states = []
         for t in range(seq_len):
-            x_t = latent_x[:, t, :]
-            g_t = latent_gate[:, t, :]
-
-            dt_base = torch.nn.functional.softplus(self.dt_proj(x_t))
-            B_base = self.B_proj(x_t)
-
-            dt_gated, B = self._apply_masking(dt_base, B_base, g_t)
-
-            # Resumed SSM update
-            A_bar = torch.exp(A * dt_gated)
-            B_bar = (A_bar - 1.0) / (A - 1e-8) * B
-
-            h_prev = A_bar * h_prev + B_bar
+            h_prev = A_bar[:, t, :] * h_prev + B_bar[:, t, :]
             hidden_states.append(h_prev)
 
         return torch.stack(hidden_states, dim=1)

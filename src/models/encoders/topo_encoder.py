@@ -36,7 +36,9 @@ class TopoEncoder(nn.Module):
         )
 
     @jaxtyped(typechecker=beartype)
-    def forward(self, x: Float[Tensor, "batch time 2 64 64"], return_hidden: bool = False):
+    def forward(
+        self, x: Float[Tensor, "batch time 2 64 64"], return_hidden: bool = False
+    ) -> Float[Tensor, "batch d_model"] | tuple[Float[Tensor, "batch d_model"], Float[Tensor, "batch time d_model"]]:
         """
         Args:
             x: Tensor of shape [Batch, Time, 2, 64, 64] representing the E-field flow
