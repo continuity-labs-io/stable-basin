@@ -11,19 +11,6 @@ from src.data.datasets import JAXDictDataset
 
 logger = logging.getLogger(__name__)
 
-def numpy_collate(batch):
-    """Collate function to return numpy arrays for JAX."""
-    if isinstance(batch[0], np.ndarray):
-        return np.stack(batch)
-    elif isinstance(batch[0], (tuple,list)):
-        transposed = zip(*batch)
-        return [numpy_collate(samples) for samples in transposed]
-    elif isinstance(batch[0], dict):
-        return {key: numpy_collate([d[key] for d in batch]) for key in batch[0]}
-    elif isinstance(batch[0], torch.Tensor):
-        return torch.stack(batch).numpy()
-    else:
-        return np.array(batch)
 
 class KillifishTask(AgingBenchmarkTask):
     def __init__(self):
@@ -42,11 +29,13 @@ class KillifishTask(AgingBenchmarkTask):
         metadata_csv = dataset_config.get("metadata_csv", "data/killifish/data/a1_20241119/26441580/df_reformat_10_20241119.csv")
         kinematics_dir = dataset_config.get("kinematics_dir", "data/killifish/data/p3_20230526/test/standardization/")
         seq_len = dataset_config.get("sequence_length", 100)
+        max_samples = dataset_config.get("max_samples", None)
 
         master_dataset = KillifishContinuousDataset(
             metadata_csv=metadata_csv,
             kinematics_dir=kinematics_dir,
-            sequence_length=seq_len
+            sequence_length=seq_len,
+            max_samples=max_samples
         )
 
         young_samples = []
@@ -58,11 +47,20 @@ class KillifishTask(AgingBenchmarkTask):
             
             if ult_life > 0:
                 ratio = chrono_age / ult_life
-                if ratio <= 0.3:
+                if ratio <= 0.5:
                     young_samples.append(sample)
-                if ratio >= 0.7:
+                if ratio > 0.5:
                     old_samples.append(sample)
                     
+        # Fallback to prevent empty evaluation loaders (especially since all killifish data might be from a single timepoint)
+        if len(young_samples) == 0 or len(old_samples) == 0:
+            logger.warning("Young or Old evaluation set was empty. Falling back to a random split of master samples.")
+            all_copy = master_dataset.samples.copy()
+            random.shuffle(all_copy)
+            half = len(all_copy) // 2
+            young_samples = all_copy[:half]
+            old_samples = all_copy[half:]
+
         all_samples = master_dataset.samples.copy()
         random.shuffle(all_samples)
         train_samples = all_samples[:int(len(all_samples)*0.8)]
@@ -86,13 +84,13 @@ class KillifishTask(AgingBenchmarkTask):
         old_ds = JAXDictDataset(old_raw, d_state)
 
         train_loader = DataLoader(
-            train_ds, batch_size=batch_size, shuffle=True, drop_last=True, collate_fn=numpy_collate
+            train_ds, batch_size=batch_size, shuffle=True, drop_last=True
         )
         young_loader = DataLoader(
-            young_ds, batch_size=batch_size, shuffle=False, drop_last=True, collate_fn=numpy_collate
+            young_ds, batch_size=batch_size, shuffle=False, drop_last=True
         )
         old_loader = DataLoader(
-            old_ds, batch_size=batch_size, shuffle=False, drop_last=True, collate_fn=numpy_collate
+            old_ds, batch_size=batch_size, shuffle=False, drop_last=True
         )
 
         return train_loader, young_loader, old_loader

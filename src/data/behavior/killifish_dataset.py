@@ -4,6 +4,7 @@ import pandas as pd
 import h5py
 import numpy as np
 import torch
+import random
 from torch.utils.data import Dataset
 from torch import Tensor
 from jaxtyping import Float, jaxtyped
@@ -21,7 +22,8 @@ class KillifishContinuousDataset(Dataset):
         self,
         metadata_csv: str = "data/killifish/data/a1_20241119/26441580/df_reformat_10_20241119.csv",
         kinematics_dir: str = "data/killifish/data/p3_20230526/test/standardization/",
-        sequence_length: int = 100
+        sequence_length: int = 100,
+        max_samples: int = None
     ):
         super().__init__()
         self.sequence_length = sequence_length
@@ -52,34 +54,47 @@ class KillifishContinuousDataset(Dataset):
         
         logger.info("Scanning for kinematic files in %s", self.kinematics_dir)
         if self.kinematics_dir.exists():
-            for h5_file in self.kinematics_dir.rglob("*.h5"):
+            h5_files = list(self.kinematics_dir.rglob("*.h5"))
+            random.shuffle(h5_files)
+            
+            for h5_file in h5_files:
+                if max_samples is not None and len(self.samples) >= max_samples:
+                    break
+                    
                 raw_fish_name = h5_file.parent.name
-                # Parse '0' from 'fish0_137'
                 if raw_fish_name.startswith("fish"):
                     fish_num = raw_fish_name.split('_')[0].replace('fish', '')
                 else:
                     fish_num = raw_fish_name
                 
                 if fish_num in self.fish_to_lifespan:
-                    # Parse features
                     features = self._load_and_normalize_h5(h5_file)
                     if features is not None and len(features) >= self.sequence_length:
-                        fish_records = self.metadata[self.metadata['fish_number'].astype(str) == fish_num]
-                        
-                        chronological_age = float(fish_records['age_days'].iloc[0]) if 'age_days' in fish_records.columns and not fish_records.empty else 0.0
+                        try:
+                            chronological_age = float(raw_fish_name.split('_')[1])
+                        except Exception:
+                            logger.warning("Could not extract chronological age from directory name: %s. Skipping this directory.", raw_fish_name)
+                            continue
+                            
                         ultimate_lifespan = self.fish_to_lifespan[fish_num]
                         
                         num_chunks = len(features) // self.sequence_length
+                        new_samples = []
                         for i in range(num_chunks):
                             start_idx = i * self.sequence_length
                             end_idx = start_idx + self.sequence_length
                             chunk = features[start_idx:end_idx]
-                            
-                            self.samples.append({
+                            new_samples.append({
                                 'trajectory_chunk': torch.tensor(chunk, dtype=torch.float32),
                                 'chronological_age': torch.tensor(chronological_age, dtype=torch.float32),
                                 'ultimate_lifespan': torch.tensor(ultimate_lifespan, dtype=torch.float32)
                             })
+                            
+                        if max_samples is not None:
+                            rem = max_samples - len(self.samples)
+                            new_samples = new_samples[:rem]
+                            
+                        self.samples.extend(new_samples)
                             
             logger.info("Constructed %d sequence chunks across all valid kinematic files.", len(self.samples))
         else:
