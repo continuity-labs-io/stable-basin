@@ -42,8 +42,9 @@ def main():
     else:
         logger.warning(f"Inferred lambda not found at {inferred_lambda_path}, falling back to config.")
 
-    wandb.init(project="stable_basin_aging", group=config.get("dataset", {}).get("name", "worm_gait"), name="08_worm_gait_lambda_sweep", config=config)
-    wandb.run.use_artifact("05_worm_gait_decline_trained_engine:latest", type="model")
+    dataset_name = config.get("dataset", {}).get("name", "worm_gait")
+    wandb_project = config.get("logging", {}).get("wandb_project", "stable_basin_aging")
+    wandb.init(project=wandb_project, group=dataset_name, name="08_lambda_sweep", config=config)
 
     graph, x0, key = setup_experiment(config)
 
@@ -66,7 +67,7 @@ def main():
         return np.array(sensory).flatten()
 
     task = get_benchmark_task(config)
-    _, young_eval_loader, _ = task.get_dataloaders(config, None, batch_size=8)
+    _, young_eval_loader, _ = task.get_dataloaders(config, None, batch_size=config.get("dataset", {}).get("batch_size", 2))
     
     Y_list = []
     for batch in young_eval_loader:

@@ -35,6 +35,7 @@ import json
 import logging
 import os
 import random
+import yaml
 
 import numpy as np
 from scipy.stats import ks_2samp, mannwhitneyu
@@ -168,18 +169,24 @@ def main():
     ap.add_argument("--max-worms", type=int, default=None, help="cap TEST worms for a quick run")
     ap.add_argument("--stub", action="store_true", help="stats plumbing test with a fake trace function; no JAX")
     args = ap.parse_args()
+    
+    with open(args.config, "r") as f:
+        config = yaml.safe_load(f)
+        
+    if args.weights == "output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx":
+        dataset_name = config.get("dataset", {}).get("name", "worm_gait")
+        args.weights = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}_trained_engine.eqx")
+        
+    if config.get("dataset", {}).get("name", "worm_gait") != "worm_gait":
+        print("Skipping null control for non-worm dataset.")
+        return
 
     if 1.0 not in args.severities:
         args.severities = [1.0] + list(args.severities)
     severities = sorted(set(args.severities))
     pair = tuple(args.pair)
 
-    config = {}
-    if os.path.exists(args.config):
-        import yaml
-        with open(args.config) as f:
-            config = yaml.safe_load(f)
-    elif not args.stub:
+    if not os.path.exists(args.config) and not args.stub:
         raise FileNotFoundError(args.config)
         
     task = get_benchmark_task(config)

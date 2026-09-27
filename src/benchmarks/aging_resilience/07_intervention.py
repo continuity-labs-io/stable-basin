@@ -48,7 +48,7 @@ def calculate_metrics(graph, traj_A_batch, traj_B_batch, config):
     logger.info("Computing energy distance rescue metric R(lambda).")
     
     task = get_benchmark_task(config)
-    _, young_eval_loader, _ = task.get_dataloaders(config, None, batch_size=8)
+    _, young_eval_loader, _ = task.get_dataloaders(config, None, batch_size=config.get("dataset", {}).get("batch_size", 2))
     
     Y_list = []
     for batch in young_eval_loader:
@@ -186,11 +186,12 @@ def main():
     else:
         logger.warning(f"Inferred lambda not found at {inferred_lambda_path}, falling back to config.")
 
-    wandb.init(project="stable_basin_aging", group=config.get("dataset", {}).get("name", "worm_gait"), name="07_worm_gait_intervention", config=config)
+    dataset_name = config.get("dataset", {}).get("name", "worm_gait")
+    wandb_project = config.get("logging", {}).get("wandb_project", "stable_basin_aging")
+    wandb.init(project=wandb_project, group=dataset_name, name="07_intervention", config=config)
     
     # Establish lineage
     weights_path = config["paths"]["model_weights"]
-    wandb.run.use_artifact("05_worm_gait_decline_trained_engine:latest", type="model")
 
     graph, x0, key = setup_experiment(config)
 

@@ -153,9 +153,10 @@ def main():
     dummy_graph, d_state = build_graph(subkey, config)
 
     task = get_benchmark_task(config)
-    _, _, loader = task.get_dataloaders(config, d_state, batch_size=8)
+    _, _, loader = task.get_dataloaders(config, d_state, batch_size=config.get("dataset", {}).get("batch_size", 2))
 
-    model_path = "output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx"
+    dataset_name = config.get("dataset", {}).get("name", "worm_gait")
+    model_path = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}_trained_engine.eqx")
     if not os.path.exists(model_path):
         logger.error(f"Pre-trained model not found at {model_path}. Please run benchmark 05 first.")
         return
@@ -170,7 +171,8 @@ def main():
     logger.info("Starting inference optimization for log_lambda...")
     
     epochs = 30
-    wandb.init(project="stable_basin_aging", group=config.get("dataset", {}).get("name", "worm_gait"), name="06_infer_biological_lambda")
+    wandb_project = config.get("logging", {}).get("wandb_project", "stable_basin_aging")
+    wandb.init(project=wandb_project, group=config.get("dataset", {}).get("name", "worm_gait"), name="06_infer_biological_lambda")
     for epoch in range(epochs):
         epoch_loss = 0.0
         batches = 0

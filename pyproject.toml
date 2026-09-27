@@ -6,6 +6,7 @@ dependencies = [
     "extro-torx",
     "jax",
     "jaxlib",
+    "jax-metal; sys_platform == 'darwin' and platform_machine == 'arm64'",
     "equinox",
     "optax",
     "rerun-sdk",

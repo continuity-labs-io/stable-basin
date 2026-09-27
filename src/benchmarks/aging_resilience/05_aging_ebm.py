@@ -134,21 +134,20 @@ def main():
 
     key, kB = jax.random.split(key)
     config_B = copy.deepcopy(config)
-    config_B["observer"]["micro"]["ebm_type"] = "dense"
-    config_B["observer"]["macro"]["ebm_type"] = "dense"
     metrics_B, trace_young_B, trace_old_B, graph_B = run_aging_experiment(
         config_B, kB, train_young_loader, eval_young_loader, eval_old_loader, args.config
     )
 
-    logger.info("Serializing trained Clean Baseline Worm engine to disk.")
-    os.makedirs("output/benchmarks/aging_resilience", exist_ok=True)
-    eqx.tree_serialise_leaves(
-        "output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx", graph_B
-    )
+    dataset_name = config.get("dataset", {}).get("name", "worm_gait")
+    model_path = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}_trained_engine.eqx")
+    
+    logger.info(f"Serializing trained Clean Baseline {dataset_name} engine to disk.")
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    eqx.tree_serialise_leaves(model_path, graph_B)
 
     all_metrics = {"IdentityPrecisionEBM": metrics_A, "PrecisionWeightedEBM": metrics_B}
 
-    metrics_path = "output/benchmarks/aging_resilience/05_worm_gait_metrics.json"
+    metrics_path = config.get("paths", {}).get("output_metrics", f"output/benchmarks/aging_resilience/{dataset_name}_metrics.json")
     with open(metrics_path, "w") as f:
         json.dump(all_metrics, f, indent=2)
     logger.info(f"Serialized full statistical metrics to {metrics_path}")
@@ -162,12 +161,13 @@ def main():
         trace_old_B,
     )
     
-    wandb.init(project="stable_basin_aging", group=config.get("dataset", {}).get("name", "worm_gait"), name="05_aging_ebm")
-    artifact = wandb.Artifact("05_worm_gait_decline_trained_engine", type="model")
-    artifact.add_file("output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx")
+    wandb_project = config.get("logging", {}).get("wandb_project", "stable_basin_aging")
+    wandb.init(project=wandb_project, group=dataset_name, name="05_aging_ebm")
+    artifact = wandb.Artifact(f"{dataset_name}_trained_engine", type="model")
+    artifact.add_file(model_path)
     wandb.log_artifact(artifact)
     
-    metrics_artifact = wandb.Artifact("05_worm_gait_metrics", type="metrics")
+    metrics_artifact = wandb.Artifact(f"{dataset_name}_metrics", type="metrics")
     metrics_artifact.add_file(metrics_path)
     wandb.log_artifact(metrics_artifact)
     

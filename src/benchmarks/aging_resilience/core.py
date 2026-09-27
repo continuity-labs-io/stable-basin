@@ -181,9 +181,15 @@ def setup_experiment(config):
     
     sample = eval_old_dataset_raw[0]
     if isinstance(sample, (tuple, list)):
-        bio_frame = sample[0].numpy()
+        bio_seq = sample[0]
+    elif isinstance(sample, dict):
+        bio_seq = sample.get("x_init", list(sample.values())[0])
     else:
-        bio_frame = sample.numpy()
+        bio_seq = sample
+    
+    bio_frame = bio_seq[0].numpy() if hasattr(bio_seq, "numpy") else np.array(bio_seq[0])
+    if bio_frame.ndim > 1:
+        bio_frame = bio_frame[0]
         
     logger.info("Extracting pathological initial state (x0) from 'Old' fallback.")
     x0_noise = jax.random.normal(k4, (d_full,)) * 2.0

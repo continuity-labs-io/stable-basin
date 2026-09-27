@@ -28,7 +28,7 @@ def main():
     task = get_benchmark_task(config)
 
     # 2. Data
-    train_loader, young_eval_loader, old_eval_loader = task.get_dataloaders(config, None, 8)
+    train_loader, young_eval_loader, old_eval_loader = task.get_dataloaders(config, None, config.get("dataset", {}).get("batch_size", 2))
 
     # 1. Architecture
     model = SensorFusionPredictor(
