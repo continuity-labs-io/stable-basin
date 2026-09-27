@@ -17,7 +17,7 @@ import wandb
 
 from src.data.waddington_dataset import SyntheticWaddingtonDataset
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
-from src.core.substrate import get_optimal_device
+from src.core.substrate import get_optimal_device, ensure_gpu
 from src.models.losses.meld_loss import MeldLoss
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -57,6 +57,7 @@ def evaluate_model(trial_config):
     test_seq_len = config["test_seq_len"]
     task_name = trial_config["task_name"]
 
+    ensure_gpu()
     device = get_optimal_device(verbose=False)
 
     # Initialize WandB

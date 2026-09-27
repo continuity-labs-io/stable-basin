@@ -17,6 +17,7 @@ except ImportError:
 from src.echo.harness.echo_trainer import EchoTrainer
 from src.echo.metrics.energy_landscape import batch_hessian_trace, batch_hutchinson_trace, ScalarEnergy
 from src.harness.pytorch_jax_bridge import torch_to_jax
+from src.core.substrate import ensure_gpu
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,7 @@ class EchoRunner:
         """
         Initializes W&B and stores the trainer.
         """
+        ensure_gpu(backend="jax")
         self.trainer = trainer
 
         wandb_project = self.config.get("logging", {}).get("wandb_project")

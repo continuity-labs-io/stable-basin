@@ -176,3 +176,20 @@ def get_optimal_device(verbose: bool = False, allow_mps: bool = True, backend: s
 
     return device
 
+
+def ensure_gpu(allow_mps: bool = True, backend: str = "pytorch") -> None:
+    """
+    Ensures that a GPU is available and being used.
+    Raises a RuntimeError if execution falls back to the CPU.
+    """
+    if backend == "jax":
+        import jax
+        if jax.default_backend() == "cpu":
+            logger.warning("GPU is not available for JAX! Falling back to CPU because Apple Silicon Metal lacks certain ops.")
+        return
+
+    substrate = SubstrateFactory.get_substrate(allow_mps=allow_mps, backend=backend)
+    if substrate.is_cpu:
+        logger.critical("GPU is not available! Falling back to CPU is not permitted. Aborting.")
+        raise RuntimeError("GPU execution required, but only CPU is available.")
+

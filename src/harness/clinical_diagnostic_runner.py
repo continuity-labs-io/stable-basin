@@ -18,7 +18,7 @@ from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
 from src.metrics import ThermodynamicMetrics
 from src.metrics.mamba_lrp import MambaLRPEpsilon
-from src.core.substrate import get_optimal_device
+from src.core.substrate import get_optimal_device, ensure_gpu
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logging.getLogger("pydmd").setLevel(logging.WARNING)
@@ -49,6 +49,7 @@ def evaluate_model(trial_config):
 
     config = trial_config["base_config"]
     model_type = trial_config["model_type"]
+    ensure_gpu()
     device = get_optimal_device(verbose=False)
 
     wandb.init(
