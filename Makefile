@@ -69,8 +69,30 @@ ssm-experiments: baseline extrapolation density-sweep loss-ablation clinical-dia
 
 
 # ==========================================
-# Scientific Experiments (Worm Gait Suite)
+# Scientific Experiments (Aging Resilience Suite)
 # ==========================================
+# The Aging Resilience suite abstracts the workflow so it can run across 
+# multiple diverse datasets. Use the convenience targets below to run the 
+# full pipeline end-to-end on a specific dataset.
+
+.PHONY: run-worm-gait
+run-worm-gait:
+	$(MAKE) aging-resilience-experiments DATASET=aging_resilience
+
+.PHONY: run-killifish
+run-killifish:
+	$(MAKE) aging-resilience-experiments DATASET=killifish_experiments
+
+.PHONY: run-catnap
+run-catnap:
+	$(MAKE) aging-resilience-experiments DATASET=catnap_experiments
+
+# ------------------------------------------
+# Granular Pipeline Steps
+# ------------------------------------------
+# You can also run individual steps for a specific dataset like so:
+# make aging-resilience-ebm DATASET=killifish_experiments
+
 
 .PHONY: aging-resilience-baseline
 aging-resilience-baseline:
