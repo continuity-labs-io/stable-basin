@@ -29,7 +29,7 @@ class StableBasinTrainer:
             self.optimizer.zero_grad()
 
             # The universal contract from Phase 1
-            preds, _ = self.model(x_raw, mask)
+            preds, h, reconstructed_t = self.model(x_raw, mask)
 
             if self.loss_type == "direct_mse":
                 y_true = batch["y_true"].to(self.device)

@@ -133,23 +133,27 @@ class RealEigenwormDataset(Dataset):
         return trajectory[start_idx : start_idx + self.seq_len]
 
 
+from src.data.behavior.synthetic_aging import slow_amplitude_relaxation, _stuart_landau
+
 class SyntheticWormMockDataset(Dataset):
     """
     Purely for CI smoke tests. Generates simple, deterministic 6D sine waves.
     """
 
-    def __init__(self, seq_len: int = 500, num_samples: int = 100):
+    def __init__(self, seq_len: int = 500, num_samples: int = 100, degraded: bool = False):
         """
         Initializes the synthetic dataset.
 
         Args:
             seq_len: The length of each synthetic sequence.
             num_samples: The number of sequences in the dataset.
+            degraded: Whether to apply thermodynamic degradation.
         """
         self.seq_len = seq_len
         self.num_samples = num_samples
+        self.degraded = degraded
         self.data = [
-            self._generate_synthetic_data(seq_len=seq_len, seed=42 + i) for i in range(num_samples)
+            self._generate_synthetic_data(seq_len=seq_len, seed=42 + i, degraded=degraded) for i in range(num_samples)
         ]
 
     def __len__(self) -> int:
@@ -174,18 +178,17 @@ class SyntheticWormMockDataset(Dataset):
         return self.data[idx]
 
     @staticmethod
-    def _generate_synthetic_data(seq_len: int = 500, seed: int = 42) -> torch.Tensor:
-        rng = torch.Generator().manual_seed(seed)
-        time_steps = torch.arange(seq_len, dtype=torch.float32)
-        frequency = 0.05
-
-        phases = torch.rand(6, generator=rng) * 2 * math.pi
-        amplitudes = torch.rand(6, generator=rng) * 0.5 + 0.5
-
-        cycle = torch.zeros((seq_len, 6), dtype=torch.float32)
-        for i in range(6):
-            cycle[:, i] = amplitudes[i] * torch.sin(
-                2 * math.pi * frequency * time_steps + phases[i]
-            )
-
-        return cycle
+    def _generate_synthetic_data(seq_len: int = 500, seed: int = 42, degraded: bool = False) -> torch.Tensor:
+        rng = np.random.default_rng(seed)
+        dt = 1.0 / 25.0
+        
+        osc = _stuart_landau(seq_len, dt, freq=0.5, mu=1.0, noise=0.1, rng=rng)
+        
+        traj = np.zeros((seq_len, 6), dtype=np.float32)
+        traj[:, :2] = osc
+        traj[:, 2:] = rng.standard_normal((seq_len, 4)) * 0.1
+        
+        if degraded:
+            traj = slow_amplitude_relaxation(traj, slowdown=3.0, pair=(0, 1))
+            
+        return torch.tensor(traj, dtype=torch.float32)

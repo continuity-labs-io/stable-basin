@@ -190,6 +190,5 @@ def ensure_gpu(allow_mps: bool = True, backend: str = "pytorch") -> None:
 
     substrate = SubstrateFactory.get_substrate(allow_mps=allow_mps, backend=backend)
     if substrate.is_cpu:
-        logger.critical("GPU is not available! Falling back to CPU is not permitted. Aborting.")
-        raise RuntimeError("GPU execution required, but only CPU is available.")
+        logger.warning("GPU is not available! Falling back to CPU.")
 

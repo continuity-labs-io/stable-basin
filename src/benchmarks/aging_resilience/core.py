@@ -204,8 +204,8 @@ def setup_experiment(config):
 def get_full_states(graph, loader):
     full_traj_list = []
     for batch in loader:
-        s_true = batch["s_true"].numpy()
-        x_init = batch["x_init"].numpy()
+        s_true = batch["s_true"].numpy() if hasattr(batch["s_true"], "numpy") else np.asarray(batch["s_true"])
+        x_init = batch["x_init"].numpy() if hasattr(batch["x_init"], "numpy") else np.asarray(batch["x_init"])
         for i in range(len(s_true)):
             # Note: seq is s_true[i]
             traj = graph.forced_unroll(

@@ -101,19 +101,19 @@ def evaluate_model(trial_config):
                 f"Successfully loaded and compressed AOLLSM Data! Telemetry shape: "
                 f"{telemetry.shape}"
             )
-        elif data_type == "pharmacological":
+        elif dataset_type == "pharmacological":
             logger.info(f"Loading PharmacologicalShockDataset (seq_len={seq_len}) on worker")
             dataset = PharmacologicalShockDataset(condition=condition, seq_len=seq_len)
             telemetry = dataset[0].unsqueeze(0).to(device)  # shape: [1, seq_len, 1024]
             mask = torch.ones(1, seq_len, 1, device=device)
             logger.info(f"Loaded Pharma Shock Data! Shape: {telemetry.shape}")
         else:
-            raise ValueError(f"Unknown data type provided in config: {data_type}")
+            raise ValueError(f"Unknown data type provided in config: {dataset_type}")
     else:
         logger.info("Generating synthetic telemetry for testing with crash at seq_len // 2.")
         t = torch.linspace(0, 10 * np.pi, seq_len, device=device).unsqueeze(1)
-        freqs = torch.linspace(0.5, 3.0, 1024, device=device)
-        healthy = torch.sin(t * freqs) + (torch.randn(seq_len, 1024, device=device) * 0.1)
+        freqs = torch.linspace(0.5, 3.0, input_dim, device=device)
+        healthy = torch.sin(t * freqs) + (torch.randn(seq_len, input_dim, device=device) * 0.1)
         telemetry = healthy.unsqueeze(0)
 
         crash_frame_true = seq_len // 2
@@ -151,7 +151,7 @@ def evaluate_model(trial_config):
 
     model.eval()
     with torch.no_grad():
-        _, base_hidden = model(x_train, mask=mask_train)
+        preds_base, base_hidden, reconstructed_base = model(x_train, mask=mask_train)
         base_ksm = ThermodynamicMetrics(alpha=500.0, beta=1.0).calculate_ksm(base_hidden[0])
         base_ksm_variance = torch.var(torch.tensor(base_ksm, dtype=torch.float32)).item()
         logger.info(f"Baseline Thermodynamic Stability (KSM Variance): {base_ksm_variance:.6e}")
@@ -159,7 +159,7 @@ def evaluate_model(trial_config):
     logger.info("Running dynamic crash detection over full sequence")
     start_time = time.time()
     with torch.no_grad():
-        pred_full, full_hidden = model(telemetry, mask=mask)
+        pred_full, full_hidden, reconstructed_full = model(telemetry, mask=mask)
     inference_time = time.time() - start_time
     latency_ms = (inference_time / seq_len) * 1000
     logger.info(f"Inference Latency: {latency_ms:.2f} ms/frame")

@@ -113,8 +113,4 @@ def generate_sim2real_stub(total_minutes=15, crash_minute=10):
     return df
 
 
-# Execute the engine
-meld_tensor = generate_sim2real_stub()
 
-meld_tensor.head(2255).to_csv("data/Xi114_Sim2Real_Stub.csv", index=False)
-logger.info("Saved to data/Xi114_Sim2Real_Stub.csv")
