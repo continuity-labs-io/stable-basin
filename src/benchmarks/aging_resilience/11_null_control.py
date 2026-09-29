@@ -58,6 +58,16 @@ logger = logging.getLogger(__name__)
 
 def load_ts(path: str) -> tuple[list[np.ndarray], np.ndarray]:
     """Parse a UEA .ts file, keeping the class label (the repo loader drops it)."""
+    if not os.path.exists(path):
+        logger.warning(f"{path} not found. Falling back to SyntheticWormMockDataset.")
+        from src.data.behavior.celegans_gait_dataset import SyntheticWormMockDataset
+        clean_ds = SyntheticWormMockDataset(num_samples=10, seq_len=500, degraded=False)
+        old_ds = SyntheticWormMockDataset(num_samples=10, seq_len=500, degraded=True)
+        
+        trajs = [clean_ds[i].numpy() for i in range(len(clean_ds))] + [old_ds[i].numpy() for i in range(len(old_ds))]
+        labels = ["Young"] * len(clean_ds) + ["Old"] * len(old_ds)
+        return trajs, np.array(labels)
+        
     trajs, labels, in_data = [], [], False
     with open(path, "r") as f:
         for line in f:

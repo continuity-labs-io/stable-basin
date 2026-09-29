@@ -65,6 +65,9 @@ density-sweep:
 ksm-threshold:
 	python -m src.harness.ksm_threshold_runner --config configs/ksm_threshold.yaml
 
+quickstart:
+	WANDB_MODE=disabled python -m src.harness.ksm_threshold_runner --config configs/ksm_threshold.yaml --use_synthetic --no-ray
+
 ssm-experiments: baseline extrapolation density-sweep loss-ablation ksm-threshold
 
 
@@ -86,6 +89,10 @@ run-killifish:
 .PHONY: run-catnap
 run-catnap:
 	$(MAKE) aging-resilience-experiments DATASET=catnap_experiments
+
+.PHONY: run-synthetic-aging
+run-synthetic-aging:
+	WANDB_MODE=disabled $(MAKE) aging-resilience-experiments DATASET=synthetic_aging
 
 # ------------------------------------------
 # Granular Pipeline Steps

@@ -120,9 +120,6 @@ def evaluate_model(trial_config):
         telemetry[:, crash_frame_true:, :] = (
             torch.randn_like(telemetry[:, crash_frame_true:, :]) * 0.5
         )
-        telemetry[:, crash_frame_true - 50 : crash_frame_true, 120:130] = (
-            telemetry[:, crash_frame_true - 50 : crash_frame_true, 120:130] + 5.0
-        )
 
         mask = torch.ones(1, seq_len, 1, device=device)
 
@@ -168,12 +165,14 @@ def evaluate_model(trial_config):
     ksm_np = np.array(ksm_trajectory)
 
     crash_frame = -1
+    crash_occurred = False
     for t in range(burn_in_len, len(ksm_np)):
         if ksm_np[t] < ksm_threshold:
             crash_frame = t
+            crash_occurred = True
             break
 
-    if crash_frame == -1:
+    if not crash_occurred:
         logger.warning(f"Crash frame not found! KSM never dropped below {ksm_threshold}.")
         crash_frame = len(ksm_np) - 1
     else:
@@ -184,7 +183,7 @@ def evaluate_model(trial_config):
     diagnostic = AttributionSummary(model, feature_names=feature_names)
 
     try:
-        report = diagnostic.summarize(telemetry, crash_time_step=crash_frame)
+        report = diagnostic.summarize(telemetry, crash_time_step=crash_frame, crash_occurred=crash_occurred)
     except Exception as e:
         logger.warning(f"Diagnostic generation failed: {e}")
         report = {"error": str(e), "crash_frame": crash_frame}
@@ -299,6 +298,9 @@ def main():
     parser.add_argument(
         "--use_synthetic", action="store_true", help="Force synthetic data for testing"
     )
+    parser.add_argument(
+        "--no-ray", action="store_true", help="Bypass Ray Tune and run in a standard loop"
+    )
     args = parser.parse_args()
 
     with open(args.config, "r") as f:
@@ -308,18 +310,24 @@ def main():
 
     search_space = {"base_config": config, "model_type": tune.grid_search(config["models"])}
 
-    ray.init(ignore_reinit_error=True)
+    if args.no_ray:
+        logger.info("Running in local loop mode (Ray bypassed).")
+        for model_type in config["models"]:
+            trial_config = {"base_config": config, "model_type": model_type}
+            evaluate_model(trial_config)
+    else:
+        ray.init(ignore_reinit_error=True)
 
-    tuner = tune.Tuner(
-        tune.with_resources(
-            evaluate_model, resources={"cpu": 1, "gpu": 1 if torch.cuda.is_available() else 0}
-        ),
-        param_space=search_space,
-        run_config=tune.RunConfig(name="ksm_threshold_sweep"),
-    )
+        tuner = tune.Tuner(
+            tune.with_resources(
+                evaluate_model, resources={"cpu": 1, "gpu": 1 if torch.cuda.is_available() else 0}
+            ),
+            param_space=search_space,
+            run_config=tune.RunConfig(name="ksm_threshold_sweep"),
+        )
 
-    results = tuner.fit()
-    logger.info("Ray Tune execution complete.")
+        results = tuner.fit()
+        logger.info("Ray Tune execution complete.")
 
     # Aggregate individual outputs into single files
     out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../output/harness"))

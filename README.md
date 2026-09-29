@@ -93,14 +93,14 @@ If the system falls out of the basin, can it compute the optimal path back in?
 
 ---
 
-## ⚙️ The Reference Architecture: `MaskAwareMamba`
+## ⚙️ The Reference Architecture: `MaskAwareSSM`
 
 To provide a baseline for the benchmark, this repository includes the
-**MaskAwareMamba**, a continuous-time state-space reference architecture powered
+**MaskAwareSSM**, a continuous-time state-space reference architecture powered
 by **Mamba-2**.
 
 Unlike standard Transformers that suffer from $\mathcal{O}(N^2)$ context limits
-and rely on discrete tokens, the `MaskAwareMamba` utilizes Mask-Aware Subspace
+and rely on discrete tokens, the `MaskAwareSSM` utilizes Mask-Aware Subspace
 Routing to dynamically modulate the flow of time and maintain an
 $\mathcal{O}(1)$ VRAM footprint on edge hardware.
 
@@ -140,7 +140,7 @@ latent embedding space:
 - **Fedichev Macrostates**: Tracking the continuous accumulation of
   configurational entropy ($Z$) over millions of frames.
 
-- **MambaLRP-Epsilon**: Mathematically exact Layer-wise Relevance Propagation
+- **MambaLRP-Epsilon**: Layer-wise Relevance Propagation
   designed explicitly for continuous-time SSMs to trace crashes back to their
   root biological circuit.
 
@@ -151,7 +151,7 @@ take ownership of specific infrastructure nodes (e.g. CUDA/Triton Mamba-LRP
 kernels, Sim2Real dataloaders, Gymnasium environments).
 
 If you want to solve aging and build out these missing nodes, please check out
-the [Open Problems Board](OPEN_PROBLEMS.md) in the repository. Pick a
+the GitHub Issues tab. Pick a
 constraint, and open a PR!
 
 📄 Citation
@@ -165,6 +165,6 @@ biological anomaly detection, please cite:
   author={Continuity Labs},
   year={2026},
   publisher={GitHub},
-  howpublished={\url{[https://github.com/continuity-labs-io/stable-basin](https://github.com/continuity-labs-io/stable-basin)}}
+  howpublished={\url{https://github.com/continuity-labs-io/stable-basin}}
 }
 ```

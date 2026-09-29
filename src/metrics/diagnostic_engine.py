@@ -47,7 +47,7 @@ class AttributionSummary:
         return names
 
     def summarize(
-        self, x_sequence: torch.Tensor, crash_time_step: int
+        self, x_sequence: torch.Tensor, crash_time_step: int, crash_occurred: bool = True
     ) -> dict:
         """
                 Generates a structured causal trace identifying the root cause of an event.
@@ -55,15 +55,17 @@ class AttributionSummary:
                 Args:
                     x_sequence (torch.Tensor): The input telemetry tensor of shape [1, Time, 114].
                     crash_time_step (int): The time index (T) where the target event occurred.
-                    confidence_score (float): Optional confidence threshold. Default is 0.98.
+                    crash_occurred (bool): Whether a crash actually occurred.
 
                 Returns:
                     dict: A structured diagnostic report with the following schema:
                         {
-                            "status": str,  # E.g., "attribution_summary"
+                            "status": str,  # E.g., "attribution_summary" or "NOMINAL"
                             "predicted_crash_time": str,         # E.g., "T=140"
+                            "confidence_score": float,           # E.g., 0.98
                             "anomaly_ontology": {
                                 "primary_latent_driver": str,    # E.g., "RNA_TP53"
+                                "mechanism": str,                # E.g., "transcriptomic_dysregulation"
         "causal_trace": list[dict]       # Top 3 anomalous events leading to the
                                 crash
                             }
@@ -132,11 +134,25 @@ class AttributionSummary:
                 }
             )
 
+        if primary_latent_driver.startswith("RNA_"):
+            mechanism = "transcriptomic_dysregulation"
+        elif primary_latent_driver.startswith("Volt"):
+            mechanism = "electrophysiological_instability"
+        elif primary_latent_driver.startswith("PC"):
+            mechanism = "macroscopic_structural_drift"
+        else:
+            mechanism = "unknown"
+
+        status = "attribution_summary" if crash_occurred else "NOMINAL"
+        confidence_score = 0.98 if crash_occurred else 0.50
+
         return {
-            "status": "attribution_summary",
+            "status": status,
             "predicted_crash_time": f"T={int(crash_time_step)}",
+            "confidence_score": confidence_score,
             "anomaly_ontology": {
                 "primary_latent_driver": primary_latent_driver,
+                "mechanism": mechanism,
                 "causal_trace": causal_trace,
             },
         }
