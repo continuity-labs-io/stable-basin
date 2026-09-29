@@ -85,7 +85,8 @@ class CatnapContinuousDataset(Dataset):
                     self.samples.append({
                         'trajectory_chunk': torch.tensor(chunk, dtype=torch.float32),
                         'chronological_age': chrono_age,
-                        'ultimate_lifespan': lifespan
+                        'ultimate_lifespan': lifespan,
+                        'individual_id': str(mouse_id)
                     })
 
         except Exception as e:

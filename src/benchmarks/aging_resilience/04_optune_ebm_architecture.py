@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 logging.getLogger("src.echo.harness.echo_runner").setLevel(logging.WARNING)
 
 
-def objective(trial, train_young_loader, eval_young_loader, eval_old_loader, base_config):
+def objective(trial, train_young_loader, val_loader, eval_young_loader, eval_old_loader, base_config):
     # Suggest hyperparameters
     macro_hidden_size = trial.suggest_categorical(
         "observer.macro.ebm_hidden_size", [16, 32, 64, 128]
@@ -60,6 +60,7 @@ def objective(trial, train_young_loader, eval_young_loader, eval_old_loader, bas
             config=config,
             key=kB,
             train_young_loader=train_young_loader,
+            val_loader=val_loader,
             eval_young_loader=eval_young_loader,
             eval_old_loader=eval_old_loader,
             config_path=tmp_path,
@@ -97,7 +98,7 @@ def main():
 
     task = get_benchmark_task(base_config)
     batch_size = base_config.get("dataset", {}).get("batch_size", 2)
-    train_young_loader, eval_young_loader, eval_old_loader = task.get_dataloaders(base_config, d_state, batch_size)
+    train_young_loader, val_loader, eval_young_loader, eval_old_loader = task.get_dataloaders(base_config, d_state, batch_size)
 
     study = optuna.create_study(direction="maximize", study_name="worm_gait_aging_ebm")
 
@@ -111,7 +112,7 @@ def main():
     logger.info(f"Starting Optuna search with timeout of {timeout_seconds} seconds and max {n_trials} trials")
     study.optimize(
         lambda trial: objective(
-            trial, train_young_loader, eval_young_loader, eval_old_loader, base_config
+            trial, train_young_loader, val_loader, eval_young_loader, eval_old_loader, base_config
         ),
         n_trials=n_trials,
         timeout=timeout_seconds,

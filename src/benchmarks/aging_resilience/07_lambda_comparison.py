@@ -48,7 +48,7 @@ def calculate_metrics(graph, traj_A_batch, traj_B_batch, config):
     logger.info("Computing energy distance rescue metric R(lambda).")
     
     task = get_benchmark_task(config)
-    _, young_eval_loader, _ = task.get_dataloaders(config, None, batch_size=config.get("dataset", {}).get("batch_size", 2))
+    _, _, young_eval_loader, _ = task.get_dataloaders(config, None, batch_size=config.get("dataset", {}).get("batch_size", 2))
     
     Y_list = []
     for batch in young_eval_loader:

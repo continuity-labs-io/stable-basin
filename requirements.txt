@@ -16,3 +16,4 @@ rerun-sdk
 pingouin
 pytest-cov
 litellm
+modal

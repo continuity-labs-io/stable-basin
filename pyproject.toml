@@ -28,6 +28,7 @@ dependencies = [
     "wandb>=0.30.0",
     "torchdiffeq>=0.2.5",
     "optuna-integration>=5.0.0",
+    "modal",
 ]
 
 [tool.ruff]

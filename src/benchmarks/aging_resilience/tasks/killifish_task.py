@@ -38,53 +38,44 @@ class KillifishTask(AgingBenchmarkTask):
             max_samples=max_samples
         )
 
-        young_samples = []
-        old_samples = []
-
-        for sample in master_dataset.samples:
-            chrono_age = sample['chronological_age'].item()
-            ult_life = sample['ultimate_lifespan'].item()
+        from src.benchmarks.aging_resilience.task_registry import build_cohorts
+        
+        def young_fn(s):
+            return (s['chronological_age'].item() / s['ultimate_lifespan'].item()) <= 0.5
             
-            if ult_life > 0:
-                ratio = chrono_age / ult_life
-                if ratio <= 0.5:
-                    young_samples.append(sample)
-                if ratio > 0.5:
-                    old_samples.append(sample)
-                    
-        # Fallback to prevent empty evaluation loaders (especially since all killifish data might be from a single timepoint)
-        if len(young_samples) == 0 or len(old_samples) == 0:
-            logger.warning("Young or Old evaluation set was empty. Falling back to a random split of master samples.")
-            all_copy = master_dataset.samples.copy()
-            random.shuffle(all_copy)
-            half = len(all_copy) // 2
-            young_samples = all_copy[:half]
-            old_samples = all_copy[half:]
-
-        all_samples = master_dataset.samples.copy()
-        random.shuffle(all_samples)
-        train_samples = all_samples[:int(len(all_samples)*0.8)]
+        def old_fn(s):
+            return (s['chronological_age'].item() / s['ultimate_lifespan'].item()) > 0.5
+            
+        seed = config.get("experiment", {}).get("seed", 42)
+        train_s, val_s, young_s, old_s = build_cohorts(master_dataset.samples, "killifish", seed, young_fn, old_fn)
 
         self.train_dataset = KillifishContinuousDataset.__new__(KillifishContinuousDataset)
-        self.train_dataset.samples = train_samples
+        self.train_dataset.samples = train_s
+        
+        val_dataset = KillifishContinuousDataset.__new__(KillifishContinuousDataset)
+        val_dataset.samples = val_s
 
         young_eval_dataset = KillifishContinuousDataset.__new__(KillifishContinuousDataset)
-        young_eval_dataset.samples = young_samples
+        young_eval_dataset.samples = young_s
 
         old_eval_dataset = KillifishContinuousDataset.__new__(KillifishContinuousDataset)
-        old_eval_dataset.samples = old_samples
+        old_eval_dataset.samples = old_s
 
-        return self.train_dataset, young_eval_dataset, old_eval_dataset
+        return self.train_dataset, val_dataset, young_eval_dataset, old_eval_dataset
 
     def get_dataloaders(self, config: Dict[str, Any], d_state: int = None, batch_size: int = 2):
-        train_raw, young_raw, old_raw = self.get_raw_datasets(config)
+        train_raw, val_raw, young_raw, old_raw = self.get_raw_datasets(config)
 
         train_ds = JAXDictDataset(train_raw, d_state)
+        val_ds = JAXDictDataset(val_raw, d_state)
         young_ds = JAXDictDataset(young_raw, d_state)
         old_ds = JAXDictDataset(old_raw, d_state)
 
         train_loader = DataLoader(
             train_ds, batch_size=batch_size, shuffle=True, drop_last=True
+        )
+        val_loader = DataLoader(
+            val_ds, batch_size=batch_size, shuffle=False, drop_last=True
         )
         young_loader = DataLoader(
             young_ds, batch_size=batch_size, shuffle=False, drop_last=True
@@ -93,7 +84,7 @@ class KillifishTask(AgingBenchmarkTask):
             old_ds, batch_size=batch_size, shuffle=False, drop_last=True
         )
 
-        return train_loader, young_loader, old_loader
+        return train_loader, val_loader, young_loader, old_loader
 
     def apply_dataset_change(self, trajectory, change_fn: Optional[Callable], **kwargs):
         if change_fn:

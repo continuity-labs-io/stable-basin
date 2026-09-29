@@ -67,7 +67,7 @@ def main():
         return np.array(sensory).flatten()
 
     task = get_benchmark_task(config)
-    _, young_eval_loader, _ = task.get_dataloaders(config, None, batch_size=config.get("dataset", {}).get("batch_size", 2))
+    _, _, young_eval_loader, _ = task.get_dataloaders(config, None, batch_size=config.get("dataset", {}).get("batch_size", 2))
     
     Y_list = []
     for batch in young_eval_loader:

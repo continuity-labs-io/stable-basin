@@ -255,7 +255,7 @@ def compute_metrics(name, t_young, t_old):
 
 
 def run_aging_experiment(
-    config, key, train_young_loader, eval_young_loader, eval_old_loader, config_path
+    config, key, train_young_loader, val_loader, eval_young_loader, eval_old_loader, config_path
 ):
     """
         Executes a complete training and evaluation pipeline for a given Energy-Based Model class
@@ -266,6 +266,7 @@ def run_aging_experiment(
             ebm_class (type): The class of the Energy-Based Model to instantiate.
             key (jax.Array): A JAX PRNG key for random initialization.
             train_young_loader (DataLoader): DataLoader for the training set (Young population).
+            val_loader (DataLoader): DataLoader for early stopping.
             eval_young_loader (DataLoader): DataLoader for evaluating the Young population.
             eval_old_loader (DataLoader): DataLoader for evaluating the Old population.
             config_path (str): The file path to the YAML configuration to be read by the EchoRunner.
@@ -289,7 +290,7 @@ def run_aging_experiment(
 
     runner = EchoRunner(config_path)
     runner.setup(trainer)
-    graph = runner.run(graph, train_young_loader, eval_young_loader, key, dt=dt)
+    graph = runner.run(graph, train_young_loader, val_loader, key, dt=dt)
 
     logger.info("Evaluating EBM on biological population.")
     full_states_young = get_full_states(graph, eval_young_loader)

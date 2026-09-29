@@ -121,7 +121,7 @@ def main():
 
     task = get_benchmark_task(config)
     batch_size = config.get("dataset", {}).get("batch_size", 2)
-    train_young_loader, eval_young_loader, eval_old_loader = task.get_dataloaders(config, d_state, batch_size)
+    train_young_loader, val_loader, eval_young_loader, eval_old_loader = task.get_dataloaders(config, d_state, batch_size)
     _, eval_young_dataset_raw, eval_old_dataset_raw = task.get_raw_datasets(config)
 
     key, kA = jax.random.split(key)
@@ -130,13 +130,13 @@ def main():
     config_A["observer"]["macro"]["ebm_type"] = "identity"
     label_a, label_b = task.cohort_labels
     metrics_A, trace_young_A, trace_old_A, graph_A = run_aging_experiment(
-        config_A, kA, train_young_loader, eval_young_loader, eval_old_loader, args.config
+        config_A, kA, train_young_loader, val_loader, eval_young_loader, eval_old_loader, args.config
     )
 
     key, kB = jax.random.split(key)
     config_B = copy.deepcopy(config)
     metrics_B, trace_young_B, trace_old_B, graph_B = run_aging_experiment(
-        config_B, kB, train_young_loader, eval_young_loader, eval_old_loader, args.config
+        config_B, kB, train_young_loader, val_loader, eval_young_loader, eval_old_loader, args.config
     )
 
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")

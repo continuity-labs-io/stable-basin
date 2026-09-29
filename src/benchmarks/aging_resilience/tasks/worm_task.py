@@ -39,31 +39,49 @@ class WormGaitTask(AgingBenchmarkTask):
         return 6
 
     def get_raw_datasets(self, config: Dict[str, Any]):
+        import random
+        seed = config.get("experiment", {}).get("seed", 42)
+        random.seed(seed)
+        np.random.seed(seed)
         dataset_config = config.get("dataset", {})
-        data_path = dataset_config.get("path", "data/worm/EigenWorms_TEST.ts")
+        eval_path = dataset_config.get("path", "data/worm/EigenWorms_TEST.ts")
+        train_path = eval_path.replace("TEST", "TRAIN")
         seq_len = dataset_config.get("seq_len", 500)
         
         try:
-            if not os.path.exists(data_path):
-                raise FileNotFoundError(f"Biological data not found at {data_path}.")
+            if not os.path.exists(eval_path) or not os.path.exists(train_path):
+                raise FileNotFoundError(f"Biological data not found.")
             
             logger.info("Loading biological RealEigenwormDataset...")
-            train_young = RealEigenwormDataset(data_path, seq_len=seq_len, inject_synthetic_degradation=False)
-            eval_young = RealEigenwormDataset(data_path, seq_len=seq_len, inject_synthetic_degradation=False)
-            eval_old = RealEigenwormDataset(data_path, seq_len=seq_len, inject_synthetic_degradation=True)
+            train_full = RealEigenwormDataset(train_path, seq_len=seq_len, inject_synthetic_degradation=False)
+            eval_young = RealEigenwormDataset(eval_path, seq_len=seq_len, inject_synthetic_degradation=False)
+            eval_old = RealEigenwormDataset(eval_path, seq_len=seq_len, inject_synthetic_degradation=True)
+            
+            train_full_copy = train_full.data.copy()
+            random.shuffle(train_full_copy)
+            split_idx = int(len(train_full_copy) * 0.8)
+            train_young = RealEigenwormDataset.__new__(RealEigenwormDataset)
+            train_young.seq_len = seq_len
+            train_young.data = train_full_copy[:split_idx]
+            
+            val_young = RealEigenwormDataset.__new__(RealEigenwormDataset)
+            val_young.seq_len = seq_len
+            val_young.data = train_full_copy[split_idx:]
             
         except FileNotFoundError:
             logger.warning("Local biological data not found. Falling back to SyntheticWormMockDataset.")
-            train_young = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
+            train_young = SyntheticWormMockDataset(seq_len=seq_len, num_samples=40)
+            val_young = SyntheticWormMockDataset(seq_len=seq_len, num_samples=10)
             eval_young = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
             eval_old = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
             
-        return train_young, eval_young, eval_old
+        return train_young, val_young, eval_young, eval_old
 
     def get_dataloaders(self, config: Dict[str, Any], d_state: int = None, batch_size: int = 2):
-        train_young_raw, eval_young_raw, eval_old_raw = self.get_raw_datasets(config)
+        train_young_raw, val_young_raw, eval_young_raw, eval_old_raw = self.get_raw_datasets(config)
         
         train_young_dataset = JAXDictDataset(train_young_raw, d_state)
+        val_young_dataset = JAXDictDataset(val_young_raw, d_state)
         eval_young_dataset = JAXDictDataset(eval_young_raw, d_state)
         eval_old_dataset = JAXDictDataset(eval_old_raw, d_state)
         
@@ -71,6 +89,13 @@ class WormGaitTask(AgingBenchmarkTask):
             train_young_dataset, 
             batch_size=batch_size, 
             shuffle=True,
+            collate_fn=numpy_collate,
+            drop_last=True
+        )
+        val_loader = DataLoader(
+            val_young_dataset, 
+            batch_size=batch_size, 
+            shuffle=False,
             collate_fn=numpy_collate,
             drop_last=True
         )
@@ -89,7 +114,7 @@ class WormGaitTask(AgingBenchmarkTask):
             drop_last=True
         )
         
-        return train_loader, eval_young_loader, eval_old_loader
+        return train_loader, val_loader, eval_young_loader, eval_old_loader
 
     def apply_dataset_change(self, trajectory, change_fn: Optional[Callable], **kwargs):
         if change_fn is not None:

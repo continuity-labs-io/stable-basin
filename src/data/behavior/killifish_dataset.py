@@ -87,7 +87,8 @@ class KillifishContinuousDataset(Dataset):
                             new_samples.append({
                                 'trajectory_chunk': torch.tensor(chunk, dtype=torch.float32),
                                 'chronological_age': torch.tensor(chronological_age, dtype=torch.float32),
-                                'ultimate_lifespan': torch.tensor(ultimate_lifespan, dtype=torch.float32)
+                                'ultimate_lifespan': torch.tensor(ultimate_lifespan, dtype=torch.float32),
+                                'individual_id': fish_num
                             })
                             
                         if max_samples is not None:

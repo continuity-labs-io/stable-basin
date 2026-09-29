@@ -153,7 +153,7 @@ def main():
     dummy_graph, d_state = build_graph(subkey, config)
 
     task = get_benchmark_task(config)
-    _, _, loader = task.get_dataloaders(config, d_state, batch_size=config.get("dataset", {}).get("batch_size", 2))
+    _, _, _, loader = task.get_dataloaders(config, d_state, batch_size=config.get("dataset", {}).get("batch_size", 2))
 
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
     model_path = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}_trained_engine.eqx")

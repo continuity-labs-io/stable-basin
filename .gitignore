@@ -169,6 +169,7 @@ cython_debug/
 /data/
 .ruff_cache/
 .uv_cache/
+.agents/
 
 # OS generated files
 .DS_Store

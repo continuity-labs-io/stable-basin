@@ -187,10 +187,6 @@ def main():
         dataset_name = config.get("dataset", {}).get("name", "worm_gait")
         args.weights = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}_trained_engine.eqx")
         
-    if config.get("dataset", {}).get("name", "worm_gait") != "worm_gait":
-        print("Skipping null control for non-worm dataset.")
-        return
-
     if 1.0 not in args.severities:
         args.severities = [1.0] + list(args.severities)
     severities = sorted(set(args.severities))
@@ -207,17 +203,35 @@ def main():
     if args.burn_in >= seq_len:
         raise ValueError("--burn-in must be smaller than seq_len.")
 
-    # ---- data: normalise both files with TRAIN statistics
-    train_trajs, train_labels = load_ts(args.train_ts)
-    test_trajs, test_labels = load_ts(args.test_ts)
-    mu, sd = zscore_fit(train_trajs)
-    train_trajs = [(t - mu) / (sd + 1e-8) for t in train_trajs]
-    test_trajs = [(t - mu) / (sd + 1e-8) for t in test_trajs]
-    if args.max_worms:
-        keep = np.sort(np.random.default_rng(seed).choice(len(test_trajs), args.max_worms, replace=False))
-        test_trajs, test_labels = [test_trajs[i] for i in keep], test_labels[keep]
-    n_worms = len(test_trajs)
-    logger.info(f"TEST worms: {n_worms}; classes: {dict(zip(*np.unique(test_labels, return_counts=True)))}")
+    if config.get("dataset", {}).get("name", "worm_gait") == "worm_gait":
+        # ---- data: normalise both files with TRAIN statistics
+        train_trajs, train_labels = load_ts(args.train_ts)
+        test_trajs, test_labels = load_ts(args.test_ts)
+        mu, sd = zscore_fit(train_trajs)
+        train_trajs = [(t - mu) / (sd + 1e-8) for t in train_trajs]
+        test_trajs = [(t - mu) / (sd + 1e-8) for t in test_trajs]
+        if args.max_worms:
+            keep = np.sort(np.random.default_rng(seed).choice(len(test_trajs), args.max_worms, replace=False))
+            test_trajs, test_labels = [test_trajs[i] for i in keep], test_labels[keep]
+        n_worms = len(test_trajs)
+        logger.info(f"TEST worms: {n_worms}; classes: {dict(zip(*np.unique(test_labels, return_counts=True)))}")
+    else:
+        train_raw, val_raw, eval_young_raw, eval_old_raw = task.get_raw_datasets(config)
+        def extract(ds):
+            if hasattr(ds, "samples"):
+                return [s["trajectory_chunk"].numpy() for s in ds.samples]
+            return [ds[i].numpy() for i in range(len(ds))]
+        train_trajs = extract(train_raw)
+        test_trajs = extract(eval_young_raw)
+        # Use individual_id for splitting if available, else sequential
+        if hasattr(eval_young_raw, "samples"):
+            test_labels = np.array([str(s.get("individual_id", i)) for i, s in enumerate(eval_young_raw.samples)])
+            train_labels = np.array([str(s.get("individual_id", i)) for i, s in enumerate(train_raw.samples)])
+        else:
+            test_labels = np.arange(len(test_trajs))
+            train_labels = np.arange(len(train_trajs))
+        n_worms = len(test_trajs)
+        logger.info(f"TEST chunks (individuals for stratification): {n_worms}")
 
     # ---- model
     if args.stub:
