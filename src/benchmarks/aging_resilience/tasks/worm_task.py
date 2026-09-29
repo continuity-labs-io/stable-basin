@@ -48,32 +48,34 @@ class WormGaitTask(AgingBenchmarkTask):
         train_path = eval_path.replace("TEST", "TRAIN")
         seq_len = dataset_config.get("seq_len", 500)
         
-        try:
-            if not os.path.exists(eval_path) or not os.path.exists(train_path):
-                raise FileNotFoundError(f"Biological data not found.")
-            
-            logger.info("Loading biological RealEigenwormDataset...")
-            train_full = RealEigenwormDataset(train_path, seq_len=seq_len, inject_synthetic_degradation=False)
-            eval_young = RealEigenwormDataset(eval_path, seq_len=seq_len, inject_synthetic_degradation=False)
-            eval_old = RealEigenwormDataset(eval_path, seq_len=seq_len, inject_synthetic_degradation=True)
-            
-            train_full_copy = train_full.data.copy()
-            random.shuffle(train_full_copy)
-            split_idx = int(len(train_full_copy) * 0.8)
-            train_young = RealEigenwormDataset.__new__(RealEigenwormDataset)
-            train_young.seq_len = seq_len
-            train_young.data = train_full_copy[:split_idx]
-            
-            val_young = RealEigenwormDataset.__new__(RealEigenwormDataset)
-            val_young.seq_len = seq_len
-            val_young.data = train_full_copy[split_idx:]
-            
-        except FileNotFoundError:
-            logger.warning("Local biological data not found. Falling back to SyntheticWormMockDataset.")
+        mock = config.get("experiment", {}).get("mock", False)
+        
+        if mock:
+            logger.warning("Using SyntheticWormMockDataset (mock mode).")
             train_young = SyntheticWormMockDataset(seq_len=seq_len, num_samples=40)
             val_young = SyntheticWormMockDataset(seq_len=seq_len, num_samples=10)
             eval_young = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
             eval_old = SyntheticWormMockDataset(seq_len=seq_len, num_samples=50)
+            return train_young, val_young, eval_young, eval_old
+            
+        if not os.path.exists(eval_path) or not os.path.exists(train_path):
+            raise FileNotFoundError(f"Biological data not found at {train_path} or {eval_path}.")
+        
+        logger.info("Loading biological RealEigenwormDataset...")
+        train_full = RealEigenwormDataset(train_path, seq_len=seq_len, inject_synthetic_degradation=False)
+        eval_young = RealEigenwormDataset(eval_path, seq_len=seq_len, inject_synthetic_degradation=False)
+        eval_old = RealEigenwormDataset(eval_path, seq_len=seq_len, inject_synthetic_degradation=True)
+        
+        train_full_copy = train_full.data.copy()
+        random.shuffle(train_full_copy)
+        split_idx = int(len(train_full_copy) * 0.8)
+        train_young = RealEigenwormDataset.__new__(RealEigenwormDataset)
+        train_young.seq_len = seq_len
+        train_young.data = train_full_copy[:split_idx]
+        
+        val_young = RealEigenwormDataset.__new__(RealEigenwormDataset)
+        val_young.seq_len = seq_len
+        val_young.data = train_full_copy[split_idx:]
             
         return train_young, val_young, eval_young, eval_old
 

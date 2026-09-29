@@ -92,8 +92,8 @@ class CatnapTask(AgingBenchmarkTask):
         return {"variance_norm": float(np.var(trajectory))}
 
     def render_animation(self, young_data, old_data, output_path: str, **kwargs):
+        logger.info("Catnap animation not yet implemented. Skipping.")
 
     @property
     def cohort_labels(self):
         return ("<= 6 months", ">= 24 months")
-        logger.info("Catnap animation not yet implemented. Skipping.")

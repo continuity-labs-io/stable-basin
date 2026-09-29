@@ -56,10 +56,10 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
-def load_ts(path: str) -> tuple[list[np.ndarray], np.ndarray]:
+def load_ts(path: str, mock: bool = False) -> tuple[list[np.ndarray], np.ndarray]:
     """Parse a UEA .ts file, keeping the class label (the repo loader drops it)."""
-    if not os.path.exists(path):
-        logger.warning(f"{path} not found. Falling back to SyntheticWormMockDataset.")
+    if mock:
+        logger.warning("Using SyntheticWormMockDataset (mock mode).")
         from src.data.behavior.celegans_gait_dataset import SyntheticWormMockDataset
         clean_ds = SyntheticWormMockDataset(num_samples=10, seq_len=500, degraded=False)
         old_ds = SyntheticWormMockDataset(num_samples=10, seq_len=500, degraded=True)
@@ -67,6 +67,9 @@ def load_ts(path: str) -> tuple[list[np.ndarray], np.ndarray]:
         trajs = [clean_ds[i].numpy() for i in range(len(clean_ds))] + [old_ds[i].numpy() for i in range(len(old_ds))]
         labels = ["Young"] * len(clean_ds) + ["Old"] * len(old_ds)
         return trajs, np.array(labels)
+        
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"{path} not found. Use --mock for synthetic data fallback.")
         
     trajs, labels, in_data = [], [], False
     with open(path, "r") as f:
@@ -178,10 +181,14 @@ def main():
     ap.add_argument("--trace-batch", type=int, default=2048)
     ap.add_argument("--max-worms", type=int, default=None, help="cap TEST worms for a quick run")
     ap.add_argument("--stub", action="store_true", help="stats plumbing test with a fake trace function; no JAX")
+    ap.add_argument("--mock", action="store_true", help="use synthetic data mock")
     args = ap.parse_args()
     
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
+        
+    if args.mock:
+        config.setdefault("experiment", {})["mock"] = True
         
     if args.weights == "output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx":
         dataset_name = config.get("dataset", {}).get("name", "worm_gait")
@@ -205,8 +212,8 @@ def main():
 
     if config.get("dataset", {}).get("name", "worm_gait") == "worm_gait":
         # ---- data: normalise both files with TRAIN statistics
-        train_trajs, train_labels = load_ts(args.train_ts)
-        test_trajs, test_labels = load_ts(args.test_ts)
+        train_trajs, train_labels = load_ts(args.train_ts, mock=args.mock)
+        test_trajs, test_labels = load_ts(args.test_ts, mock=args.mock)
         mu, sd = zscore_fit(train_trajs)
         train_trajs = [(t - mu) / (sd + 1e-8) for t in train_trajs]
         test_trajs = [(t - mu) / (sd + 1e-8) for t in test_trajs]
@@ -307,7 +314,7 @@ def main():
         results["positive"][str(s)] = entry
 
     os.makedirs(args.out_dir, exist_ok=True)
-    out_json = os.path.join(args.out_dir, "11_null_control.json")
+    out_json = os.path.join(args.out_dir, f"11_null_control{'_mock' if args.mock else ''}.json")
     with open(out_json, "w") as f:
         json.dump(results, f, indent=2)
 
@@ -373,7 +380,7 @@ def main():
         ax[1].legend()
         ax[1].set_title("Detection vs. known degradation")
         plt.tight_layout()
-        out_png = os.path.join(args.out_dir, "11_null_control.png")
+        out_png = os.path.join(args.out_dir, f"11_null_control{'_mock' if args.mock else ''}.png")
         plt.savefig(out_png, dpi=150)
         plt.close()
         print(f"Wrote {out_png}")

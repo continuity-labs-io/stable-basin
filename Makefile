@@ -123,11 +123,11 @@ aging-resilience-ebm:
 
 .PHONY: aging-resilience-fit-lambda
 aging-resilience-fit-lambda:
-	python -m src.benchmarks.aging_resilience.06_infer_fitted_lambda --config configs/$(DATASET).yaml
+	python -m src.benchmarks.aging_resilience.06_fit_lambda --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-lambda-comparison
 aging-resilience-lambda-comparison:
-	python -m src.benchmarks.aging_resilience.07_intervention --config configs/$(DATASET).yaml
+	python -m src.benchmarks.aging_resilience.07_lambda_comparison --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-sweep
 aging-resilience-sweep:
@@ -135,7 +135,7 @@ aging-resilience-sweep:
 
 .PHONY: aging-resilience-lambda-argmax
 aging-resilience-lambda-argmax:
-	python -m src.benchmarks.aging_resilience.09_pharmacological_translation --config configs/$(DATASET).yaml
+	python -m src.benchmarks.aging_resilience.09_lambda_argmax --config configs/$(DATASET).yaml
 
 .PHONY: aging-resilience-animate
 aging-resilience-animate:

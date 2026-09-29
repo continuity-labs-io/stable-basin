@@ -38,6 +38,8 @@ def plot_ablation_results(
     trace_old_A,
     trace_young_B,
     trace_old_B,
+    label_a,
+    label_b,
 ):
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
@@ -160,6 +162,8 @@ def main():
         trace_old_A,
         trace_young_B,
         trace_old_B,
+        label_a,
+        label_b,
     )
     
     wandb_project = config.get("logging", {}).get("wandb_project", "stable_basin_aging")

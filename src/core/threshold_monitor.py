@@ -14,9 +14,7 @@ if not logger.handlers:
 
 class MetricThresholdMonitor:
     """
-    Biological Flight Computer for Closed-Loop Rejuvenation Therapies.
-    Monitors thermodynamic stability and physically actuates the IV pump
-    to prevent saddle-node bifurcations.
+    Monitors thermodynamic stability and checks metrics against safety thresholds.
     """
 
     def __init__(self, engine, metrics, hysteresis_frames=3):
@@ -67,20 +65,20 @@ class MetricThresholdMonitor:
 
     def _log_decision(self, action, ksm_score, csd_score, plv_score):
         """
-        Hardware Webhook to physically control payload delivery.
+        Log the status of thermodynamic metrics.
         """
         metrics_str = f"[KSM: {ksm_score:.3f} | CSD: {csd_score:.3f} | PLV: {plv_score:.3f}]"
 
         if action == "ALARM":
-            logger.critical(f"Therapy terminated due to instability. {metrics_str}")
+            logger.critical(f"Critical instability thresholds exceeded. {metrics_str}")
         elif action == "OK":
-            logger.info(f"Nominal parameters observed. Maintaining infusion. {metrics_str}")
+            logger.info(f"Metrics within nominal range. {metrics_str}")
         elif action == "WARNING":
-            logger.warning(f"Borderline metrics detected. Holding flow rate. {metrics_str}")
+            logger.warning(f"Borderline metrics detected. {metrics_str}")
 
     def evaluate_safety_margins(self, ksm_score, csd_score, plv_score):
         """
-        PID / State Machine logic to determine hardware actuation.
+        Check metrics against predefined safety margins.
         """
         result = {}
 
@@ -115,7 +113,7 @@ class MetricThresholdMonitor:
             result = {
                 "action": "OK",
                 "status": "SAFE",
-                "reason": "Homeostasis intact.",
+                "reason": "Metrics are stable.",
             }
 
         self._log_decision(result["action"], ksm_score, csd_score, plv_score)
