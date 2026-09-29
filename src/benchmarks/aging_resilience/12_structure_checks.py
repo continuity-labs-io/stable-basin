@@ -101,6 +101,8 @@ def main():
         return jax.vmap(lambda xi, s, k: g.forced_unroll(k, xi, dt, seq=s))(x_inits, seqs, keys)
 
     worm_trajs = [] # shape: (20 worms, steps, d_state)
+    worm_trajs_windowed = []
+    worm_unroll_args = []
     for w, traj in enumerate(test_trajs):
         starts = window_starts(traj.shape[0], seq_len, args.windows_per_worm)
         seqs = np.stack([traj[s : s + seq_len] for s in starts]).astype(np.float32)
@@ -110,8 +112,11 @@ def main():
         keys = jax.numpy.stack([jax.random.fold_in(base, w * 10_000 + win) for win in range(len(starts))])
         
         states = unroll(graph, x_inits, seqs, keys) # shape (windows, seq_len, d_state)
-        X = np.array(states)[:, args.burn_in :, :].reshape(-1, d_state)
+        X_win = np.array(states)[:, args.burn_in :, :]
+        worm_trajs_windowed.append(X_win)
+        X = X_win.reshape(-1, d_state)
         worm_trajs.append(X)
+        worm_unroll_args.append({"x_inits": x_inits, "seqs": seqs, "keys": keys})
         
     worm_trajs = np.array(worm_trajs)
     
@@ -194,56 +199,151 @@ def main():
     # ---------------------------------------------------------
     logger.info("TEST C: does the macro level predict itself?")
     
-    def extract_features_targets(traj, lag=5):
-        target_traj = traj[:, d_micro : d_micro + d_macro_int]
-        macro_traj = traj[:, d_micro : d_micro + d_macro_full]
+    def extract_features_targets_windowed(X_win, lag=5):
+        target_traj = X_win[:, :, d_micro : d_micro + d_macro_int]
+        macro_traj = X_win[:, :, d_micro : d_micro + d_macro_full]
         
         X_macro = []
         X_full = []
         Y = []
         
-        for t in range(lag - 1, traj.shape[0] - 1):
-            X_macro.append(macro_traj[t-lag+1 : t+1].flatten())
-            X_full.append(traj[t-lag+1 : t+1].flatten())
-            Y.append(target_traj[t+1])
-            
+        windows, T, _ = X_win.shape
+        for win in range(windows):
+            for t in range(lag - 1, T - 1):
+                X_macro.append(macro_traj[win, t-lag+1 : t+1].flatten())
+                X_full.append(X_win[win, t-lag+1 : t+1].flatten())
+                Y.append(target_traj[win, t+1])
+                
         return np.array(X_macro), np.array(X_full), np.array(Y)
 
     X_m_list, X_f_list, Y_list = [], [], []
-    for w in range(len(worm_trajs)):
-        xm, xf, y = extract_features_targets(worm_trajs[w])
+    groups_list = []
+    for w in range(len(worm_trajs_windowed)):
+        xm, xf, y = extract_features_targets_windowed(worm_trajs_windowed[w])
         X_m_list.append(xm)
         X_f_list.append(xf)
         Y_list.append(y)
+        groups_list.append(np.full(len(y), w))
 
     train_idx = np.arange(10)
-    test_idx = np.arange(10, min(20, len(worm_trajs)))
+    test_idx = np.arange(10, min(20, len(worm_trajs_windowed)))
 
     X_m_train = np.concatenate([X_m_list[i] for i in train_idx])
     X_f_train = np.concatenate([X_f_list[i] for i in train_idx])
     Y_train = np.concatenate([Y_list[i] for i in train_idx])
+    groups_train = np.concatenate([groups_list[i] for i in train_idx])
     
-    X_m_test = np.concatenate([X_m_list[i] for i in test_idx])
-    X_f_test = np.concatenate([X_f_list[i] for i in test_idx])
-    Y_test = np.concatenate([Y_list[i] for i in test_idx])
-
-    model_macro = Ridge(alpha=1.0)
-    model_full = Ridge(alpha=1.0)
+    m_mean = X_m_train.mean(axis=0)
+    m_std = X_m_train.std(axis=0) + 1e-8
+    f_mean = X_f_train.mean(axis=0)
+    f_std = X_f_train.std(axis=0) + 1e-8
+    
+    X_m_train = (X_m_train - m_mean) / m_std
+    X_f_train = (X_f_train - f_mean) / f_std
+    
+    from sklearn.linear_model import RidgeCV
+    from sklearn.model_selection import GroupKFold
+    
+    alphas = np.logspace(-3, 3, 13)
+    cv_macro = list(GroupKFold(n_splits=5).split(X_m_train, Y_train, groups_train))
+    cv_full = list(GroupKFold(n_splits=5).split(X_f_train, Y_train, groups_train))
+    
+    model_macro = RidgeCV(alphas=alphas, cv=cv_macro)
+    model_full = RidgeCV(alphas=alphas, cv=cv_full)
     
     model_macro.fit(X_m_train, Y_train)
     model_full.fit(X_f_train, Y_train)
     
-    preds_macro = model_macro.predict(X_m_test)
-    preds_full = model_full.predict(X_f_test)
+    preds_macro_train = model_macro.predict(X_m_train)
+    preds_full_train = model_full.predict(X_f_train)
+    mse_macro_train = np.mean((Y_train - preds_macro_train)**2)
+    mse_full_train = np.mean((Y_train - preds_full_train)**2)
     
-    mse_macro = np.mean((Y_test - preds_macro)**2)
-    mse_full = np.mean((Y_test - preds_full)**2)
+    logger.info(f"Test C: train MSE_macro={mse_macro_train:.4f}, train MSE_full={mse_full_train:.4f}")
+    if mse_full_train > mse_macro_train + 1e-6:
+        logger.error("Sanity check failed: train MSE_full > train MSE_macro. The fitting code is wrong.")
+        raise ValueError("Sanity check failed: train MSE_full > train MSE_macro")
+        
+    test_mse_macro_list = []
+    test_mse_full_list = []
     
-    closure = float(mse_full / (mse_macro + 1e-8))
-    pass_C = bool(closure >= 0.9)
-    logger.info(f"Test C: closure={closure:.4f} (MSE_full={mse_full:.4f}, MSE_macro={mse_macro:.4f}). PASS: {pass_C}")
+    for i in test_idx:
+        X_m_t = (X_m_list[i] - m_mean) / m_std
+        X_f_t = (X_f_list[i] - f_mean) / f_std
+        Y_t = Y_list[i]
+        
+        p_m = model_macro.predict(X_m_t)
+        p_f = model_full.predict(X_f_t)
+        
+        test_mse_macro_list.append(np.mean((Y_t - p_m)**2))
+        test_mse_full_list.append(np.mean((Y_t - p_f)**2))
+        
+    test_mse_macro_list = np.array(test_mse_macro_list)
+    test_mse_full_list = np.array(test_mse_full_list)
+    
+    mse_macro_test = np.mean(test_mse_macro_list)
+    mse_full_test = np.mean(test_mse_full_list)
+    closure_point = mse_full_test / (mse_macro_test + 1e-8)
+    
+    n_boot_c = 5000
+    boot_closures = []
+    for _ in range(n_boot_c):
+        idx_sample = rng.choice(len(test_mse_macro_list), len(test_mse_macro_list), replace=True)
+        sample_macro = np.mean(test_mse_macro_list[idx_sample])
+        sample_full = np.mean(test_mse_full_list[idx_sample])
+        boot_closures.append(sample_full / (sample_macro + 1e-8))
+        
+    ci_closure_lower = np.percentile(boot_closures, 2.5)
+    ci_closure_upper = np.percentile(boot_closures, 97.5)
+    
+    decoupling_changes = []
+    for idx_pos, i in enumerate(test_idx):
+        args_i = worm_unroll_args[i]
+        other_pos = (idx_pos + 1) % len(test_idx)
+        other_i = test_idx[other_pos]
+        other_seqs = worm_unroll_args[other_i]["seqs"]
+        
+        alt_states = unroll(graph, args_i["x_inits"], other_seqs, args_i["keys"])
+        alt_X_win = np.array(alt_states)[:, args.burn_in :, :]
+        
+        orig_X_win = worm_trajs_windowed[i]
+        
+        orig_macro = orig_X_win[:, :, d_micro : d_micro + d_macro_int]
+        alt_macro = alt_X_win[:, :, d_micro : d_micro + d_macro_int]
+        
+        change = np.mean(np.abs(alt_macro - orig_macro))
+        orig_sd = orig_macro.std() + 1e-8
+        decoupling_changes.append(change / orig_sd)
+        
+    mean_decoupling = np.mean(decoupling_changes)
+    
+    pass_C = False
+    fail_C = False
+    
+    if closure_point >= 0.9 and ci_closure_upper <= 1.1 and mean_decoupling >= 0.1:
+        pass_C = True
+    elif closure_point < 0.9:
+        fail_C = True
+        
+    status_C = "PASS" if pass_C else ("FAIL" if fail_C else "VOID")
+    logger.info(f"Test C: closure={closure_point:.4f} CI95[{ci_closure_lower:.4f}, {ci_closure_upper:.4f}] "
+                f"decoupling={mean_decoupling:.4f}. Status: {status_C}")
 
+    import hashlib
+    def get_sha256(filepath):
+        if not os.path.exists(filepath):
+            return None
+        with open(filepath, "rb") as f:
+            return hashlib.sha256(f.read()).hexdigest()
+            
+    files_loaded = {
+        "train_ts": {"path": args.train_ts, "sha256": get_sha256(args.train_ts)},
+        "test_ts": {"path": args.test_ts, "sha256": get_sha256(args.test_ts)},
+        "weights": {"path": args.weights, "sha256": get_sha256(args.weights)}
+    }
+    
     results = {
+        "files_loaded": files_loaded,
         "test_a": {
             "median_r": float(r_median),
             "p95_r": float(r_p95),
@@ -256,15 +356,20 @@ def main():
             "pass": pass_B
         },
         "test_c": {
-            "closure": float(closure),
-            "mse_macro": float(mse_macro),
-            "mse_full": float(mse_full),
-            "pass": pass_C
+            "closure_median": float(closure_point),
+            "ci95_lower": float(ci_closure_lower),
+            "ci95_upper": float(ci_closure_upper),
+            "mean_decoupling_change": float(mean_decoupling),
+            "train_mse_macro": float(mse_macro_train),
+            "train_mse_full": float(mse_full_train),
+            "test_mse_macro": float(mse_macro_test),
+            "test_mse_full": float(mse_full_test),
+            "status": status_C
         }
     }
     
     os.makedirs(args.out_dir, exist_ok=True)
-    out_file = os.path.join(args.out_dir, "structure_checks.json")
+    out_file = os.path.join(args.out_dir, "structure_checks_c_v2.json")
     with open(out_file, "w") as f:
         json.dump(results, f, indent=2)
     logger.info(f"Wrote {out_file}")
