@@ -115,10 +115,6 @@ class WormGaitTask(AgingBenchmarkTask):
         }
 
     def render_animation(self, young_data, old_data, output_path: str, **kwargs):
-
-    @property
-    def cohort_labels(self):
-        return ("clean", "synthetic slowdown x3")
         frames = kwargs.get("frames", young_data.shape[0])
         fps = kwargs.get("fps", 30)
         create_worm_gait_animation(
@@ -128,3 +124,7 @@ class WormGaitTask(AgingBenchmarkTask):
             frames=frames,
             fps=fps
         )
+
+    @property
+    def cohort_labels(self):
+        return ("clean", "synthetic slowdown x3")
