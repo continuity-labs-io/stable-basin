@@ -47,10 +47,11 @@ def run_baseline_metrics():
                 aggregated[k].append(v)
         return aggregated
 
-    logger.info("Evaluating Clean Baseline Cohort...")
+    label_a, label_b = task.cohort_labels
+    logger.info(f"Evaluating {label_a} Cohort...")
     metrics_young = evaluate_cohort(ds_young)
     
-    logger.info("Evaluating Synthetically Degraded Cohort...")
+    logger.info(f"Evaluating {label_b} Cohort...")
     metrics_old = evaluate_cohort(ds_old)
 
     logger.info("\n--- METRICS COMPARISON ---")
@@ -78,8 +79,8 @@ def run_baseline_metrics():
         for k, v in stats.items():
             results[key][k] = v
             
-        logger.info(f"Clean Baseline {key}: {mean_y:.4f} ± {std_y:.4f}")
-        logger.info(f"Synthetically Degraded {key}: {mean_o:.4f} ± {std_o:.4f}")
+        logger.info(f"{label_a} {key}: {mean_y:.4f} ± {std_y:.4f}")
+        logger.info(f"{label_b} {key}: {mean_o:.4f} ± {std_o:.4f}")
 
     # Save results
     out_dir = "output/benchmarks/aging_resilience"

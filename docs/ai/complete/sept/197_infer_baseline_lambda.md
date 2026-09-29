@@ -2,7 +2,7 @@
 We need to eliminate the "magic number" $\lambda_A = 0.2$ representing the pathological old worm state in our Worm Gait intervention experiment. We want to formally infer the true biological $\lambda$ directly from the empirical data using Single-Parameter Variational Inference.
 
 **Your Task:**
-Create a new benchmark script: `src/benchmarks/13_infer_biological_lambda.py`
+Create a new benchmark script: `src/benchmarks/13_infer_fitted_lambda.py`
 
 **Requirements:**
 1. **The Data:** Load the Old Worm dataset (`RealEigenwormDataset` with `is_aged=True`, `seq_len=100`). Use `JAXDictDataset` and a `DataLoader` (batch_size=8).
@@ -15,7 +15,7 @@ Create a new benchmark script: `src/benchmarks/13_infer_biological_lambda.py`
 5. **Optimization:** Run the optimization loop over the Old Worm dataloader for a few epochs (e.g., 20-50) until `log_lambda` converges.
 6. **Output:** 
    - Print the final converged value of $\lambda$ (`jnp.exp(log_lambda)`).
-   - Save this float value to a JSON file: `output/echo/benchmarks/13_inferred_biological_lambda.json`.
+   - Save this float value to a JSON file: `output/echo/benchmarks/13_inferred_fitted_lambda.json`.
 7. **Pipeline Update:** Add `.PHONY: worm-gait-infer-lambda` to the `Makefile` and execute the script.
 
 Please execute this and report the final inferred biological $\lambda$! We expect it to converge somewhere below 1.0, quantifying exactly how much the Waddington basin flattens during aging.

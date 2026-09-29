@@ -9,7 +9,7 @@ Requirements:
 
 - Import `torch`, `time`.
 - Import `StateSpaceEngine` from `src.models.state_space_engine`.
-- Import `ThermodynamicMetrics` from `src.metrics.thermodynamics`.
+- Import `TimeSeriesStabilityMetrics` from `src.metrics.thermodynamics`.
 - Initialize
   `device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")`.
 - Initialize `model = StateSpaceEngine(d_model=832).to(device).eval()`.
@@ -20,7 +20,7 @@ Requirements:
 - At exactly frame 50, inject a catastrophic variance explosion (multiply frames
   50-100 by an exponentially increasing scalar) to simulate a structural
   Waddington crash.
-- Run `ThermodynamicMetrics(alpha=500.0).calculate_ksm(z_seq, window_size=4)`.
+- Run `TimeSeriesStabilityMetrics(alpha=500.0).calculate_ksm(z_seq, window_size=4)`.
 - Identify the exact frame the KSM metric drops below 0.9.
 - Note: DMD will naturally have a slight temporal lag (1-3 frames) because it
   calculates the approximation over a sliding window. PALC operates on

@@ -33,6 +33,6 @@ Create a test script `src/harness/test_async_ksm.py`.
    300 using your `unpack_to_dense` method.
 6. Flatten the dense hidden states from `[1, 300, 30, 16]` to `[300, 480]` and
    feed them into
-   `ThermodynamicMetrics(alpha=500.0).calculate_ksm(..., window_size=10)`.
+   `TimeSeriesStabilityMetrics(alpha=500.0).calculate_ksm(..., window_size=10)`.
 7. Print out the KSM trajectory and assert that it remains stable (near 1.0)
    before frame 150 and correctly drops towards 0.0 after the crash.

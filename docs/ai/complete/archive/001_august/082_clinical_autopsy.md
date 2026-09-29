@@ -43,7 +43,7 @@ Feed the following file paths into your Antigravity IDE context:
 
 **Raw Text Prompt to Execute:**
 
-> Create a new file at `src/harness/clinical_diagnostic_runner.py`. You are an
+> Create a new file at `src/harness/ksm_threshold_runner.py`. You are an
 > Expert PyTorch ML Engineer. Write a production-grade CLI harness with
 > `argparse` and `logging`. Requirements:
 >
@@ -57,14 +57,14 @@ Feed the following file paths into your Antigravity IDE context:
 >    and log the baseline thermodynamic stability (measuring the variance of the
 >    Koopman Stability Metric (KSM) during the healthy period).
 > 4. Pass the full sequence through the trained engine to extract continuous
->    hidden states. Use `ThermodynamicMetrics(alpha=500.0).calculate_ksm()` to
+>    hidden states. Use `TimeSeriesStabilityMetrics(alpha=500.0).calculate_ksm()` to
 >    dynamically identify the exact frame where the KSM drops below
 >    `--ksm-threshold`. Log this as the `crash_frame` and track the inference
 >    latency (ms per frame) during this detection phase.
 > 5. Instantiate `MambaLRPEpsilon` to get the exact relevance tensor.
 >    Monkey-patch the model's `compute_attribution` method to return this
 >    tensor.
-> 6. Pass the engine and sequence to `ThermodynamicDiagnosticEngine` to generate
+> 6. Pass the engine and sequence to `AttributionSummary` to generate
 >    a JSON diagnostic report for the `crash_frame`. Log a metric evaluating the
 >    causal coherence (e.g., sparsity/focus of the relevance tensor).
 > 7. Plot a 3-panel dashboard using `matplotlib` (subsample or max-pool the
@@ -76,7 +76,7 @@ Feed the following file paths into your Antigravity IDE context:
 > - Panel 3: The MambaLRP Causal Attribution Heatmap.
 >
 > 8. Save the JSON report to
->    `output/harness/clinical_diagnostic_report_[model_type].json`, the
+>    `output/harness/ksm_threshold_report_[model_type].json`, the
 >    dashboard to `output/harness/[png_name]`, and a CSV summary to
 >    `output/harness/[csv_name]`.
 
@@ -93,27 +93,27 @@ Feed the following file path into your Antigravity IDE context:
 > Append the following targets to the `Makefile`:
 >
 > ```makefile
-> .PHONY: clinical-diagnostic evaluate-all-models
+> .PHONY: ksm-threshold evaluate-all-models
 >
 > EPOCHS ?= 15
 >
-> clinical-diagnostic:
-> 	python -m src.harness.clinical_diagnostic_runner \
+> ksm-threshold:
+> 	python -m src.harness.ksm_threshold_runner \
 > 		--model-type meld \
 > 		--epochs $(EPOCHS) \
 > 		--seq-len 2000 \
 > 		--ksm-threshold 0.85 \
-> 		--png-name 06_clinical_diagnostic_dashboard_meld.png \
-> 		--csv-name 06_clinical_diagnostic_metrics_meld.csv
+> 		--png-name 06_ksm_threshold_dashboard_meld.png \
+> 		--csv-name 06_ksm_threshold_metrics_meld.csv
 >
 > evaluate-all-models:
 > 	for model in meld baseline transformer mask_aware ; do \
-> 		python -m src.harness.clinical_diagnostic_runner \
+> 		python -m src.harness.ksm_threshold_runner \
 > 			--model-type $$model \
 > 			--epochs $(EPOCHS) \
 > 			--seq-len 2000 \
 > 			--ksm-threshold 0.85 \
-> 			--png-name 06_clinical_diagnostic_dashboard_$$model.png \
-> 			--csv-name 06_clinical_diagnostic_metrics_$$model.csv ; \
+> 			--png-name 06_ksm_threshold_dashboard_$$model.png \
+> 			--csv-name 06_ksm_threshold_metrics_$$model.csv ; \
 > 	done
 > ```

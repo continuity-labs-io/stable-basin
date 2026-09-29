@@ -108,5 +108,9 @@ class KillifishTask(AgingBenchmarkTask):
         return {"variance": variance}
 
     def render_animation(self, young_data, old_data, output_path: str, **kwargs):
+
+    @property
+    def cohort_labels(self):
+        return ("<= 50% of lifespan", "> 50% of lifespan")
         logger.warning(f"Skipping animation for Killifish dataset. Output path: {output_path}")
         pass

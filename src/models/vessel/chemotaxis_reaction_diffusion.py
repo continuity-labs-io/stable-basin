@@ -8,7 +8,7 @@ from jaxtyping import Float
 from einops import rearrange
 
 
-class ActiveInferenceAgent(nn.Module):
+class ChemotaxisReactionDiffusion(nn.Module):
     """
     Active Inference Agent: Upgrades the Observer Zero Reaction-Diffusion system
     with Fristonian Free Energy minimization and chemotaxis.

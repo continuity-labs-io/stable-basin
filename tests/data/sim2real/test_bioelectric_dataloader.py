@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from src.data.sim2real.bioelectric_dataloader import BioelectricLoader
+from src.data.synthetic.bioelectric_dataloader import BioelectricLoader
 
 
 def test_bioelectric_dataloader():

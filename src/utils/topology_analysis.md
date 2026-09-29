@@ -37,26 +37,26 @@ Modules that orchestrate or combine many different components (more bug-prone).
 
 | Module                                                | Out-Degree (Imports Made) |
 | ----------------------------------------------------- | ------------------------- |
-| `src.harness.clinical_diagnostic_runner`              | 26                        |
+| `src.harness.ksm_threshold_runner`              | 26                        |
 | `src.harness.sensor_fusion_sweep`                     | 23                        |
 | `src.harness.sensor_fusion_predictor`                 | 15                        |
 | `src.metrics.metrics`                                 | 8                         |
-| `src.data.sim2real.phase_structure_dataloader`        | 7                         |
-| `src.data.sim2real.human_telemetry_dataloader`        | 6                         |
+| `src.data.synthetic.phase_structure_dataloader`        | 7                         |
+| `src.data.synthetic.human_telemetry_dataloader`        | 6                         |
 | `src.data.waddington_dataset`                         | 6                         |
 | `src.models.losses.meld_loss`                         | 6                         |
 | `src.data.ephys.pharma_shock_dataset`                 | 5                         |
 | `src.metrics.diagnostic_engine`                       | 5                         |
 | `src.models.encoders.topo_encoder`                    | 5                         |
-| `src.data.sim2real.bioelectric_dataloader`            | 4                         |
-| `src.data.sim2real.epigenetic_entropy_dataloader`     | 4                         |
+| `src.data.synthetic.bioelectric_dataloader`            | 4                         |
+| `src.data.synthetic.epigenetic_entropy_dataloader`     | 4                         |
 | `src.harness.trainer`                                 | 4                         |
 | `src.models.encoders.gevi_encoder`                    | 4                         |
 | `src.models.encoders.spatial_compressor`              | 4                         |
 | `src.icebox.models.ssm.masr_mamba`                    | 4                         |
-| `src.data.sim2real.gevi_dataloader`                   | 3                         |
-| `src.data.sim2real.multimodal_bio_dataloader`         | 3                         |
-| `src.data.sim2real.neocortical_assembloid_dataloader` | 3                         |
+| `src.data.synthetic.gevi_dataloader`                   | 3                         |
+| `src.data.synthetic.multimodal_bio_dataloader`         | 3                         |
+| `src.data.synthetic.neocortical_assembloid_dataloader` | 3                         |
 
 ## Entry Points
 
@@ -66,7 +66,7 @@ modules.
 | Module                                   |
 | ---------------------------------------- |
 | `src.demo`                               |
-| `src.harness.clinical_diagnostic_runner` |
+| `src.harness.ksm_threshold_runner` |
 | `src.harness.sensor_fusion_sweep`        |
 | `src.harness.summarize_results`          |
 
@@ -78,16 +78,16 @@ point scripts).
 
 | Module                                                |
 | ----------------------------------------------------- |
-| `src.data.sim2real`                                   |
-| `src.data.sim2real.bioelectric_dataloader`            |
-| `src.data.sim2real.epigenetic_entropy_dataloader`     |
-| `src.data.sim2real.gevi_dataloader`                   |
-| `src.data.sim2real.human_telemetry_dataloader`        |
-| `src.data.sim2real.multimodal_bio_builder`            |
-| `src.data.sim2real.multimodal_bio_dataloader`         |
-| `src.data.sim2real.neocortical_assembloid_dataloader` |
-| `src.data.sim2real.phase_structure_dataloader`        |
-| `src.data.sim2real.rna_dataloader`                    |
+| `src.data.synthetic`                                   |
+| `src.data.synthetic.bioelectric_dataloader`            |
+| `src.data.synthetic.epigenetic_entropy_dataloader`     |
+| `src.data.synthetic.gevi_dataloader`                   |
+| `src.data.synthetic.human_telemetry_dataloader`        |
+| `src.data.synthetic.multimodal_bio_builder`            |
+| `src.data.synthetic.multimodal_bio_dataloader`         |
+| `src.data.synthetic.neocortical_assembloid_dataloader` |
+| `src.data.synthetic.phase_structure_dataloader`        |
+| `src.data.synthetic.rna_dataloader`                    |
 | `src.models.encoders.gevi_encoder`                    |
 | `src.models.encoders.spatial_compressor`              |
 | `src.models.encoders.topo_encoder`                    |

@@ -3,7 +3,7 @@ We are upgrading our continuous-time simulation from a reactive "Observer" to an
 chemotaxis.
 
 Please write a new PyTorch script in
-src/models/vessel/active_inference_agent.py. Build upon the previous
+src/models/vessel/chemotaxis_reaction_diffusion.py. Build upon the previous
 Reaction-Diffusion architecture, but implement the following thermodynamic
 agency mechanics:
 

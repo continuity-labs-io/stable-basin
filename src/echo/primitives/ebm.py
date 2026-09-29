@@ -80,7 +80,7 @@ class PrecisionWeightedEBM(eqx.Module):
         # Bound energy from below to ensure a thermodynamic floor (prevents infinite sinkholes)
         e_mlp = jnp.squeeze(jax.nn.softplus(energy_raw))  # Shape: ()
 
-        # Add a global structural prior to guarantee the landscape is a positive-definite basin
+        # Adds 0.0005*||x||^2 so energy grows at large |x|. This does not make the Hessian positive-definite; the MLP term can make it indefinite.
         e_prior = 0.5 * 0.001 * jnp.sum(x**2)
         energy = e_prior + e_mlp
 
@@ -174,7 +174,7 @@ class IdentityPrecisionEBM(eqx.Module):
         # Bound energy from below to ensure a thermodynamic floor (prevents infinite sinkholes)
         e_mlp = jnp.squeeze(jax.nn.softplus(energy_raw))  # Shape: ()
 
-        # Add a global structural prior to guarantee the landscape is a positive-definite basin
+        # Adds 0.0005*||x||^2 so energy grows at large |x|. This does not make the Hessian positive-definite; the MLP term can make it indefinite.
         e_prior = 0.5 * 0.001 * jnp.sum(x**2)
         energy = e_prior + e_mlp
 

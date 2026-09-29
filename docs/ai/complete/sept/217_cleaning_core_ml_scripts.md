@@ -1,6 +1,6 @@
 # Prompt 3: Cleaning the Core ML Scripts (02 through 09)
 
-Refactor the core ML scripts in `src/benchmarks/worm_gait/`: `02_worm_gait_aging_ssm.py` through `09_pharmacological_translation.py`.
+Refactor the core ML scripts in `src/benchmarks/worm_gait/`: `02_worm_gait_aging_ssm.py` through `09_lambda_argmax.py`.
 
 For EACH script:
 1. Remove all direct imports of `RealEigenwormDataset` and `SyntheticWormMockDataset`.

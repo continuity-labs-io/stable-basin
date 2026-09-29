@@ -5,7 +5,7 @@ spatial variance across its features. Our global `np.std(Z_np)` check is missing
 the flatline, allowing PyDMD to calculate an eigenvalue of 1.0 (since x*t =
 x*{t+1}).
 
-Task: Fix the flatline detection logic in `ThermodynamicMetrics`.
+Task: Fix the flatline detection logic in `TimeSeriesStabilityMetrics`.
 
 1. In both `calculate_ksm` and `calculate_lle`, locate the
    `Z_np = Z.T.detach().cpu().numpy()` assignment.

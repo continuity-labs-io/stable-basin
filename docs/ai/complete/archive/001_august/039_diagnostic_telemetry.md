@@ -20,7 +20,7 @@ Task: Implement a `DiagnosticLogger` in `8_ephys_demo.py`.
    `mean` and `std` of the tensor _before_ the crash (e.g., frames 4000-4999)
    versus _after_ the crash (frames 5000-5999) to verify that the mathematical
    "flatline" was injected correctly.
-5. **PyDMD Eigenvalue Audit:** Modify `ThermodynamicMetrics.calculate_ksm`
+5. **PyDMD Eigenvalue Audit:** Modify `TimeSeriesStabilityMetrics.calculate_ksm`
    temporarily (or add a debug flag) to log the exact complex eigenvalues
    (`dmd.eigs`) and the extracted `max_eig` magnitude for the specific sliding
    window immediately _before_ the crash and the sliding window immediately

@@ -3,7 +3,7 @@
 We need to transition the dataloaders from ingesting micro-scale cellular data
 to ingesting macroscopic human wearable data.
 
-Please create a new file: `src/pipeline/sim2real/human_telemetry_dataloader.py`
+Please create a new file: `src/pipeline/synthetic/human_telemetry_dataloader.py`
 
 **Requirements:**
 

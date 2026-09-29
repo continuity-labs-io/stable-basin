@@ -8,11 +8,7 @@ from typing import Dict
 
 class MarkovHull(eqx.Module):
     """
-    Mathematically enforces a Markov Blanket partition on a biological state tensor.
-    Partitions the universe state into internal (μ), sensory (s), active (a),
-    and external (η) components.
-    Enforces the fundamental law: internal state must not interact directly with
-    the external state.
+    Partitions the state into internal/sensory/active/external index ranges and provides a mask that zeroes internal-external entries of Q and Gamma. This does not make internal and external states conditionally independent: the energy is a dense MLP over the full state, so the drift of internal states still depends on external states.
 
     Attributes:
         d_internal: Dimensionality of the internal state (μ).

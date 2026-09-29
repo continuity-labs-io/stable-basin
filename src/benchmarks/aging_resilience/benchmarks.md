@@ -32,7 +32,7 @@ cycles and conclusively demonstrates our ability to measure the thermodynamic
 flattening (decline in the Hessian Curvature trace of the Joint EBM) of a
 Waddington basin caused by biological aging.
 
-## 06: Infer Biological Lambda (`06_infer_biological_lambda.py`)
+## 06: Infer Biological Lambda (`06_fit_lambda.py`)
 Infers the latent biological precision parameter ($\lambda$) that governs the
 thermodynamic curvature of the 'Old Worm' state relative to the trained 'Young
 Worm' engine. Provides the empirically grounded baseline parameter for the
@@ -55,7 +55,7 @@ Performs a dose-response sweep across various values of the precision injection
 parameter $\lambda$. It systematically calculates the resulting mean Hessian
 trace and Cohen's $d$ effect sizes for each discrete intervention intensity.
 
-## 09: Pharmacological Translation (`09_pharmacological_translation.py`)
+## 09: Pharmacological Translation (`09_lambda_argmax.py`)
 Bridges the gap between abstract thermodynamic geometry and standard clinical
 pharmacology. By fitting a 4-parameter logistic (4PL) Hill equation to the
 dose-response trace data from step 08, it exacts the $EC_{50}$ intervention

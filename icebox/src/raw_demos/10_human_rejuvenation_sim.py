@@ -8,11 +8,11 @@ import logging
 import os
 import time
 
-from src.data.sim2real.human_telemetry_dataloader import HumanTelemetryLoader
-from src.data.sim2real.epigenetic_entropy_dataloader import EpigeneticEntropyLoader
+from src.data.synthetic.human_telemetry_dataloader import HumanTelemetryLoader
+from src.data.synthetic.epigenetic_entropy_dataloader import EpigeneticEntropyLoader
 from src.icebox.models.ssm.masr_mamba import MaskAwareMamba
-from src.metrics import ThermodynamicMetrics
-from src.core.rejuvenation_controller import RejuvenationFlightController
+from src.metrics import TimeSeriesStabilityMetrics
+from src.core.threshold_monitor import MetricThresholdMonitor
 
 # Suppress PyDMD debug spam
 logging.getLogger("DiagnosticLogger").setLevel(logging.WARNING)
@@ -30,8 +30,8 @@ def main():
     # 1. Initialize Components
     logger.info("[1/4] Booting Biological Flight Computer...")
     engine = MaskAwareMamba(input_dim=6, d_model=32, mask_aware=True).to(device)
-    metrics = ThermodynamicMetrics()
-    controller = RejuvenationFlightController(engine, metrics, hysteresis_frames=3)
+    metrics = TimeSeriesStabilityMetrics()
+    controller = MetricThresholdMonitor(engine, metrics, hysteresis_frames=3)
 
     # 2. Generate 20-minute timeline (1200 seconds at 250Hz = 300,000 frames)
     logger.info("[2/4] Generating 20-minute patient telemetry...")
@@ -61,7 +61,7 @@ def main():
         csd = metrics.calculate_csd(z_win, window_size=40)[-1]
 
         res = controller.evaluate_safety_margins(ksm, csd, plv_score=1.0)
-        if res["action"] == "EMERGENCY_ABORT":
+        if res["action"] == "ALARM":
             abort_sec = sec
             break
 

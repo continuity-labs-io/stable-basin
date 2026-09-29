@@ -10,22 +10,11 @@ PROJECT_ROOT = os.path.abspath(os.path.join(MODULE_DIR, "..", "..", ".."))
 
 class PharmacologicalShockDataset(Dataset):
     """
-        Pharmacological Shock Dataset.
+    Pharmacological Shock Dataset.
 
-    Origin: Functional neuronal circuitry and oscillatory dynamics in human brain organoids (Nature
-        Communications, 2022)
-    Sampling: Continuous extracellular neural activity recorded via high-density CMOS microelectrode
-        spatial arrays.
-
-        The MVM Proof (Phase Transition):
-    Serves as the ultimate ground-truth test for the continuous-time solver. Instead of just
-        counting
-    dropped spikes, this dataset proves the architecture can detect the exact millisecond the
-        pharmacological
-        agent collapses the network's Kinetic Stability Metric (KSM) from 1.0 down to 0.0.
-
-        Note: Here the shock is due to Diazepam, a potent benzodiazepine / GABA-A receptor positive
-        allosteric modulator that globally suppresses neural network excitability.
+    Data source: Functional neuronal circuitry and oscillatory dynamics in human brain organoids (Nature Communications, 2022)
+    Format: Continuous extracellular neural activity recorded via high-density CMOS microelectrode spatial arrays.
+    Array shape: (seq_len, num_channels)
     """
 
     def __init__(self, condition: str = "control", base_path: str = None, seq_len: int = 1024):

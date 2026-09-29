@@ -44,7 +44,7 @@ from src.data.ephys.uhd_lfp_dataset import ContinuousLFPDataset
 from src.models.encoders.topo_encoder import TopoEncoder
 from src.models.ssm.baseline_ssm import BaselineSSM
 from src.models.losses.meld_loss import TopoContrastiveLoss
-from src.metrics.metrics import ThermodynamicMetrics
+from src.metrics.metrics import TimeSeriesStabilityMetrics
 
 
 def main():
@@ -110,8 +110,8 @@ def main():
 
     z_sequence = hidden_states.squeeze(0).cpu()  # [100, 768]
 
-    # Instantiate ThermodynamicMetrics and calculate KSM
-    thermo = ThermodynamicMetrics(alpha=500.0)
+    # Instantiate TimeSeriesStabilityMetrics and calculate KSM
+    thermo = TimeSeriesStabilityMetrics(alpha=500.0)
     ksm_scores = thermo.calculate_ksm(z_sequence, window_size=4)
 
     # 4. Visualization

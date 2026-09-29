@@ -1,7 +1,7 @@
 import pytest
 import torch
 import numpy as np
-from src.metrics import ThermodynamicMetrics
+from src.metrics import TimeSeriesStabilityMetrics
 
 
 def test_physics_invariant_sine_wave_ksm():
@@ -17,7 +17,7 @@ def test_physics_invariant_sine_wave_ksm():
     freqs = torch.linspace(0.5, 2.0, dim)
     stable_signal = torch.sin(t * freqs)
 
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     ksm_scores = metrics.calculate_ksm(stable_signal, window_size=50, rank_method="default")
 
     # Check stability after initial window
@@ -37,7 +37,7 @@ def test_physics_invariant_gaussian_noise_ksm():
     torch.manual_seed(42)
     noise_signal = torch.randn(time_steps, dim) * 5.0  # High variance noise
 
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     ksm_scores = metrics.calculate_ksm(noise_signal, window_size=50, rank_method="dynamic")
 
     for i, ksm in enumerate(ksm_scores[50:]):
@@ -71,7 +71,7 @@ def test_physics_invariant_ksm_integration():
     # Concatenate sequence
     signal = torch.cat([noise1, stable, noise2], dim=0)
 
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     ksm_scores = metrics.calculate_ksm(signal, window_size=window_size, rank_method="dynamic")
 
     # Check Phase 1 (frames 50 to 150) -> noise
@@ -106,7 +106,7 @@ def test_physics_invariant_ksm_middle_case():
     noise = torch.randn(time_steps, dim) * 1.5
     mixed_signal = stable_signal + noise
 
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     ksm_scores = metrics.calculate_ksm(mixed_signal, window_size=50, rank_method="dynamic")
 
     mean_ksm = np.mean(ksm_scores[50:])

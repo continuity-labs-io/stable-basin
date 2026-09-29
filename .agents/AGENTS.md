@@ -138,3 +138,31 @@ All machine learning experiment suites must strictly follow a 6-phase linear pip
 6. **Phase 5: Translation & Visualization**: Translate abstract thermodynamic/mathematical metrics back into domain-specific contexts (e.g., EC50) and generate final visualizations for publication.
 
 **Shared Engine Logic**: NEVER import directly from one numbered script to another (e.g., importing `02_train.py` into `03_test.py`). All shared boilerplate (e.g., model instantiation, environment setup) must be extracted into a `core.py` or similar shared module.
+
+### Naming and documentation rule
+
+Names, docstrings, comments, log messages, plot labels, file names, README and ISSUES
+describe what the code does today. They do not describe what we hope it will show.
+
+1. Name things by the operation: what goes in, what is computed, what comes out.
+   Example: MetricThresholdMonitor, not RejuvenationController.
+2. Do not use clinical or outcome words (rescue, therapy, therapeutic, dose,
+   pharmacological, clinical, patient, rejuvenation, infusion, cure) for simulations or
+   model parameters. Use them only for code that processes real data from that setting.
+3. Label data by where it came from, everywhere it appears (variable names, legends,
+   output files). Synthetic or transformed data says so: "synthetic slowdown x3", not
+   "old". Real cohorts state their definition: "<= 6 months", "adult day 18".
+4. No certainty or superlatives the code has not earned: exact, guaranteed, proves,
+   ultimate, successfully detects, defeats. If a comment says "guarantees", a test
+   checks it.
+5. Physics words (entropy, thermodynamic, basin, Markov blanket, homeostasis) are used
+   only when the code computes or enforces that quantity. Variance is "variance", not
+   "entropy".
+6. Mock, placeholder and estimated values are labeled as such where produced and where
+   shown. Never hardcode a number that looks like a measurement.
+7. A result stated in README or docs names the script and output file that produced it,
+   and whether it passed its pre-registered gate.
+8. Dropped or iceboxed code is marked at the top of the file and is not presented as
+   current.
+9. When you add or rename anything, check it against this rule. If you notice a
+   violation outside your current task, list it in your summary; do not fix it silently.

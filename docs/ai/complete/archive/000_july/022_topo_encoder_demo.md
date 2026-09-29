@@ -7,7 +7,7 @@ Requirements:
 
 1. Setup:
    - Import `ContinuousLFPDataset`, `TopoEncoder`, `TopoContrastiveLoss` (from
-     `src.models.meld_loss`), and `ThermodynamicMetrics` (from
+     `src.models.meld_loss`), and `TimeSeriesStabilityMetrics` (from
      `src.metrics.thermodynamics`).
    - Initialize the dataloader (batch_size=8), model, and loss on the optimal
      device using `src.utils.device.get_optimal_device()`.
@@ -18,7 +18,7 @@ Requirements:
    - After training, pass a single continuous LFP sequence `[1, 500, 2, 64, 64]`
      through the model with `return_hidden=True`. Extract the full sequence of
      Mamba hidden states.
-   - Instantiate `ThermodynamicMetrics(alpha=500.0)`. Run `calculate_ksm` over
+   - Instantiate `TimeSeriesStabilityMetrics(alpha=500.0)`. Run `calculate_ksm` over
      the hidden states to map the eigenvalue divergence over the 500ms window.
 4. Visualization:
    - Generate a 2-panel Matplotlib dashboard (save to

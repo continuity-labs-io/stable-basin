@@ -5,7 +5,7 @@ The Inertial Dial Validation Suite: In
 telemetry testing suite using pytest and matplotlib.
 
 1. **Generate a synthetic biological dataset**: Reuse the existing
-   `GeviInjector` from `src.data.sim2real.gevi_injector`. Generate a baseline
+   `GeviInjector` from `src.data.synthetic.gevi_injector`. Generate a baseline
    signal with a high-variance anomaly phase (e.g. `is_healthy=False`).
 2. **Implement a simplified mock of the Conv1D kinematic routing**: Implement
    `MockKinematicRouting(nn.Module)`. Use `kernel_size=4` acting as a finite

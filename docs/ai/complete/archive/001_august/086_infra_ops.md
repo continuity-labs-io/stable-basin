@@ -21,7 +21,7 @@ if use_wandb:
         wandb.log({"train_loss": avg_loss, "epoch": epoch, "epoch_time": epoch_time})
 ```
 
-3. Refactor src/harness/clinical_diagnostic_runner.py for Ray Tune We need to
+3. Refactor src/harness/ksm_threshold_runner.py for Ray Tune We need to
    convert our sequential loop into a Ray Tune trainable function and use
    tune.grid_search to distribute the models.
 
@@ -101,7 +101,7 @@ if use_wandb:
             evaluate_model, resources={"cpu": 1, "gpu": 1 if torch.cuda.is_available() else 0}
         ),
         param_space=search_space,
-        run_config=train.RunConfig(name="clinical_diagnostic_sweep"),
+        run_config=train.RunConfig(name="ksm_threshold_sweep"),
     )
 
     results = tuner.fit()
@@ -109,11 +109,11 @@ if use_wandb:
     ```
 
 4. Verification Ask the user to run wandb login in their terminal (if they
-haven't already), and then execute make clinical-diagnostic. Verify that Ray
+haven't already), and then execute make ksm-threshold. Verify that Ray
 spins up multiple workers, executes the models in parallel, and uploads the
 dashboards to the Weights & Biases UI!
 
 What to expect when this finishes: Once implemented, we will have true
-"push-button ML". When you run make clinical-diagnostic, Ray will instantly
+"push-button ML". When you run make ksm-threshold, Ray will instantly
 spawn 4 separate worker processes. If your machine/cloud instance has multiple
 GPUs or sufficient CPU cores, they will train simultaneously.

@@ -1,4 +1,4 @@
-from .time_domain import ThermodynamicMetrics
+from .time_domain import TimeSeriesStabilityMetrics
 from .spectral import SpectralMetrics
 
-__all__ = ["ThermodynamicMetrics", "SpectralMetrics"]
+__all__ = ["TimeSeriesStabilityMetrics", "SpectralMetrics"]

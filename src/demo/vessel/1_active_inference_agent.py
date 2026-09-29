@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.colors import LinearSegmentedColormap
 
-from src.models.vessel.active_inference_agent import ActiveInferenceAgent
+from src.models.vessel.chemotaxis_reaction_diffusion import ChemotaxisReactionDiffusion
 
 
 def main():
@@ -15,7 +15,7 @@ def main():
     # Initialize the model
     size = 128
     # We set a low sigma to allow clear structure formation and strong chi for obvious chemotaxis
-    model = ActiveInferenceAgent(
+    model = ChemotaxisReactionDiffusion(
         size=size,
         dt=0.01,
         D_u=0.16,

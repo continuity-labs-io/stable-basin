@@ -8,7 +8,7 @@ from src.data.waddington_dataset import SyntheticWaddingtonDataset
 from src.data.async_event_packer import AsyncEventPackerDataset, ragged_collate_fn
 from src.models.ssm.async_ssm import AsyncMaskAwareSSM
 from src.models.ssm.state_unpacker import unpack_to_dense
-from src.metrics.metrics import ThermodynamicMetrics
+from src.metrics.metrics import TimeSeriesStabilityMetrics
 
 
 class CrashedWaddingtonDataset(Dataset):
@@ -70,11 +70,11 @@ def test_async_ksm():
         h_dense = unpack_to_dense(h_sparse, events, event_mask, seq_len=300, dt_resolution=1.0)
         print(f"Dense hidden states shape: {h_dense.shape}")
 
-        # 6. Flatten for ThermodynamicMetrics
+        # 6. Flatten for TimeSeriesStabilityMetrics
         # h_dense is [Batch, Seq_Len, Dim, D_State] -> [1, 300, 30, 16]
         h_flat = h_dense.view(300, 30 * 16)
 
-        metrics = ThermodynamicMetrics(alpha=500.0)
+        metrics = TimeSeriesStabilityMetrics(alpha=500.0)
         ksm_scores = metrics.calculate_ksm(h_flat, window_size=10)
 
         # 7. Print and Assert

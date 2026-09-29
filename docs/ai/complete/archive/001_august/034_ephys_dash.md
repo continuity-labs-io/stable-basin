@@ -1,7 +1,7 @@
 Context: We are creating a master execution script to prototype the
 continuous-time Mamba-2 engine on raw 1,024-channel HD-MEA data. We have
 `brw_dataloader.py` which ingests raw Zenodo 3Brain data, the `SpikeForecaster`
-(Mamba-2), `ThermodynamicMetrics` (PyDMD), and `MambaLRPEpsilon`.
+(Mamba-2), `TimeSeriesStabilityMetrics` (PyDMD), and `MambaLRPEpsilon`.
 
 Task: Create a new script `src/demo/8_ephys_demo.py`.
 
@@ -16,7 +16,7 @@ Task: Create a new script `src/demo/8_ephys_demo.py`.
    "variance explosion" (simulate a seizure or membrane rupture) starting
    exactly at the 5,000th frame.
 4. **Thermodynamic Extraction:** Pass the crashed sequence through the model,
-   extract the hidden states, and run `ThermodynamicMetrics.calculate_ksm` to
+   extract the hidden states, and run `TimeSeriesStabilityMetrics.calculate_ksm` to
    generate the Koopman Stability Metric array.
 5. **Attribution:** Run `MambaLRPEpsilon` targeting the exact 5,000th frame to
    extract the `[1, 10000, 1024]` relevance tensor showing which electrodes

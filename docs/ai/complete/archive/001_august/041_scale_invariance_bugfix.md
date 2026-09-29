@@ -10,7 +10,7 @@ Task 1: Fix the Crash Physics in `src/demo/8_ephys_demo.py`
 2. Change this to a true flatline: `val_seq[:, EVENT_FRAME:, :] = 0.0`. This
    ensures the standard deviation drops to exactly 0.0.
 
-Task 2: Wire `ThermodynamicMetrics` to the Diagnostic Logger in
+Task 2: Wire `TimeSeriesStabilityMetrics` to the Diagnostic Logger in
 `src/metrics/metrics.py`
 
 1. At the top of the file, ensure the logger is explicitly grabbing the

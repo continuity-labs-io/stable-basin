@@ -7,11 +7,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from src.data.sim2real.neocortical_assembloid_dataloader import NeocorticalAssembloidDataset
+from src.data.synthetic.neocortical_assembloid_dataloader import NeocorticalAssembloidDataset
 from src.models.ssm.neocortical_engine import NeocorticalEngine
 from src.models.losses.meld_loss import MeldLoss
 from src.utils.device import get_optimal_device
-from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
+from src.metrics.diagnostic_engine import AttributionSummary
 
 
 def main():
@@ -71,8 +71,8 @@ def main():
     )
 
     print("[*] Generating Thermodynamic Diagnostic Report...")
-    diagnostic_engine = ThermodynamicDiagnosticEngine(engine)
-    diagnostic_report = diagnostic_engine.generate_diagnostic(test_seq, EVENT_FRAME)
+    diagnostic_engine = AttributionSummary(engine)
+    diagnostic_report = diagnostic_engine.summarize(test_seq, EVENT_FRAME)
     import json
 
     print(json.dumps(diagnostic_report, indent=2))

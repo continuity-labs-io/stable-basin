@@ -92,7 +92,8 @@ def main():
                 mses.extend(seq_mse.tolist())
         return np.array(mses)
         
-    print("Evaluating Young and Old datasets...")
+    label_a, label_b = task.cohort_labels
+    print(f"Evaluating {label_a} and {label_b} datasets...")
     young_mses = evaluate_mse(young_eval_loader)
     old_mses = evaluate_mse(old_eval_loader)
     
@@ -125,9 +126,9 @@ def main():
         json.dump(metrics, f, indent=4)
         
     plt.figure(figsize=(8, 6))
-    sns.kdeplot(young_mses, label="Young Eval", fill=True, alpha=0.5)
-    sns.kdeplot(old_mses, label="Old Eval", fill=True, alpha=0.5)
-    plt.title("BaselineTransformer MSE Distributions (Young vs Old)")
+    sns.kdeplot(young_mses, label=label_a, fill=True, alpha=0.5)
+    sns.kdeplot(old_mses, label=label_b, fill=True, alpha=0.5)
+    plt.title(f"BaselineTransformer MSE Distributions ({label_a} vs {label_b})")
     plt.xlabel("Mean Squared Error")
     plt.ylabel("Density")
     plt.legend()

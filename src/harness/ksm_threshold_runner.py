@@ -14,9 +14,9 @@ from ray import tune, train
 import wandb
 
 from src.data.ephys.pharma_shock_dataset import PharmacologicalShockDataset
-from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
+from src.metrics.diagnostic_engine import AttributionSummary
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor, SSMType
-from src.metrics import ThermodynamicMetrics
+from src.metrics import TimeSeriesStabilityMetrics
 from src.metrics.mamba_lrp import MambaLRPEpsilon
 from src.core.substrate import get_optimal_device, ensure_gpu
 
@@ -152,7 +152,7 @@ def evaluate_model(trial_config):
     model.eval()
     with torch.no_grad():
         preds_base, base_hidden, reconstructed_base = model(x_train, mask=mask_train)
-        base_ksm = ThermodynamicMetrics(alpha=500.0, beta=1.0).calculate_ksm(base_hidden[0])
+        base_ksm = TimeSeriesStabilityMetrics(alpha=500.0, beta=1.0).calculate_ksm(base_hidden[0])
         base_ksm_variance = torch.var(torch.tensor(base_ksm, dtype=torch.float32)).item()
         logger.info(f"Baseline Thermodynamic Stability (KSM Variance): {base_ksm_variance:.6e}")
 
@@ -164,7 +164,7 @@ def evaluate_model(trial_config):
     latency_ms = (inference_time / seq_len) * 1000
     logger.info(f"Inference Latency: {latency_ms:.2f} ms/frame")
 
-    ksm_trajectory = ThermodynamicMetrics(alpha=500.0).calculate_ksm(full_hidden[0])
+    ksm_trajectory = TimeSeriesStabilityMetrics(alpha=500.0).calculate_ksm(full_hidden[0])
     ksm_np = np.array(ksm_trajectory)
 
     crash_frame = -1
@@ -181,17 +181,17 @@ def evaluate_model(trial_config):
 
     logger.info("Executing Thermodynamic Diagnostic Engine")
     feature_names = [f"Ch_{i}" for i in range(input_dim)]
-    diagnostic = ThermodynamicDiagnosticEngine(model, feature_names=feature_names)
+    diagnostic = AttributionSummary(model, feature_names=feature_names)
 
     try:
-        report = diagnostic.generate_diagnostic(telemetry, crash_time_step=crash_frame)
+        report = diagnostic.summarize(telemetry, crash_time_step=crash_frame)
     except Exception as e:
         logger.warning(f"Diagnostic generation failed: {e}")
         report = {"error": str(e), "crash_frame": crash_frame}
 
     out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../output/harness"))
     os.makedirs(out_dir, exist_ok=True)
-    report_path = os.path.join(out_dir, f"clinical_diagnostic_report_{model_type}.json")
+    report_path = os.path.join(out_dir, f"ksm_threshold_report_{model_type}.json")
     with open(report_path, "w") as f:
         json.dump(report, f, indent=4, cls=NpEncoder)
     logger.info(f"Saved Diagnostic JSON to {report_path}")
@@ -315,7 +315,7 @@ def main():
             evaluate_model, resources={"cpu": 1, "gpu": 1 if torch.cuda.is_available() else 0}
         ),
         param_space=search_space,
-        run_config=tune.RunConfig(name="clinical_diagnostic_sweep"),
+        run_config=tune.RunConfig(name="ksm_threshold_sweep"),
     )
 
     results = tuner.fit()
@@ -328,20 +328,20 @@ def main():
 
     # Aggregate JSON reports
     all_reports = {}
-    json_pattern = os.path.join(out_dir, "clinical_diagnostic_report_*.json")
+    json_pattern = os.path.join(out_dir, "ksm_threshold_report_*.json")
     for filepath in glob.glob(json_pattern):
-        if filepath.endswith("clinical_diagnostic_reports.json"):
+        if filepath.endswith("ksm_threshold_reports.json"):
             continue
         basename = os.path.basename(filepath)
-        model_name = basename.replace("clinical_diagnostic_report_", "").replace(".json", "")
+        model_name = basename.replace("ksm_threshold_report_", "").replace(".json", "")
         with open(filepath, "r") as f:
             all_reports[model_name] = json.load(f)
         os.remove(filepath)
 
     if all_reports:
-        with open(os.path.join(out_dir, "clinical_diagnostic_reports.json"), "w") as f:
+        with open(os.path.join(out_dir, "ksm_threshold_reports.json"), "w") as f:
             json.dump(all_reports, f, indent=4, cls=NpEncoder)
-        logger.info("Aggregated individual JSON reports into clinical_diagnostic_reports.json")
+        logger.info("Aggregated individual JSON reports into ksm_threshold_reports.json")
 
     # Aggregate CSV metrics
     csv_prefix = config["evaluation"]["csv_prefix"]

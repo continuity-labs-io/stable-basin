@@ -6,7 +6,7 @@ Reviewer 2 pointed out that our baseline script evaluates an N=1 cohort and that
 2. **Fix N=1 and Swap Metrics (`src/benchmarks/worm_gait/01_worm_gait_baseline_metrics.py`):**
    - We currently hardcode `traj_young = ds_young.data[0]`. Rewrite the script to iterate over **all** trajectories in both the baseline and degraded datasets.
    - Delete the "TIME DOMAIN METRICS" (CSD) and "ENTROPY METRICS" (MOU) sections entirely, as they are invalidated by synthetic white noise.
-   - Keep the "SPECTRAL METRICS" (Peak Frequency) and add `calculate_ksm` from `ThermodynamicMetrics` as the primary stability metric. Note that the True biological framerate is 25Hz, so change `sampling_rate=16.0` to `25.0`.
+   - Keep the "SPECTRAL METRICS" (Peak Frequency) and add `calculate_ksm` from `TimeSeriesStabilityMetrics` as the primary stability metric. Note that the True biological framerate is 25Hz, so change `sampling_rate=16.0` to `25.0`.
    - Calculate the metrics for every trajectory, then log the `np.mean()` and `np.std()` for the KSM and Peak Frequency across the entire cohort.
 
 3. **Update Plot Labels (`src/benchmarks/worm_gait/05_worm_gait_aging_ebm.py` and `10_animate_worm_gait.py`):**

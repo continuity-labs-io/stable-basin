@@ -32,6 +32,12 @@ class AgingBenchmarkTask(abc.ABC):
 
     @abc.abstractmethod
     def render_animation(self, young_data, old_data, output_path: str, **kwargs):
+
+    @property
+    @abc.abstractmethod
+    def cohort_labels(self) -> Tuple[str, str]:
+        """Return the labels for the young/old cohorts."""
+        pass
         """Render a task-specific side-by-side animation of young vs old/intervention behavior."""
         pass
 

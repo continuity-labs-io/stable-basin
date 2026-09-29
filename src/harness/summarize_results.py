@@ -7,7 +7,7 @@ out_path = "output/harness/summary_output.txt"
 
 with open(out_path, "w") as out:
     out.write("=== CLINICAL DIAGNOSTIC REPORTS (JSON) ===\n")
-    json_path = "output/harness/clinical_diagnostic_reports.json"
+    json_path = "output/harness/ksm_threshold_reports.json"
     if os.path.exists(json_path):
         with open(json_path) as f:
             all_data = json.load(f)
@@ -29,7 +29,7 @@ with open(out_path, "w") as out:
                     out.write("\n")
 
     out.write("=== CLINICAL DIAGNOSTIC METRICS (CSV) ===\n")
-    csv_path = "output/harness/clinical_diagnostic_metrics.csv"
+    csv_path = "output/harness/ksm_threshold_metrics.csv"
     if os.path.exists(csv_path):
         metrics_df = pd.read_csv(csv_path)
         if not metrics_df.empty:

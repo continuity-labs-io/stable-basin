@@ -6,7 +6,7 @@ src/config.py
 
 src/data/ephys/uhd_lfp_dataset.py
 
-src/data/sim2real/gevi_dataloader.py
+src/data/synthetic/gevi_dataloader.py
 
 src/data/async_event_packer.py
 

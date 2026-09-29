@@ -114,7 +114,7 @@ Ensure your hardware and registry are perfectly configured:
 
 **2. Execute the Clinical Diagnostic Pipeline**
 This command spins up parallel workers to evaluate the architectures simultaneously against the pharmacological crash dataset:
-`make clinical-diagnostic`
+`make ksm-threshold`
 *All inference latencies, KSM traces, and MambaLRP Causal Diagnostic JSONs will automatically sync to your W&B cloud dashboard.*
 ```
 

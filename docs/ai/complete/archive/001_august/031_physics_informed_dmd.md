@@ -1,4 +1,4 @@
-Context: The `ThermodynamicMetrics` class currently calculates the Koopman
+Context: The `TimeSeriesStabilityMetrics` class currently calculates the Koopman
 Stability Metric (KSM) and Local Lyapunov Exponent (LLE) using a manual, naive
 Truncated SVD implementation. We need to make this robust against the heavy 1/f
 noise of real biological tissue by integrating `pydmd`.

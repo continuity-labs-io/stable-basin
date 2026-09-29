@@ -13,7 +13,7 @@ import numpy as np
 import logging
 
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor
-from src.metrics import ThermodynamicMetrics, SpectralMetrics
+from src.metrics import TimeSeriesStabilityMetrics, SpectralMetrics
 from src.system.telemetry_logger import TelemetryLogger
 from src.core.substrate import get_optimal_device
 
@@ -30,7 +30,7 @@ def main():
     engine.eval()
 
     # 2. Initialize the metrics extractor and telemetry bridge
-    metrics_engine = ThermodynamicMetrics()
+    metrics_engine = TimeSeriesStabilityMetrics()
     spectral_metrics = SpectralMetrics()
 
     output_dir = "output/demo"
@@ -84,14 +84,14 @@ def main():
             z_pert_seq = torch.stack(z_perturbed_list)
 
             # Extract macrostates
-            macrostates = metrics_engine.extract_fedichev_macrostates(
+            macrostates = metrics_engine.extract_path_metrics(
                 z_baseline=z_base_seq, z_perturbed=z_pert_seq, window_size=4
             )
 
             # The macrostates return lists of length `t-1`. We log the latest one for streaming.
-            z0 = macrostates["z0_volatility"][-1]
-            Z = macrostates["Z_entropic_damage"][-1]
-            eps0 = macrostates["epsilon_0_ksm"][-1]
+            z0 = macrostates["csd"][-1]
+            Z = macrostates["cumulative_path_divergence"][-1]
+            eps0 = macrostates["ksm"][-1]
 
             # We also compute LLE chaos
             lle_list = metrics_engine.calculate_lle(z_pert_seq, window_size=4, dt=dt)
@@ -111,8 +111,8 @@ def main():
             exhaust.update_time(frame_idx=t, time_sec=physical_time)
 
             # Log scalars
-            exhaust.log_fedichev_macrostates(
-                z0_volatility=z0, Z_entropic_damage=Z, epsilon_0_ksm=eps0, lle_chaos=lle
+            exhaust.log_path_metrics(
+                csd=z0, cumulative_path_divergence=Z, ksm=eps0, lle_chaos=lle
             )
 
             exhaust.log_spectral_decoherence(

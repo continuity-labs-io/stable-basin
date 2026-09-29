@@ -32,11 +32,11 @@ def main():
         config = yaml.safe_load(f)
 
     # Dynamically inject lambda_A from inferred baseline
-    inferred_lambda_path = "output/benchmarks/aging_resilience/06_inferred_biological_lambda.json"
+    inferred_lambda_path = "output/benchmarks/aging_resilience/06_fitted_lambda.json"
     if os.path.exists(inferred_lambda_path):
         with open(inferred_lambda_path, "r") as f:
             lambda_data = json.load(f)
-            inferred_lambda = lambda_data.get("biological_lambda")
+            inferred_lambda = lambda_data.get("fitted_lambda")
             if inferred_lambda is not None:
                 config["intervention"]["lambda_A"] = inferred_lambda
     else:
@@ -129,15 +129,15 @@ def main():
     os.makedirs(os.path.dirname(output_plot), exist_ok=True)
     plt.figure(figsize=(10, 6))
     
-    plt.plot(lambdas_for_plot, R_per_lambda, marker='o', color='blue', label=r'Therapeutic Rescue $R(\lambda)$')
+    plt.plot(lambdas_for_plot, R_per_lambda, marker='o', color='blue', label=r'R(\lambda) = 1 - D(young, \lambda) / D(young, \lambda_A)')
     plt.axhline(y=0.0, color='red', linestyle='--', label=f'Baseline Rescue (λ={lambda_baseline:.2f})')
     
     plt.xscale('log')
     plt.xticks(lambdas, labels=[f"{l:.2f}" for l in lambdas])
     
     plt.xlabel(r"Inverse-Temperature Scaling ($\lambda$)")
-    plt.ylabel(r"Therapeutic Rescue $R(\lambda)$")
-    plt.title("Clinical Dose-Response Sweep")
+    plt.ylabel(r"R(\lambda) = 1 - D(young, \lambda) / D(young, \lambda_A)")
+    plt.title("R(lambda) across lambda (inverse-temperature scaling)")
     plt.legend()
     plt.grid(True, which="both", ls="--", alpha=0.5)
     

@@ -42,7 +42,7 @@ logger = setup_diagnostic_logger()
 from src.data.ephys.hdmea_dataset import HDMEADataset
 from src.models.ssm.spike_forecaster import SpikeForecaster
 from src.models.losses.meld_loss import MeldLoss
-from src.metrics.metrics import ThermodynamicMetrics
+from src.metrics.metrics import TimeSeriesStabilityMetrics
 from src.icebox.metrics.mamba_lrp import MambaLRPEpsilon
 from src.system.hardware_monitor import HardwareMonitor
 from src.utils.device import get_optimal_device
@@ -277,7 +277,7 @@ def main():
         _, hidden_states = model(val_seq, return_hidden=True)
 
     print("    -> Passing to PyDMD...")
-    metrics = ThermodynamicMetrics(alpha=500.0, beta=1.0)
+    metrics = TimeSeriesStabilityMetrics(alpha=500.0, beta=1.0)
 
     # Decimate by 50 to compute fast (10,000 fits takes minutes otherwise)
     decimation_factor = 50

@@ -17,11 +17,7 @@ logger = logging.getLogger(__name__)
 
 class MambaLRPEpsilon:
     """
-    Mathematically exact Layer-wise Relevance Propagation (LRP-epsilon)
-    for continuous-time State-Space Models (Mamba-2 backbone).
-
-    This replaces the naive First-Order Taylor Decomposition (Input * Gradient)
-    to perfectly conserve the attribution signal back through time without shattering.
+    Approximate LRP-epsilon: routes relevance back through time with a fixed retention factor of 0.98 instead of the model's state transition, so relevance is not exactly conserved.
     """
 
     def __init__(self, model, epsilon=1e-7):

@@ -1,6 +1,6 @@
 Reviewer 2 caught a fatal mathematical error in our intervention scripts: we are artificially multiplying the final evaluation metric by lambda *after* the simulation completes. We also have a bias where we impute `NaN`s as 1.0 (perfectly healthy) when the physics engine blows up.
 
-Please fix `07_worm_gait_intervention.py`, `08_worm_gait_lambda_sweep.py`, and `09_pharmacological_translation.py`:
+Please fix `07_worm_gait_intervention.py`, `08_worm_gait_lambda_sweep.py`, and `09_lambda_argmax.py`:
 
 1. **Remove Post-Hoc Multiplication (Scripts 07 & 08):** 
    Locate where the traces are extracted and multiplied (e.g., `trace_A_batch = get_traces(...) * lambda_A` or `* lam`). Remove the `* lambda_A`, `* lambda_B`, and `* lam` entirely. The Hessian trace must evaluate the raw curvature of the resulting trajectory without artificial scaling.

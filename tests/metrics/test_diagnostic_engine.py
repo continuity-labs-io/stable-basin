@@ -1,7 +1,7 @@
 import pytest
 import torch
 from unittest.mock import MagicMock
-from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
+from src.metrics.diagnostic_engine import AttributionSummary
 
 
 def test_diagnostic_engine_generation():
@@ -16,13 +16,13 @@ def test_diagnostic_engine_generation():
 
     AttributionEngine.get_instance().set_strategy(lambda m, x, t: mock_attribution)
 
-    engine = ThermodynamicDiagnosticEngine(mock_model)
+    engine = AttributionSummary(mock_model)
     x_sequence = torch.randn(1, 50, 114)
     crash_time_step = 45
 
-    report = engine.generate_diagnostic(x_sequence, crash_time_step)
+    report = engine.summarize(x_sequence, crash_time_step)
 
-    assert report["status"] == "CRITICAL_FAILURE_PREDICTED"
+    assert report["status"] == "attribution_summary"
     assert report["predicted_crash_time"] == "T=45"
     assert "anomaly_ontology" in report
     assert report["anomaly_ontology"]["primary_latent_driver"] == engine.feature_names[10]

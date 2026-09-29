@@ -45,8 +45,8 @@ def plot_ablation_results(
     traj_young = sample_young[0].numpy() if isinstance(sample_young, (tuple, list)) else sample_young.numpy()
     sample_old = eval_old_dataset_raw[0]
     traj_old = sample_old[0].numpy() if isinstance(sample_old, (tuple, list)) else sample_old.numpy()
-    axes[0].plot(traj_young[:500, 0], traj_young[:500, 1], label="Clean Baseline")
-    axes[0].plot(traj_old[:500, 0], traj_old[:500, 1], label="Synthetically Degraded", alpha=0.7)
+    axes[0].plot(traj_young[:500, 0], traj_young[:500, 1], label=label_a)
+    axes[0].plot(traj_old[:500, 0], traj_old[:500, 1], label=label_b, alpha=0.7)
     axes[0].set_title("Panel A: The Limit Cycle")
     axes[0].set_xlabel("Sensor Dimension 0")
     axes[0].set_ylabel("Sensor Dimension 1")
@@ -59,20 +59,20 @@ def plot_ablation_results(
     # Panel B: Frozen Identity Precision We use a thick line for Clean Baseline and a dashed line
     # for Synthetically Degraded because the IdentityPrecisionEBM's Hessian is mathematically constant
     # across the state space, causing perfect overlap.
-    axes[1].plot(trace_young_A_np, label="Clean Baseline", color="blue", linewidth=4)
-    axes[1].plot(trace_old_A_np, label="Synthetically Degraded", color="orange", linestyle="--", linewidth=2)
+    axes[1].plot(trace_young_A_np, label=label_a, color="blue", linewidth=4)
+    axes[1].plot(trace_old_A_np, label=label_b, color="orange", linestyle="--", linewidth=2)
     axes[1].set_title("Panel B: IdentityPrecisionEBM (Baseline)")
     axes[1].set_xlabel("Time Step")
     axes[1].set_ylabel("Hessian Trace (Curvature)")
     axes[1].legend()
 
     # Panel C: Waddington Basin Flattening
-    axes[2].hist(trace_young_B_np, bins=20, alpha=0.5, label="Clean Baseline", color="blue", density=True)
+    axes[2].hist(trace_young_B_np, bins=20, alpha=0.5, label=label_a, color="blue", density=True)
     axes[2].hist(
         trace_old_B_np,
         bins=20,
         alpha=0.7,
-        label="Synthetically Degraded",
+        label=label_b,
         color="orange",
         density=True,
         histtype="step",
@@ -128,6 +128,7 @@ def main():
     config_A = copy.deepcopy(config)
     config_A["observer"]["micro"]["ebm_type"] = "identity"
     config_A["observer"]["macro"]["ebm_type"] = "identity"
+    label_a, label_b = task.cohort_labels
     metrics_A, trace_young_A, trace_old_A, graph_A = run_aging_experiment(
         config_A, kA, train_young_loader, eval_young_loader, eval_old_loader, args.config
     )

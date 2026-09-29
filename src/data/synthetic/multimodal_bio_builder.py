@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def generate_sim2real_stub(total_minutes=15, crash_minute=10):
+def generate_synthetic_stub(total_minutes=15, crash_minute=10):
     """
     Sim2Real Sim2Real Engine
     Generates a 15-minute multi-scale tensor for 1 cell.

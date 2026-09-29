@@ -3,7 +3,7 @@ import logging
 from src.metrics.spectral import SpectralMetrics
 
 # Configure logger
-logger = logging.getLogger("RejuvenationFlightController")
+logger = logging.getLogger("MetricThresholdMonitor")
 if not logger.handlers:
     ch = logging.StreamHandler()
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -12,7 +12,7 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 
-class RejuvenationFlightController:
+class MetricThresholdMonitor:
     """
     Biological Flight Computer for Closed-Loop Rejuvenation Therapies.
     Monitors thermodynamic stability and physically actuates the IV pump
@@ -65,15 +65,15 @@ class RejuvenationFlightController:
 
         return latest_ksm, latest_csd, plv_score
 
-    def _actuate_iv_pump(self, action, ksm_score, csd_score, plv_score):
+    def _log_decision(self, action, ksm_score, csd_score, plv_score):
         """
         Hardware Webhook to physically control payload delivery.
         """
         metrics_str = f"[KSM: {ksm_score:.3f} | CSD: {csd_score:.3f} | PLV: {plv_score:.3f}]"
 
-        if action == "EMERGENCY_ABORT":
+        if action == "ALARM":
             logger.critical(f"Therapy terminated due to instability. {metrics_str}")
-        elif action == "MAINTAIN_INFUSION":
+        elif action == "OK":
             logger.info(f"Nominal parameters observed. Maintaining infusion. {metrics_str}")
         elif action == "WARNING":
             logger.warning(f"Borderline metrics detected. Holding flow rate. {metrics_str}")
@@ -91,9 +91,9 @@ class RejuvenationFlightController:
         ):
             self.critical_count += 1
             if self.critical_count >= self.hysteresis_frames:
-                self.current_state = "STATE_BIFURCATION_DANGER"
+                self.current_state = "STATE_ALARM"
                 result = {
-                    "action": "EMERGENCY_ABORT",
+                    "action": "ALARM",
                     "status": "CRITICAL",
                     "reason": "Instability or spectral decoherence detected.",
                 }
@@ -113,10 +113,10 @@ class RejuvenationFlightController:
 
             self.current_state = "STATE_NOMINAL"
             result = {
-                "action": "MAINTAIN_INFUSION",
+                "action": "OK",
                 "status": "SAFE",
                 "reason": "Homeostasis intact.",
             }
 
-        self._actuate_iv_pump(result["action"], ksm_score, csd_score, plv_score)
+        self._log_decision(result["action"], ksm_score, csd_score, plv_score)
         return result

@@ -13,7 +13,7 @@ clinical workflow on a simulated aging patient ("Alice").
 
 - The script must be executable from the command line
   (`if __name__ == "__main__":`).
-- Import the components from `src.echo.clinic.interventions`,
+- Import the components from `src.echo.model_probes.interventions`,
   `src.echo.architecture`, and `src.echo.metrics.thermal_interpretability`.
 
 ## EXECUTE THE 5-STEP WORKFLOW
@@ -31,15 +31,15 @@ clinical workflow on a simulated aging patient ("Alice").
      Geometry... Trace = X. Attractor basin is flattened.").
 
 3. **Ping (Detecting Silent Drift):**
-   - Instantiate the `DigitalTwinInterrogator`.
+   - Instantiate the `GradientResponseProbe`.
    - Define a small `q_ext_pulse` vector.
-   - Call `ping_and_measure` on the graph.
+   - Call `measure` on the graph.
    - Print the Discordance Score. Implement logic:
      `if discordance < 0.1: print("DIAGNOSIS: Silent Drift Detected! Macro-level is blind to physical micro-damage.") else: print("DIAGNOSIS: Concordant.")`.
 
 4. **Compute Counterfactual (The Reference Twin):**
-   - Instantiate the `DigitalTwinAnnealer`.
-   - Call `anneal_twin()` on Alice's degraded graph to generate `Twin B` (Optimal
+   - Instantiate the `ParameterScaler`.
+   - Call `scale_friction_and_precision()` on Alice's degraded graph to generate `Twin B` (Optimal
      Alice).
    - Print confirmation that Friction (Γ) and Precision (Π) have been restored
      _in silico_ without needing a population database.

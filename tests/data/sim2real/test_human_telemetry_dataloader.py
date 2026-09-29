@@ -1,5 +1,5 @@
 import pytest
-from src.data.sim2real.human_telemetry_dataloader import HumanTelemetryLoader
+from src.data.synthetic.human_telemetry_dataloader import HumanTelemetryLoader
 
 
 def test_human_telemetry_dataloader():

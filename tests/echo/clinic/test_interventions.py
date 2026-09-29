@@ -6,7 +6,7 @@ import equinox as eqx
 from src.echo.architecture.markov_hull import MarkovHull
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
-from src.echo.clinic.interventions import DigitalTwinAnnealer, DigitalTwinInterrogator
+from src.echo.model_probes.interventions import ParameterScaler, GradientResponseProbe
 from src.echo.physics.dissipative import DissipativeFriction
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 
@@ -76,7 +76,7 @@ def get_weight_norms(graph: PredictiveCodingGraph):
 
 
 def test_digital_twin_annealer(degraded_graph):
-    annealer = DigitalTwinAnnealer()
+    annealer = ParameterScaler()
 
     gamma_boost = 1.5
     pi_boost = 2.0
@@ -84,7 +84,7 @@ def test_digital_twin_annealer(degraded_graph):
     norms_a = get_weight_norms(degraded_graph)
 
     # Act
-    annealed_graph = annealer.anneal_twin(
+    annealed_graph = annealer.scale_friction_and_precision(
         degraded_graph, gamma_boost=gamma_boost, pi_boost=pi_boost
     )
 
@@ -103,7 +103,7 @@ def test_digital_twin_annealer(degraded_graph):
 
 
 def test_digital_twin_interrogator(degraded_graph):
-    interrogator = DigitalTwinInterrogator()
+    interrogator = GradientResponseProbe()
 
     factor = degraded_graph.thermalizer.graph.sites[0].factor.base
     d_micro = factor.d_micro
@@ -114,7 +114,7 @@ def test_digital_twin_interrogator(degraded_graph):
 
     q_ext_pulse = jnp.ones(d_micro) * 0.1
 
-    res = interrogator.ping_and_measure(degraded_graph, x_micro, x_macro, q_ext_pulse)
+    res = interrogator.measure(degraded_graph, x_micro, x_macro, q_ext_pulse)
 
     assert isinstance(res, dict)
     assert "micro_surprisal" in res
@@ -126,7 +126,7 @@ def test_digital_twin_interrogator(degraded_graph):
 
 
 def test_interrogator_blindness(degraded_graph):
-    interrogator = DigitalTwinInterrogator()
+    interrogator = GradientResponseProbe()
 
     factor = degraded_graph.thermalizer.graph.sites[0].factor.base
     d_micro = factor.d_micro
@@ -149,7 +149,7 @@ def test_interrogator_blindness(degraded_graph):
         "src.echo.architecture.hierarchical_factor.HierarchicalThermoFlowFactor.joint_energy_fn",
         new=mocked_joint_energy_fn,
     ):
-        res = interrogator.ping_and_measure(degraded_graph, x_micro, x_macro, q_ext_pulse)
+        res = interrogator.measure(degraded_graph, x_micro, x_macro, q_ext_pulse)
 
         # Macro gradient should be exactly zero
         assert jnp.allclose(res["macro_surprisal"], 0.0)

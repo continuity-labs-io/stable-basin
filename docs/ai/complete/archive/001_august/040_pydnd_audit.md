@@ -4,7 +4,7 @@ drops near zero), the KSM score is bouncing back to 1.0 instead of collapsing to
 0.0. This implies the solver is silently failing on rank-deficient matrices and
 triggering our graceful fallback.
 
-Task: Update `calculate_ksm` in `ThermodynamicMetrics` to audit the PyDMD
+Task: Update `calculate_ksm` in `TimeSeriesStabilityMetrics` to audit the PyDMD
 solver.
 
 1. Add an explicit variance check at the top of the sliding window loop. If the

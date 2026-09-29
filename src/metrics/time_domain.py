@@ -62,7 +62,7 @@ def calculate_dynamic_rank(S, n_rows, n_cols):
     return int(r_max)
 
 
-class ThermodynamicMetrics:
+class TimeSeriesStabilityMetrics:
     def __init__(self, alpha=1000.0, beta=1.0):
         """
         Calculates kinetic biomarkers from the continuous biological latent space.
@@ -73,9 +73,7 @@ class ThermodynamicMetrics:
 
     def calculate_csd(self, z_sequence, window_size=settings.CSD_WINDOW_SIZE):
         """
-        Critical Slowing Down (CSD)
-        Tracks the physical 'wobble' (Variance) and sluggishness (AR1) of the cell.
-        z_sequence shape: [Time, Embed_Dim]
+        alpha * rolling variance + beta * lag-1 autocorrelation over a sliding window.
         """
         time_steps = z_sequence.shape[0]
         csd_scores = []
@@ -128,9 +126,7 @@ class ThermodynamicMetrics:
                 Decomposition.
         By decomposing the sliding window of latent states X, the algorithm approximates the local
                 linear
-        operator A_tilde that steps the system forward in time to state Y. The eigenvalues of this
-                operator
-        directly quantify the thermodynamic stability of the biological system. A maximum eigenvalue
+        operator A_tilde that steps the system forward in time to state Y. A maximum eigenvalue
                 near 1.0
                 indicates stable homeostasis, while a diverging eigenvalue maps to the
                 system crossing the
@@ -161,7 +157,7 @@ class ThermodynamicMetrics:
                 solution that
         satisfies the requirement for a real-time predictive metric. It isolates the critical
                 variance
-                and successfully detects the Waddington bifurcation point while keeping
+                while keeping
                 the codebase lean.
         """
         import math
@@ -369,7 +365,7 @@ class ThermodynamicMetrics:
 
         return total_entropy_z.tolist()
 
-    def extract_fedichev_macrostates(
+    def extract_path_metrics(
         self,
         z_baseline: torch.Tensor,
         z_perturbed: torch.Tensor,
@@ -384,7 +380,7 @@ class ThermodynamicMetrics:
         """
         min_steps = min(z_baseline.shape[0], z_perturbed.shape[0])
         if min_steps < 2:
-            return {"Z_entropic_damage": [], "z0_volatility": [], "epsilon_0_ksm": []}
+            return {"cumulative_path_divergence": [], "csd": [], "ksm": []}
 
         path_down = z_baseline[:min_steps, :]
         path_up = z_perturbed[:min_steps, :]
@@ -398,11 +394,11 @@ class ThermodynamicMetrics:
         # torch.cumulative_trapezoid returns length Time-1. Prepend 0.0 to match Time.
         Z_t = torch.cat([torch.tensor([0.0], device=Z_t.device), Z_t])
 
-        # 2. Variable z0_volatility (Dynamic Response)
-        z0_volatility = self.calculate_csd(path_up, window_size=window_size)
+        # 2. Variable csd (Dynamic Response)
+        csd = self.calculate_csd(path_up, window_size=window_size)
 
         # 3. Variable epsilon_0 (Criticality)
-        epsilon_0_ksm = self.calculate_ksm(path_up, window_size=window_size)
+        ksm = self.calculate_ksm(path_up, window_size=window_size)
 
         # 4. Epigenetic Entropy (Z directly from Methylation, if provided)
         Z_epigenetic_entropy = []
@@ -410,9 +406,9 @@ class ThermodynamicMetrics:
             Z_epigenetic_entropy = self.calculate_epigenetic_dispersion(cpg_tensor)
 
         return {
-            "Z_entropic_damage": Z_t.tolist(),
-            "z0_volatility": z0_volatility,
-            "epsilon_0_ksm": epsilon_0_ksm,
+            "cumulative_path_divergence": Z_t.tolist(),
+            "csd": csd,
+            "ksm": ksm,
             "Z_epigenetic_entropy": Z_epigenetic_entropy,
         }
 

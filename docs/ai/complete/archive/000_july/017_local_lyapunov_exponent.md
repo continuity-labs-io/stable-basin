@@ -1,4 +1,4 @@
-Please update the `ThermodynamicMetrics` class to include a new method called
+Please update the `TimeSeriesStabilityMetrics` class to include a new method called
 `calculate_lle(self, z_sequence, window_size=4, dt=1.0)`. This method will
 compute the Local Lyapunov Exponent (LLE) over a sliding window to measure the
 stability of the biological attractor basin.

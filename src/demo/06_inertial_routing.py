@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
-from src.data.sim2real.gevi_dataloader import GEVIDataloader
+from src.data.synthetic.gevi_dataloader import GEVIDataloader
 from src.models.encoders.gevi_encoder import GEVIEncoder
 
 

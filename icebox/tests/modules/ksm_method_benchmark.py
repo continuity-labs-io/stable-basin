@@ -1,7 +1,7 @@
 import torch
 import time
 from src.models.ssm.mask_aware_mamba import MaskAwareMamba
-from src.metrics.metrics import ThermodynamicMetrics, calculate_dynamic_rank
+from src.metrics.metrics import TimeSeriesStabilityMetrics, calculate_dynamic_rank
 
 import logging
 
@@ -32,7 +32,7 @@ def run_accuracy_benchmark(device):
     scalars = torch.exp(torch.linspace(0, 5, 50, device=device))
     z_seq[50:100] = z_seq[50:100] * scalars.unsqueeze(1)
 
-    thermo = ThermodynamicMetrics(alpha=500.0)
+    thermo = TimeSeriesStabilityMetrics(alpha=500.0)
     ksm_scores = thermo.calculate_ksm(z_seq, window_size=4, rank_method="dynamic")
 
     # Identify exact frame KSM metric drops below 0.9

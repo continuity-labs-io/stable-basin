@@ -7,16 +7,11 @@ from torch.utils.data import Dataset
 
 class HDMEADataset(Dataset):
     """
-        3Brain HD-MEA 4,096-Channel Stress Test Dataset.
+    3Brain HD-MEA 4,096-Channel Stress Test Dataset.
 
-        Origin: HD-MEA NEUROPulse
-        Sampling: 20kHz continuous telemetry stored in raw BrainWave format (hdmea_neuropulse.brw).
-
-        The MVM Proof (Hardware Scale):
-    The ultimate engineering benchmark. By piping this massive spatial grid into the state-space
-        engine,
-        generate the visual proof that the architecture maintains a linear, O(1) VRAM footprint
-        triggering Out-Of-Memory crashes, defeating standard Transformer models side-by-side.
+    Data source: HD-MEA NEUROPulse
+    Format: 20kHz continuous telemetry stored in raw BrainWave format (hdmea_neuropulse.brw).
+    Array shape: (seq_len, 4096)
     """
 
     def __init__(self, data_path: str = "data/ephys/hdmea_neuropulse.brw", seq_len: int = 1024):

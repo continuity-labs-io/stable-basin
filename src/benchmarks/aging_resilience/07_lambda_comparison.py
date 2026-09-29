@@ -30,14 +30,14 @@ def run_experiment(graph, x0, key, config):
     lambda_A = config["intervention"]["lambda_A"]
     lambda_B = config["intervention"]["lambda_B"]
 
-    logger.info(f"Simulating Run A: Degraded baseline with precision_injection_gain={lambda_A}")
+    logger.info(f"Simulating Run A: Degraded baseline with lambda={lambda_A}")
     keys_A = jax.random.split(key, num_runs)
     vmap_simulate = eqx.filter_jit(
         jax.vmap(simulate_sde, in_axes=(None, None, None, None, None, 0))
     )
     traj_A_batch = vmap_simulate(graph, x0, lambda_A, N_steps, dt, keys_A)
 
-    logger.info(f"Simulating Run B: Therapeutic rescue with precision_injection_gain={lambda_B}")
+    logger.info(f"Simulating Run B: Therapeutic rescue with lambda={lambda_B}")
     keys_B = jax.random.split(key, num_runs)  # Same seeds for fair comparison
     traj_B_batch = vmap_simulate(graph, x0, lambda_B, N_steps, dt, keys_B)
 
@@ -80,7 +80,10 @@ def calculate_metrics(graph, traj_A_batch, traj_B_batch, config):
 
 
 def plot_results(traj_A, traj_B, dist_A, dist_B, R_lambda_B, config):
-    logger.info("Generating Figure 4 Beacon Plot.")
+    from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
+    task = get_benchmark_task(config)
+    label_a, label_b = task.cohort_labels
+    logger.info("Generating.")
     output_plot = config["paths"]["output_plot"]
     lambda_A = config["intervention"]["lambda_A"]
     lambda_B = config["intervention"]["lambda_B"]
@@ -95,16 +98,16 @@ def plot_results(traj_A, traj_B, dist_A, dist_B, R_lambda_B, config):
     ax1 = fig.add_subplot(131, projection="3d")
     tA_np = np.array(traj_A)
     ax1.plot(tA_np[:, 0], tA_np[:, 1], tA_np[:, 2], color="red", alpha=0.7, linewidth=1)
-    ax1.scatter(tA_np[0, 0], tA_np[0, 1], tA_np[0, 2], color="black", s=50, label="x0 (Synthetically Degraded)")
-    ax1.set_title(f"Panel A: Degraded Pathology (λ={lambda_A_str})")
+    ax1.scatter(tA_np[0, 0], tA_np[0, 1], tA_np[0, 2], color="black", s=50, label=f"x0 ({label_b})")
+    ax1.set_title(f"Panel A: lambda = {lambda_A_str}")
     ax1.legend()
 
     # Panel B: The Phase Space Rescue
     ax2 = fig.add_subplot(132, projection="3d")
     tB_np = np.array(traj_B)
     ax2.plot(tB_np[:, 0], tB_np[:, 1], tB_np[:, 2], color="green", alpha=0.7, linewidth=1)
-    ax2.scatter(tB_np[0, 0], tB_np[0, 1], tB_np[0, 2], color="black", s=50, label="x0 (Synthetically Degraded)")
-    ax2.set_title(f"Panel B: Therapeutic Rescue (λ={lambda_B_str})")
+    ax2.scatter(tB_np[0, 0], tB_np[0, 1], tB_np[0, 2], color="black", s=50, label=f"x0 ({label_b})")
+    ax2.set_title(f"Panel B: lambda = {lambda_B_str}")
     ax2.legend()
 
     # Panel C: Energy Distance Metric
@@ -115,7 +118,7 @@ def plot_results(traj_A, traj_B, dist_A, dist_B, R_lambda_B, config):
     
     ax3.bar(metrics_labels, R_values, color=['gray', 'green'], alpha=0.7)
     
-    ax3.set_ylabel(r"Therapeutic Rescue $R(\lambda)$")
+    ax3.set_ylabel(r"R(\lambda) = 1 - D(young, \lambda) / D(young, \lambda_A)")
     ax3.set_title("Panel C: Energy Distance Restoration")
     ax3.grid(axis='y', linestyle='--', alpha=0.5)
 
@@ -123,7 +126,7 @@ def plot_results(traj_A, traj_B, dist_A, dist_B, R_lambda_B, config):
     plt.savefig(output_plot, dpi=300)
     plt.close()
 
-    logger.info(f"Figure 4 successfully generated and saved to: {output_plot}")
+    logger.info(f"Figure successfully generated and saved to: {output_plot}")
 
 
 def save_results(
@@ -176,11 +179,11 @@ def main():
         config = yaml.safe_load(f)
 
     # Dynamically inject lambda_A from inferred baseline
-    inferred_lambda_path = "output/benchmarks/aging_resilience/06_inferred_biological_lambda.json"
+    inferred_lambda_path = "output/benchmarks/aging_resilience/06_fitted_lambda.json"
     if os.path.exists(inferred_lambda_path):
         with open(inferred_lambda_path, "r") as f:
             lambda_data = json.load(f)
-            inferred_lambda = lambda_data.get("biological_lambda")
+            inferred_lambda = lambda_data.get("fitted_lambda")
             if inferred_lambda is not None:
                 config["intervention"]["lambda_A"] = inferred_lambda
     else:

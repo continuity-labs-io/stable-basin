@@ -20,7 +20,7 @@ import logging
 
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor
 from src.metrics.mamba_lrp import MambaLRPEpsilon
-from src.metrics.diagnostic_engine import ThermodynamicDiagnosticEngine
+from src.metrics.diagnostic_engine import AttributionSummary
 from src.core.substrate import get_optimal_device
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -121,8 +121,8 @@ def main():
     AttributionEngine.get_instance().set_strategy(lambda m, x, t: relevance_tensor)
 
     logger.info("[*] Generating Thermodynamic Diagnostic...")
-    diagnostic_engine = ThermodynamicDiagnosticEngine(engine)
-    diagnostic_report = diagnostic_engine.generate_diagnostic(test_seq, EVENT_FRAME)
+    diagnostic_engine = AttributionSummary(engine)
+    diagnostic_report = diagnostic_engine.summarize(test_seq, EVENT_FRAME)
 
     print("\n" + "=" * 50)
     print(" MULTIMODAL DIAGNOSTIC REPORT ")

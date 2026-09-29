@@ -8,7 +8,7 @@ src/metrics/metrics.py
 
 Raw Prompt to Execute:
 
-Add a new method to the ThermodynamicMetrics class in src/metrics/metrics.py named calculate_cfc_pac.
+Add a new method to the TimeSeriesStabilityMetrics class in src/metrics/metrics.py named calculate_cfc_pac.
 
 calculate_cfc_pac(self, slow_seq, fast_seq): Implement Phase-Amplitude Coupling using the Mean Vector Length (MVL) mathematical formulation.
 

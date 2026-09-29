@@ -1,4 +1,4 @@
-Target File: src/pipeline/sim2real/rna_dataloader.py
+Target File: src/pipeline/synthetic/rna_dataloader.py
 
 Context: We need to fundamentally alter how we handle sparse transcriptomic
 reads. The current `align_to_master_clock` method injects 12-D Poisson RNA

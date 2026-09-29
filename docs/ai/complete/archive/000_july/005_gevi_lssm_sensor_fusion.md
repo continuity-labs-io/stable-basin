@@ -87,7 +87,7 @@ Monitor, and update the dashboard to plot the comparisons.
     metric.
   - Pass `latent_fused_anomalous` through `mamba_engine_fused` -> extract loss
     and ksm metric.
-  - Calculate CSD and KSM using `ThermodynamicMetrics` for BOTH
+  - Calculate CSD and KSM using `TimeSeriesStabilityMetrics` for BOTH
     `latent_anomalous[0].detach()` (Optics-only) AND
     `latent_fused_anomalous[0].detach()` (Fused).
   - Update the Hysteresis calculation to use the fused representations

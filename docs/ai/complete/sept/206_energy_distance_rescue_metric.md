@@ -1,6 +1,6 @@
 Reviewer 2 pointed out that scoring our therapeutic rescue by multiplying the Hessian trace by lambda is mathematically circular. Because lambda acts as an inverse-temperature scaling, we must score the rescue based on distributional distance in the observable space.
 
-Please overhaul `07_worm_gait_intervention.py`, `08_worm_gait_lambda_sweep.py`, and `09_pharmacological_translation.py`:
+Please overhaul `07_worm_gait_intervention.py`, `08_worm_gait_lambda_sweep.py`, and `09_lambda_argmax.py`:
 
 1. **Remove Circular Math:** Delete all instances of multiplying traces by lambda (e.g., `* lambda_A`, `* lambda_B`, `* lam`). Also change any `nan_to_num(..., nan=1.0)` to `nan=0.0`.
 2. **Implement Energy Distance Metric R(λ):** Import `energy_distance` from `scipy.stats`. 

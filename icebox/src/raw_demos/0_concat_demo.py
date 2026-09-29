@@ -27,8 +27,8 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from src.system.hardware_monitor import HardwareMonitor
-from src.metrics.metrics import ThermodynamicMetrics
-from src.data.sim2real.gevi_dataloader import GEVIDataloader
+from src.metrics.metrics import TimeSeriesStabilityMetrics
+from src.data.synthetic.gevi_dataloader import GEVIDataloader
 from src.models.encoders.gevi_encoder import GEVIEncoder
 from src.models.encoders.spatial_compressor import SpatialCompressor
 from src.models.ssm.state_space_engine import StateSpaceEngine
@@ -390,7 +390,7 @@ def main():
     z_fused_healthy = latent_fused_healthy[0].detach()
     time_steps = z_anomalous.shape[0]
 
-    metrics = ThermodynamicMetrics(alpha=500.0, beta=1.0)
+    metrics = TimeSeriesStabilityMetrics(alpha=500.0, beta=1.0)
     csd_scores_optics = metrics.calculate_csd(z_anomalous, window_size=3)
     ksm_scores_optics = metrics.calculate_ksm(z_anomalous, window_size=4)
 

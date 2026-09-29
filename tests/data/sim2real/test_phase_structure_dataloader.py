@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from src.data.sim2real.phase_structure_dataloader import PhaseStructureLoader
+from src.data.synthetic.phase_structure_dataloader import PhaseStructureLoader
 
 
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")

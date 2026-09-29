@@ -1,10 +1,10 @@
 Act as a Staff Machine Learning Engineer. We need to build a pure PyTorch
-invariant test suite for the `ThermodynamicMetrics` class to guarantee our math
+invariant test suite for the `TimeSeriesStabilityMetrics` class to guarantee our math
 is sound before we train the Mamba models.
 
 Write a pytest script in `tests/metrics/test_physics_invariants.py`.
 
-1. Instantiate ThermodynamicMetrics.
+1. Instantiate TimeSeriesStabilityMetrics.
 2. Generate a perfectly stable 10D biological sine wave (Time=500). Assert that
    the calculate_ksm function returns values consistently > 0.95.
 3. Generate a 10D tensor of pure Gaussian white noise. Assert that the

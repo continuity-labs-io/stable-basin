@@ -42,7 +42,7 @@ def main():
     lambdas = np.array(lambdas)
     R_values = np.array(R_values)
     
-    # 2. Find Optimal Dose
+    # 2. Find argmax lambda
     logger.info("Finding optimal dose corresponding to maximum therapeutic rescue...")
     max_idx = np.argmax(R_values)
     optimal_lambda = lambdas[max_idx]
@@ -52,11 +52,11 @@ def main():
     wandb.init(project="stable_basin_aging", group=config.get("dataset", {}).get("name", "worm_gait"), name="09_pharmacological_translation", config=config)
 
     # 3. Serialization
-    output_metrics = "output/benchmarks/aging_resilience/09_clinical_translation_metrics.json"
+    output_metrics = "output/benchmarks/aging_resilience/09_lambda_argmax.json"
     os.makedirs(os.path.dirname(output_metrics), exist_ok=True)
     metrics_data = {
-        "Optimal_Lambda": float(optimal_lambda),
-        "Max_Rescue_R": float(max_rescue_r)
+        "argmax_lambda": float(optimal_lambda),
+        "max_R": float(max_rescue_r)
     }
     with open(output_metrics, "w") as f:
         json.dump(metrics_data, f, indent=2)
@@ -65,24 +65,24 @@ def main():
     logger.info(f"Metrics saved to {output_metrics}")
 
     # 4. Visualization
-    output_plot = "output/benchmarks/aging_resilience/09_pharmacological_curve.png"
+    output_plot = "output/benchmarks/aging_resilience/09_lambda_argmax.png"
     plt.figure(figsize=(10, 6))
     
     # Plot raw points
     plt.scatter(lambdas, R_values, color='blue', label=r'Measured $R(\lambda)$', zorder=5)
     
     # Add vertical dashed line for Optimal Lambda
-    plt.axvline(x=optimal_lambda, color='green', linestyle='--', label=f'Optimal Dose = {optimal_lambda:.3f}')
+    plt.axvline(x=optimal_lambda, color='green', linestyle='--', label=f'argmax lambda = {optimal_lambda:.3f}')
     
     # Add text box
-    textstr = f'Optimal Dose: {optimal_lambda:.3f}\nMax R: {max_rescue_r:.3f}'
+    textstr = f'argmax lambda: {optimal_lambda:.3f}\nMax R: {max_rescue_r:.3f}'
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
     plt.gca().text(0.05, 0.95, textstr, transform=plt.gca().transAxes, fontsize=12,
             verticalalignment='top', bbox=props)
 
     plt.xscale('log')
     plt.xlabel(r"Inverse-Temperature Scaling ($\lambda$)")
-    plt.ylabel(r"Therapeutic Rescue $R(\lambda)$")
+    plt.ylabel(r"R(\lambda) = 1 - D(young, \lambda) / D(young, \lambda_A)")
     plt.title("Pharmacological Translation & Dose-Response Curve")
     plt.legend()
     plt.grid(True, which="both", ls="--", alpha=0.5)

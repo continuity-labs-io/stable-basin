@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 from src.data.ephys.maxwell_dataset import MaxWellHDMEADataset
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor
-from src.metrics import ThermodynamicMetrics
+from src.metrics import TimeSeriesStabilityMetrics
 from src.core.substrate import get_optimal_device
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -232,7 +232,7 @@ def main():
     with torch.no_grad():
         hidden_states = model.get_hidden_states(val_seq)
 
-    metrics = ThermodynamicMetrics(alpha=500.0)
+    metrics = TimeSeriesStabilityMetrics(alpha=500.0)
 
     decimation_factor = 50
     z_seq_decimated = hidden_states[0, ::decimation_factor, :]

@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def generate_sim2real_stub(total_minutes=15, crash_minute=10):
+def generate_synthetic_stub(total_minutes=15, crash_minute=10):
     """
     Sim2Real Sim2Real Engine
     Generates a 15-minute multi-scale tensor for 1 cell.
@@ -126,7 +126,7 @@ class MultimodalBioDataset(torch.utils.data.Dataset):
     def __init__(self, total_minutes=15, crash_minute=10, sequence_length=100):
         super().__init__()
         self.sequence_length = sequence_length
-        self.df = generate_sim2real_stub(total_minutes, crash_minute)
+        self.df = generate_synthetic_stub(total_minutes, crash_minute)
 
         # Pre-extract columns
         self.phase_cols = [c for c in self.df.columns if c.startswith("PC")]

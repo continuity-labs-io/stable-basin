@@ -10,8 +10,7 @@ from src.config import settings
 class MeldLoss(nn.Module):
     """
     Composite loss function for the state-space training loop.
-    Incorporates Next-Frame Forecasting, Lipschitz continuous penalty, and Time-Reversal Error.
-    Backcronym: multimodal evaluation of latent dynamics.
+    Describe the math: forecast MSE, penalty relu(||delta_y||_2 - L*delta_x), reconstruction MSE.
     """
 
     def __init__(
@@ -58,42 +57,29 @@ class MeldLoss(nn.Module):
         # 1. Next-Frame Forecasting (L_forecast)
         l_forecast = F.mse_loss(pred_t_plus_1, target_t_plus_1)
 
-        # 2. Steady-State Flux Penalty (formerly Lipschitz Penalty)
-        # Biology is an open thermodynamic system fed by microfluidics.
-        # We penalize the AI if it hallucinates a state transition whose required activation
-        # energy exceeds the continuous glucose perfusion rate.
-        # ΔATP_internal = Energy_imported - Energy_expended
-
-        # Calculate the predicted state change (activation energy required): Δy = pred_t_plus_1 -
-        # state_t
+        # 2. Penalty
+        # Calculate the predicted state change: Δy = pred_t_plus_1 - state_t
         delta_y = pred_t_plus_1 - state_t
 
         # Calculate the L2 norm of the predicted state change per sample across all non-batch
         # dimensions.
-        # This represents the Energy_expended for the state transition.
         batch_size = delta_y.size(0)
         delta_y_flat = delta_y.view(batch_size, -1)
         energy_expended = torch.sqrt(
             torch.sum(delta_y_flat**2, dim=1, keepdim=True) + 1e-8
         )  # shape (batch_size, 1)
 
-        # The glucose perfusion rate provides continuous energy flux: Energy_imported = L * delta_x
-        # where L is the perfusion rate constant (steady-state flux).
+        # Energy_imported = L * delta_x
         energy_imported = self.L * delta_x
 
-        # Penalize if required activation energy exceeds the glucose perfusion rate:
-        # max(0, Energy_expended - Energy_imported)
+        # Penalty: max(0, ||delta_y||_2 - L*delta_x)
         flux_violations = F.relu(energy_expended - energy_imported)
 
         # Mean across the batch (kept as l_lipschitz for backward compatibility with telemetry)
         l_lipschitz = flux_violations.mean()
 
         # 3. Time-Reversal Error (L_reverse)
-        # Reversible processes produce no net entropy.
-        # When a cell undergoes an irreversible phase transition, information is permanently erased,
-        # dissipating heat according to Landauer's limit.
-        # reverse-prediction head attempts to invert the trajectory back to time t.
-        # The magnitude of l_reverse quantifies the thermodynamic irreversibility of the transition.
+        # Reconstruction MSE
         l_reverse = F.mse_loss(reconstructed_t, state_t)
 
         # Total Loss

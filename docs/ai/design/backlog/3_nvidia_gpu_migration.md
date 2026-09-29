@@ -4,7 +4,7 @@
 The `stable-basin` killifish aging pipeline currently utilizes a hybrid PyTorch and JAX stack. While the PyTorch modules (`baseline_transformer`, etc.) seamlessly execute on Apple Silicon (`mps`), the JAX pipeline hits fundamental limitations with the `jax-metal` plugin.
 
 ## Technical Issue
-The script `06_infer_biological_lambda.py` relies on `jnp.linalg.cholesky()` (which maps to XLA's `mhlo.cholesky`) in `hierarchical_factor.py`. The Apple `jax-metal` backend currently does not support this operation, leading to the following hard crash:
+The script `06_fit_lambda.py` relies on `jnp.linalg.cholesky()` (which maps to XLA's `mhlo.cholesky`) in `hierarchical_factor.py`. The Apple `jax-metal` backend currently does not support this operation, leading to the following hard crash:
 ```
 jax.errors.JaxRuntimeError: UNKNOWN: /Users/ry/gh/stable-basin/src/echo/architecture/hierarchical_factor.py:109:18: error: failed to legalize operation 'mhlo.cholesky'
 ```

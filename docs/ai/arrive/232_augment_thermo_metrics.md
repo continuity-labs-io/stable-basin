@@ -8,7 +8,7 @@ from `brain_gen/eval/rollout_metrics.py` and `rollout_sliding_windows.py`.
 see: https://github.com/ricsinaruto/brain-gen
 
 
-Destination: Port this logic into a new class called `ThermodynamicMetrics` located in `src/metrics/time_domain.py`.
+Destination: Port this logic into a new class called `TimeSeriesStabilityMetrics` located in `src/metrics/time_domain.py`.
 
 Requirements:
 1. Isolate the core mathematical logic for DFA, Hurst, and the sliding window statistical features.

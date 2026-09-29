@@ -191,7 +191,7 @@ def setup_experiment(config):
     if bio_frame.ndim > 1:
         bio_frame = bio_frame[0]
         
-    logger.info("Extracting pathological initial state (x0) from 'Old' fallback.")
+    logger.info("Extracting x0: random normal (scale 2) with sensory dims set from one eval-old frame (x0) from 'Old' fallback.")
     x0_noise = jax.random.normal(k4, (d_full,)) * 2.0
     x0_np = np.array(x0_noise)
     idx_s = micro.hull.d_internal

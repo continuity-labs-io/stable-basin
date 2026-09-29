@@ -85,9 +85,9 @@ class StableBasinTrainer:
         return loss_history
 ```
 
-3. Create the YAML Configuration (configs/clinical_diagnostic.yaml) Create a
+3. Create the YAML Configuration (configs/ksm_threshold.yaml) Create a
    configs directory at the root of the project, and add
-   clinical_diagnostic.yaml:
+   ksm_threshold.yaml:
 
 ```yaml
 experiment_name: "Clinical Diagnostic (Pharmacological Shock)"
@@ -107,11 +107,11 @@ training:
   burn_in_frames: 500
 evaluation:
   ksm_threshold: 0.85
-  png_prefix: "06_clinical_diagnostic_dashboard"
-  csv_prefix: "06_clinical_diagnostic_metrics"
+  png_prefix: "06_ksm_threshold_dashboard"
+  csv_prefix: "06_ksm_threshold_metrics"
 ```
 
-4. Refactor src/harness/clinical_diagnostic_runner.py Update the script to use
+4. Refactor src/harness/ksm_threshold_runner.py Update the script to use
    the new architecture:
 
 Replace all argparse flags except --config. Load the YAML using import yaml and
@@ -131,12 +131,12 @@ In main(), iterate over config["models"] to run run_diagnostic_for_model()
 sequentially. Suffix the output filenames dynamically using the prefixes from
 the config (e.g., f"{config['evaluation']['png_prefix']}_{model_type}.png").
 
-5. Clean Up the Makefile Update the clinical-diagnostic target in the Makefile
-   to run: python -m src.harness.clinical_diagnostic_runner --config
-   configs/clinical_diagnostic.yaml (You can delete the old
-   clinical-diagnostic-all target, as the YAML configuration inherently handles
+5. Clean Up the Makefile Update the ksm-threshold target in the Makefile
+   to run: python -m src.harness.ksm_threshold_runner --config
+   configs/ksm_threshold.yaml (You can delete the old
+   ksm-threshold-all target, as the YAML configuration inherently handles
    iterating over all models now).
 
-6. Verification Run make clinical-diagnostic to ensure the refactored script
+6. Verification Run make ksm-threshold to ensure the refactored script
    executes cleanly end-to-end and still produces the expected JSON, CSV, and
    PNG artifacts for all 4 models.

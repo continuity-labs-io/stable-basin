@@ -2,7 +2,7 @@ Context: I am working on the `stable-basin` repository to build a diagnostic pip
 
 Task: Extract the sliding-window evaluation loop and plotting utilities from the `brain-gen` codebase (specifically parts of `brain_gen/eval/eval_runner.py`, `brain_gen/eval/rollout_sliding_windows.py`, and `brain_gen/eval/plotting.py`).
 
-Destination: Port this logic into a new runner class called `ClinicalDiagnosticRunner` located at `src/harness/clinical_diagnostic_runner.py`.
+Destination: Port this logic into a new runner class called `ClinicalDiagnosticRunner` located at `src/harness/ksm_threshold_runner.py`.
 
 Requirements:
 1. Isolate the logic that chunks a continuous time-series into sliding windows, applies the metrics from `time_domain.py` and `spectral.py`, and aggregates the results across the time horizon.

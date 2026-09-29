@@ -10,8 +10,7 @@ logger = logging.getLogger(__name__)
 
 class EchoTrainer(eqx.Module):
     """
-    Pure functional JAX/Equinox trainer for Backpropagation Through Time (BPTT).
-    Aligns a latent Waddington basin to observed biological dynamics via Free Energy minimization.
+    Trains by minimizing one-step-ahead MSE on the sensory dims under teacher forcing, backpropagating through the SDE unroll.
     """
 
     optimizer: optax.GradientTransformation

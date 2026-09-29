@@ -12,7 +12,7 @@ these new Enum values.
 
 Step 2: Fix the Diagnostic Runner & The Bug
 
-In src/harness/clinical_diagnostic_runner.py, please remove the custom
+In src/harness/ksm_threshold_runner.py, please remove the custom
 ModelAdapter class entirely, as well as the hardcoded if/elif instantiation
 block inside evaluate_model. Instead, import SensorFusionPredictor and SSMType.
 Instantiate the model cleanly using SensorFusionPredictor(ssm_type=model_type,
@@ -32,7 +32,7 @@ align with the SensorFusionPredictor wrapper.
 
 Step 4: Audit Configs and Makefiles
 
-Please audit the Makefile, configs/clinical_diagnostic.yaml,
+Please audit the Makefile, configs/ksm_threshold.yaml,
 configs/sensor_fusion.yaml, src/harness/smoke_test.py, and
 src/harness/sensor_fusion_sweep.py. Ensure that any lists of models, CLI
 arguments, or plotting dictionaries strictly use the newly defined string values

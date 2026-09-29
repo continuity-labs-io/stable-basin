@@ -8,7 +8,7 @@ down the pipeline), please implement a two-part fix to make the physics engine
 stable and prevent unrealistic dose extrapolation:
 
 1. **Cap the Extrapolated EC50 Bound
-   (`src/benchmarks/worm_gait/09_pharmacological_translation.py`)** The `bounds`
+   (`src/benchmarks/worm_gait/09_lambda_argmax.py`)** The `bounds`
    tuple provided to `curve_fit` currently allows the `ec50` to extrapolate up
    to `max(lambdas) * 10.0`. Please change this upper bound from `max(lambdas) *
    10.0` to `max(lambdas)` to constrain the fit strictly within our tested

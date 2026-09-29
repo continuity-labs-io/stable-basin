@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from src.data.sim2real.rna_dataloader import TranscriptomicLoader
+from src.data.synthetic.rna_dataloader import TranscriptomicLoader
 
 
 def test_psi_dataloader_event_tensor():

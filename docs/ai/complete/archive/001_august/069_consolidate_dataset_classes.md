@@ -46,6 +46,6 @@ test scripts.
 ## 4. Pipeline Cleanup
 
 Once the datasets are safely inside `src/data/`, we will evaluate what remains
-in `src/pipeline/` (e.g., `credentials.json`, `sim2real/`). If `src/pipeline` is
+in `src/pipeline/` (e.g., `credentials.json`, `synthetic/`). If `src/pipeline` is
 only holding datasets, we can delete the directory entirely to keep the root
 tree clean.

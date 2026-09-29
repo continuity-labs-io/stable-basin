@@ -10,7 +10,7 @@ src/config.py
 
 Raw Prompt to Execute:
 
-Add two new methods to the ThermodynamicMetrics class in src/metrics/metrics.py: calculate_psd and calculate_plv.
+Add two new methods to the TimeSeriesStabilityMetrics class in src/metrics/metrics.py: calculate_psd and calculate_plv.
 
 calculate_psd(self, tensor_seq, sampling_rate): Implement Power Spectral Density using Welch's method or a standard real FFT (torch.fft.rfft). Return the frequency bins and the power array.
 

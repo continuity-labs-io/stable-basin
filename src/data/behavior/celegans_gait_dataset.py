@@ -32,8 +32,7 @@ class RealEigenwormDataset(Dataset):
                              dataset
         will return when sampled, ensuring uniform and computationally manageable
                              inputs.
-        inject_synthetic_degradation: If True, applies an OU/Gaussian noise process to simulate thermodynamic
-                    degradation. This is a synthetic positive control for testing the pipeline's detection capabilities, not real aged biology.
+        inject_synthetic_degradation: Slows gait-amplitude relaxation 3x via synthetic_aging.slow_amplitude_relaxation. Synthetic positive control, not aged worms.
         """
         self.seq_len = seq_len
         self.data = []
@@ -83,7 +82,7 @@ class RealEigenwormDataset(Dataset):
             traj = (traj - global_mean) / (global_std + 1e-8)
 
             if inject_synthetic_degradation:
-                # Apply thermodynamic noise degradation
+                # Slows gait-amplitude relaxation 3x via synthetic_aging.slow_amplitude_relaxation. Synthetic positive control, not aged worms.
                 traj = torch.tensor(slow_amplitude_relaxation(traj.numpy(), slowdown=3.0, pair=(0, 1)), dtype=torch.float32)
 
             normalized_data.append(traj)
@@ -137,7 +136,7 @@ from src.data.behavior.synthetic_aging import slow_amplitude_relaxation, _stuart
 
 class SyntheticWormMockDataset(Dataset):
     """
-    Purely for CI smoke tests. Generates simple, deterministic 6D sine waves.
+    Noisy Stuart-Landau oscillator in channels 0-1, Gaussian noise in channels 2-5.
     """
 
     def __init__(self, seq_len: int = 500, num_samples: int = 100, degraded: bool = False):

@@ -1,11 +1,11 @@
 import pytest
 import torch
-from src.metrics import ThermodynamicMetrics
+from src.metrics import TimeSeriesStabilityMetrics
 
 
 @pytest.fixture
 def metrics_engine():
-    return ThermodynamicMetrics()
+    return TimeSeriesStabilityMetrics()
 
 
 def create_dummy_signal(time_steps, embed_dim):

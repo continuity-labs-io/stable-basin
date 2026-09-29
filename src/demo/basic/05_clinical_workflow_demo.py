@@ -7,7 +7,7 @@ import os
 from src.echo.architecture.markov_hull import MarkovHull
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
-from src.echo.clinic.interventions import DigitalTwinAnnealer, DigitalTwinInterrogator
+from src.echo.model_probes.interventions import ParameterScaler, GradientResponseProbe
 from src.echo.metrics.energy_landscape import calculate_curvature, ScalarEnergy
 from src.echo.physics.dissipative import DissipativeFriction
 from src.echo.primitives.ebm import PrecisionWeightedEBM
@@ -128,10 +128,10 @@ def main():
     # We "ping" her with a strong virtual jolt of energy directly into her micro-level sensors.
     # We then use the Joint Free Energy equation to measure the resulting Prediction Error.
     logging.info("\n=== Step 3: The Hardware Ping (Detecting Silent Drift) ===")
-    interrogator = DigitalTwinInterrogator()
+    interrogator = GradientResponseProbe()
     q_ext_pulse = jax.random.normal(k1, (d_state,)) * 5.0  # Strong ping
 
-    res = interrogator.ping_and_measure(alice_degraded, x_micro, x_macro, q_ext_pulse)
+    res = interrogator.measure(alice_degraded, x_micro, x_macro, q_ext_pulse)
     micro_surp = res["micro_surprisal"]
     macro_surp = res["macro_surprisal"]
     discordance = res["discordance"]
@@ -145,11 +145,11 @@ def main():
         logging.info("DIAGNOSIS: Concordant.")
 
     # How do we fix Alice? We create her Counterfactual Twin (Twin B).
-    # Using the DigitalTwinAnnealer, we mathematically multiply her
+    # Using the ParameterScaler, we mathematically multiply her
     # Friction (Γ) and Precision (Π) weights by 100.0.
     logging.info("\n=== Step 4: Compute Counterfactual (The Reference Twin) ===")
-    annealer = DigitalTwinAnnealer()
-    alice_optimal = annealer.anneal_twin(alice_degraded, gamma_boost=100.0, pi_boost=100.0)
+    annealer = ParameterScaler()
+    alice_optimal = annealer.scale_friction_and_precision(alice_degraded, gamma_boost=100.0, pi_boost=100.0)
 
     # Also boost the energy head so the basin steepness explicitly changes in the plot
     alice_optimal = jax.tree_util.tree_map(

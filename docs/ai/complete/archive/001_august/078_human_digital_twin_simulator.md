@@ -2,7 +2,7 @@
 
 We need a capstone demo script to simulate a full clinical rejuvenation pass on
 a 50-year-old human. We will use `MeldEngine` as a "Digital Twin", apply our
-`RejuvenationFlightController` to guide the therapy, and plot the resulting
+`MetricThresholdMonitor` to guide the therapy, and plot the resulting
 telemetry.
 
 Please create a new file: `src/demo/10_human_rejuvenation_sim.py`
@@ -10,15 +10,15 @@ Please create a new file: `src/demo/10_human_rejuvenation_sim.py`
 **Requirements:**
 
 1. **Setup:** Instantiate the `HumanTelemetryLoader`, `EpigeneticEntropyLoader`,
-   `MeldEngine`, `ThermodynamicMetrics`, and `RejuvenationFlightController`.
+   `MeldEngine`, `TimeSeriesStabilityMetrics`, and `MetricThresholdMonitor`.
    Force device to CPU for the simulation to avoid MPS autograd issues.
 2. **The Simulation Loop (The Ratchet Mechanism):** Simulate a 20-minute
    timeline.
    - **Phase 1 (Baseline, Min 0-5):** Run the engine on healthy baseline data to
      establish the patient's deep `epsilon_0` (KSM) stability well.
    - **Phase 2 (The Shock, Min 5-10):** Apply the `apply_therapy_shock()` from
-     the dataloader. The `RejuvenationFlightController` must process this,
-     detect the KSM drop / CSD spike, and fire the `EMERGENCY_ABORT`.
+     the dataloader. The `MetricThresholdMonitor` must process this,
+     detect the KSM drop / CSD spike, and fire the `ALARM`.
    - **Phase 3 (Recovery, Min 10-15):** The abort clears the shock. Telemetry
      recovers. The controller resumes infusion.
    - **Phase 4 (The Delta, Min 15-20):** Call the `EpigeneticEntropyLoader` with

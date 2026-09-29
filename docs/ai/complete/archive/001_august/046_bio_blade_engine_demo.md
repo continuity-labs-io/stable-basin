@@ -17,7 +17,7 @@ Requirements:
      `matplotlib.use("Agg")`).
    - Import `ContinuousHDMEADataset` from `src.pipeline.ephys.brw_dataloader`.
    - Import `SpikeForecaster` from `src.models.spike_forecaster`.
-   - Import `ThermodynamicMetrics` from `src.metrics.metrics`.
+   - Import `TimeSeriesStabilityMetrics` from `src.metrics.metrics`.
    - Import `HardwareMonitor` from `src.metrics.hardware_monitor`.
    - Import `get_optimal_device` from `src.utils.device`.
    - Define the `format_bytes` and `format_bandwidth` utility functions (from
@@ -65,7 +65,7 @@ Requirements:
    - Clone the final batch to `val_seq`. Simulate a true biological flatline
      (necrosis) by setting `val_seq[:, EVENT_FRAME:, :] = 0.0`.
    - Pass `val_seq` through the model to extract `hidden_states`.
-   - Initialize `ThermodynamicMetrics(alpha=500.0)`.
+   - Initialize `TimeSeriesStabilityMetrics(alpha=500.0)`.
    - To keep the demo fast, decimate the hidden states temporally by a factor of
      50 before passing them to `calculate_ksm(window_size=5)`.
    - Interpolate the resulting KSM scores back to the original `SEQ_LEN`

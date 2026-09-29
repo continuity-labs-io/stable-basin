@@ -32,16 +32,16 @@ class TelemetryLogger:
         rr.set_time("frame_idx", sequence=frame_idx)
         rr.set_time("time_sec", duration=time_sec)
 
-    def log_fedichev_macrostates(
-        self, z0_volatility: float, Z_entropic_damage: float, epsilon_0_ksm: float, lle_chaos: float
+    def log_path_metrics(
+        self, csd: float, cumulative_path_divergence: float, ksm: float, lle_chaos: float
     ) -> None:
         """
         Logs the macroscopic variables defined by the Fedichev-Gruber minimal model.
         """
-        rr.log("fedichev_macrostates/z0_volatility", rr.Scalars(z0_volatility))
-        rr.log("fedichev_macrostates/Z_entropic_damage", rr.Scalars(Z_entropic_damage))
-        rr.log("fedichev_macrostates/epsilon_0_ksm", rr.Scalars(epsilon_0_ksm))
-        rr.log("early_warning_radar/lle_chaos", rr.Scalars(lle_chaos))
+        rr.log("metrics/csd", rr.Scalars(csd))
+        rr.log("metrics/cumulative_path_divergence", rr.Scalars(cumulative_path_divergence))
+        rr.log("metrics/ksm", rr.Scalars(ksm))
+        rr.log("metrics/lle_chaos", rr.Scalars(lle_chaos))
 
     def log_attractor_basin(self, latent_tensor: torch.Tensor) -> None:
         """
@@ -56,7 +56,7 @@ class TelemetryLogger:
         if points.ndim != 2 or points.shape[1] != 3:
             raise ValueError(f"Expected shape [Num_Points, 3], got {points.shape}")
 
-        rr.log("consciousness_manifold/attractor_basin", rr.Points3D(points))
+        rr.log("latent/points_3d/attractor_basin", rr.Points3D(points))
 
     def log_infrastructure(self, vram_mb: float, perfusion_rate: float) -> None:
         """
@@ -69,5 +69,5 @@ class TelemetryLogger:
         """
         Logs frequency-domain spectral coherence markers.
         """
-        rr.log("early_warning_radar/spectral/plv_coherence", rr.Scalars(plv_coherence))
-        rr.log("early_warning_radar/spectral/cfc_enslavement", rr.Scalars(cfc_enslavement))
+        rr.log("metrics/spectral/plv_coherence", rr.Scalars(plv_coherence))
+        rr.log("metrics/spectral/cfc_enslavement", rr.Scalars(cfc_enslavement))

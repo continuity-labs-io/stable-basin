@@ -17,7 +17,7 @@ diagnostic diagnostic report.
 
 ## Requirements
 
-1. **Class `ThermodynamicDiagnosticEngine`**:
+1. **Class `AttributionSummary`**:
 
    - `__init__(self, model, feature_names=None)`: Stores the trained model and
      an optional list of 114 feature names. If `feature_names` is None,
@@ -28,7 +28,7 @@ diagnostic diagnostic report.
      `VoltGrn`).
 
 2. **Method
-   `generate_diagnostic(self, x_sequence, crash_time_step, confidence_score=0.98)`**:
+   `summarize(self, x_sequence, crash_time_step, confidence_score=0.98)`**:
 
    - Accept a batched input tensor `x_sequence` of shape `[1, Time, 114]` and
      the designated `crash_time_step`.
@@ -71,6 +71,6 @@ diagnostic diagnostic report.
 4. **Execution Test Block**:
    - Include a `if __name__ == "__main__":` block that initializes a mock
      `SpikeForecaster` or `NeocorticalEngine` (or similar dummy model), passes a
-     dummy 114-D sequence with an injected crash, runs `generate_diagnostic()`,
+     dummy 114-D sequence with an injected crash, runs `summarize()`,
      and prints the pretty-printed JSON string to the terminal to verify
      zero-error execution.

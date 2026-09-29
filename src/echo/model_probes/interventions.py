@@ -7,7 +7,7 @@ from src.echo.physics.dissipative import DissipativeFriction
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 
 
-class DigitalTwinAnnealer(eqx.Module):
+class ParameterScaler(eqx.Module):
     """
     Mathematically restores a degraded Digital Twin to its optimal
     physical state without needing a population database.
@@ -16,7 +16,7 @@ class DigitalTwinAnnealer(eqx.Module):
     def __init__(self):
         pass
 
-    def anneal_twin(
+    def scale_friction_and_precision(
         self, degraded_graph: PredictiveCodingGraph, gamma_boost: float = 1.5, pi_boost: float = 2.0
     ) -> PredictiveCodingGraph:
         """
@@ -44,7 +44,7 @@ class DigitalTwinAnnealer(eqx.Module):
         return annealed_graph
 
 
-class DigitalTwinInterrogator(eqx.Module):
+class GradientResponseProbe(eqx.Module):
     """
     Measures "Silent Drift" (Blindness) by comparing micro-level
     surprisal to macro-level surprisal after an active ping.
@@ -53,7 +53,7 @@ class DigitalTwinInterrogator(eqx.Module):
     def __init__(self):
         pass
 
-    def ping_and_measure(
+    def measure(
         self,
         graph: PredictiveCodingGraph,
         x_micro: jax.Array,

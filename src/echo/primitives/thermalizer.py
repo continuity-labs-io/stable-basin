@@ -248,17 +248,7 @@ class ForcedTorxThermalizer(eqx.Module):
 
             current_q_mask = q_mask if q_mask is not None else jnp.ones_like(state)
 
-            # Closed-Loop Proportional Controller
-            # This calculates a dynamic restorative force that pulls the state towards the origin
-            # (homeostasis).
-            # It is a closed-loop system because the force (`q_ext`) adapts at each timestep based
-            # on the
-            # current `state`. The `current_q_mask` ensures that this external actuation is only
-            # applied
-            # to accessible physical components (e.g., the Markov Blanket: sensory and active
-            # states),
-            # relying on the network's internal physics to drag the unactuated internal states to
-            # safety.
+            # q_ext = -q_gain * state * mask: proportional pull toward zero on masked dims.
             q_ext = -q_gain * state * current_q_mask
 
             inputs = {

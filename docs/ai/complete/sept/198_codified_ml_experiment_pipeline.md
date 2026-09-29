@@ -13,14 +13,14 @@ To codify a reproducible 6-phase machine learning experiment pipeline that preve
 2. **Standardize Sequence (1-10)**
    - Rename and logically order all benchmark scripts from Phase 0 (Data Grounding) up to Phase 5 (Visualization):
      - `01_worm_gait_baseline_metrics.py` (was `04`)
-     - `02_infer_biological_lambda.py` (was `10`)
+     - `02_infer_fitted_lambda.py` (was `10`)
      - `03_worm_gait_aging_ssm.py` (was `08`)
      - `04_worm_gait_aging_transformer.py` (was `09`)
      - `05_optune.py` (was `01`)
      - `06_worm_gait_aging_ebm.py` (was `02`)
      - `07_worm_gait_intervention.py` (was `03`)
      - `08_worm_gait_lambda_sweep.py` (was `06`)
-     - `09_pharmacological_translation.py` (was `07`)
+     - `09_lambda_argmax.py` (was `07`)
      - `10_animate_worm_gait.py` (was `05`)
 
 3. **Output Path Synchronization**

@@ -27,7 +27,7 @@ and potential co-authorship on resulting papers._
 
 - **Target:** Reinforcement Learning (RL) Engineers, AI Agent Builders.
 - **Where it lives in the code:** The intersection of
-  `rejuvenation_controller.py` (which uses a hardcoded threshold
+  `threshold_monitor.py` (which uses a hardcoded threshold
   `if ksm_score < 0.85`) and the terminal game `11_ratchet_simulator.py`.
 - **The Problem:** Aging and therapy dosing is a sequential decision-making
   problem, but currently, it is driven by basic heuristics and text prompts.

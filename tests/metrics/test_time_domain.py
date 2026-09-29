@@ -1,7 +1,7 @@
 import pytest
 import torch
 import numpy as np
-from src.metrics.time_domain import ThermodynamicMetrics, calculate_dynamic_rank
+from src.metrics.time_domain import TimeSeriesStabilityMetrics, calculate_dynamic_rank
 
 @pytest.fixture(autouse=True)
 def detect_anomaly():
@@ -27,7 +27,7 @@ def test_csd_lag_paradox():
     ACT: Calculate CSD.
     ASSERT: Validates the graceful fallback returns a 0.0 array of max(1, time_steps) length.
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     z_seq = torch.randn(5, 10)
     
     csd = metrics.calculate_csd(z_seq, window_size=20)
@@ -40,7 +40,7 @@ def test_csd_window_size_one():
     ACT: Calculate CSD.
     ASSERT: Ensures no nan/crash occurs when lag-1 autocorrelation cannot be computed.
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     z_seq = torch.randn(10, 5)
     
     csd = metrics.calculate_csd(z_seq, window_size=1)
@@ -53,7 +53,7 @@ def test_ksm_lag_paradox():
     ACT: Calculate KSM.
     ASSERT: Validates fallback to [1.0] * time_steps.
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     z_seq = torch.randn(5, 10)
     
     ksm = metrics.calculate_ksm(z_seq, window_size=5)
@@ -66,7 +66,7 @@ def test_ksm_flatline():
     ACT: Calculate KSM.
     ASSERT: Ensures it gracefully forces rank collapse and returns 0.0 for KSM.
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     z_seq = torch.ones(10, 5)
     
     ksm = metrics.calculate_ksm(z_seq, window_size=4)
@@ -80,7 +80,7 @@ def test_ksm_exception_handling():
     ACT: Calculate KSM.
     ASSERT: Ensures exception is caught and KSM gracefully returns 0.0 without crashing.
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     z_seq = torch.full((10, 5), float('nan'))
     
     ksm = metrics.calculate_ksm(z_seq, window_size=4, debug_crash_frame=5)
@@ -93,7 +93,7 @@ def test_hysteresis_short_sequence():
     ACT: Calculate Hysteresis.
     ASSERT: Validates short sequences return 0.0 and empty list.
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     z_base = torch.randn(1, 5)
     z_pert = torch.randn(1, 5)
     
@@ -107,7 +107,7 @@ def test_lle_lag_paradox():
     ACT: Calculate LLE.
     ASSERT: Validates fallback returns [0.0] * time_steps.
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     z_seq = torch.randn(5, 10)
     
     lle = metrics.calculate_lle(z_seq, window_size=10)
@@ -120,7 +120,7 @@ def test_lle_flatline():
     ACT: Calculate LLE.
     ASSERT: Validates temporal_std check sets max_eig=0 and LLE correctly.
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     z_seq = torch.ones(10, 5)
     
     lle = metrics.calculate_lle(z_seq, window_size=4)
@@ -132,7 +132,7 @@ def test_lle_exception_handling():
     ACT: Calculate LLE.
     ASSERT: Validates exception is caught and sets max_eig=1.0 for graceful fallback.
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     z_seq = torch.full((10, 5), float('nan'))
     
     lle = metrics.calculate_lle(z_seq, window_size=4)
@@ -144,7 +144,7 @@ def test_cka_zero_variance():
     ACT: Calculate CKA.
     ASSERT: Ensures ZeroDivisionError is prevented and returns a valid value (0.0).
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     z_seq = torch.ones(10, 5)
     
     cka = metrics.calculate_cka(z_seq, z_seq)
@@ -157,7 +157,7 @@ def test_epigenetic_dispersion():
     ACT: Calculate Epigenetic Dispersion.
     ASSERT: Validates valid variance and None fallback.
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     cpg_tensor = torch.randn(10, 5, 20)
     disp = metrics.calculate_epigenetic_dispersion(cpg_tensor)
     assert len(disp) == 10
@@ -165,26 +165,26 @@ def test_epigenetic_dispersion():
     disp_none = metrics.calculate_epigenetic_dispersion(None)
     assert len(disp_none) == 0
 
-def test_fedichev_macrostates():
+def test_metrics():
     """
     ARRANGE: Two paths of length 1, and two paths of valid length.
     ACT: Extract macrostates.
     ASSERT: Validates early return for short sequences, and correct output for valid sequences.
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     z_base = torch.randn(1, 5)
     z_pert = torch.randn(1, 5)
     
-    macros_short = metrics.extract_fedichev_macrostates(z_base, z_pert)
-    assert len(macros_short["Z_entropic_damage"]) == 0
+    macros_short = metrics.extract_path_metrics(z_base, z_pert)
+    assert len(macros_short["cumulative_path_divergence"]) == 0
     
     z_base_valid = torch.randn(10, 5)
     z_pert_valid = torch.randn(10, 5)
     cpg = torch.randn(10, 5, 20)
-    macros = metrics.extract_fedichev_macrostates(z_base_valid, z_pert_valid, window_size=4, cpg_tensor=cpg)
-    assert len(macros["Z_entropic_damage"]) == 10
-    assert len(macros["z0_volatility"]) == 10
-    assert len(macros["epsilon_0_ksm"]) == 10
+    macros = metrics.extract_path_metrics(z_base_valid, z_pert_valid, window_size=4, cpg_tensor=cpg)
+    assert len(macros["cumulative_path_divergence"]) == 10
+    assert len(macros["csd"]) == 10
+    assert len(macros["ksm"]) == 10
     assert len(macros["Z_epigenetic_entropy"]) == 10
 
 def test_unified_diagnostics():
@@ -193,7 +193,7 @@ def test_unified_diagnostics():
     ACT: Calculate unified diagnostics.
     ASSERT: Output dictionary has expected keys and shapes.
     """
-    metrics = ThermodynamicMetrics()
+    metrics = TimeSeriesStabilityMetrics()
     z_seq = torch.randn(10, 5)
     raw = torch.randn(2, 100) # (Channels, Time)
     

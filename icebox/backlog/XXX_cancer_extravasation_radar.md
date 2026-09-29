@@ -1,7 +1,7 @@
-Create a new sim2real dataloader and visual simulation script for my biological
+Create a new synthetic dataloader and visual simulation script for my biological
 physics engine. We are mocking 'Cancer Extravasation' based on LLSM imaging.
 
-1 In src/data/sim2real/phase_structure_dataloader.py, create
+1 In src/data/synthetic/phase_structure_dataloader.py, create
 ExtravasationSigmaLoader. Generate a 3000-step 100-D latent sequence ($\Sigma$).
 
 Phase 1: Rolling (T=0 to 1000): Fast, stable oscillation with low variance.
@@ -13,7 +13,7 @@ Phase 3: The Breach (T=2000 to 3000): Massive variance explosion. The L2 norm of
 the vector instantaneously jumps 50%.
 
 2 Create src/demo/12_extravasation_radar_sim.py. Pass this sequence through my
-existing ThermodynamicMetrics class (calculate_csd and calculate_ksm).
+existing TimeSeriesStabilityMetrics class (calculate_csd and calculate_ksm).
 
 3 Generate a 3-panel dark-mode Matplotlib dashboard. Top: 100-D Heatmap showing
 the 50% jump at T=2000. Middle: CSD Curve showing wobble peaking in Phase 2.

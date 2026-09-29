@@ -1,12 +1,12 @@
 import torch
 import pytest
-from src.models.vessel.active_inference_agent import ActiveInferenceAgent
+from src.models.vessel.chemotaxis_reaction_diffusion import ChemotaxisReactionDiffusion
 
 
 def test_gradient_operator_invariants():
     # ARRANGE
     size = 16
-    model = ActiveInferenceAgent(size=size)
+    model = ChemotaxisReactionDiffusion(size=size)
     x = torch.zeros(1, 1, size, size, requires_grad=True)
     # Put a linear slope across the x-axis to test the x-gradient
     with torch.no_grad():
@@ -46,7 +46,7 @@ def test_gradient_operator_invariants():
 def test_active_inference_step_invariants():
     # ARRANGE
     size = 16
-    model = ActiveInferenceAgent(
+    model = ChemotaxisReactionDiffusion(
         size=size, dt=0.1, sigma=0.0
     )  # sigma=0 for deterministic grad check
     model.u.requires_grad = True

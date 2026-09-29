@@ -172,7 +172,7 @@ def main():
     
     epochs = 30
     wandb_project = config.get("logging", {}).get("wandb_project", "stable_basin_aging")
-    wandb.init(project=wandb_project, group=config.get("dataset", {}).get("name", "worm_gait"), name="06_infer_biological_lambda")
+    wandb.init(project=wandb_project, group=config.get("dataset", {}).get("name", "worm_gait"), name="06_infer_fitted_lambda")
     for epoch in range(epochs):
         epoch_loss = 0.0
         batches = 0
@@ -194,14 +194,14 @@ def main():
     final_lambda = float(jnp.exp(lambda_model.log_lambda))
     logger.info(f"Optimization complete. Final inferred biological lambda: {final_lambda:.4f}")
 
-    out_path = "output/benchmarks/aging_resilience/06_inferred_biological_lambda.json"
+    out_path = "output/benchmarks/aging_resilience/06_fitted_lambda.json"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as f:
-        json.dump({"biological_lambda": final_lambda}, f, indent=4)
+        json.dump({"fitted_lambda": final_lambda}, f, indent=4)
         
-    wandb.log({"final_biological_lambda": final_lambda})
+    wandb.log({"final_fitted_lambda": final_lambda})
     
-    artifact = wandb.Artifact("06_biological_lambda_json", type="metrics")
+    artifact = wandb.Artifact("06_fitted_lambda_json", type="metrics")
     artifact.add_file(out_path)
     wandb.log_artifact(artifact)
     wandb.finish()

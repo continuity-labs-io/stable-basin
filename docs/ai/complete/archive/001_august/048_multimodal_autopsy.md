@@ -9,7 +9,7 @@ failure, and outputting an automated, human-readable JSON diagnostic.
 
 Task: Create a new script `src/demo/03_multimodal_diagnostic.py` by synthesizing
 the 114-D simulation logic, the `MambaLRPEpsilon` module, and the
-`ThermodynamicDiagnosticEngine`.
+`AttributionSummary`.
 
 Requirements:
 
@@ -21,7 +21,7 @@ Requirements:
      this instead of NeocorticalEngine because MambaLRPEpsilon explicitly
      targets its `output_proj` and `get_hidden_states` attributes_).
    - Import `MambaLRPEpsilon` from `src.metrics.mamba_lrp`.
-   - Import `ThermodynamicDiagnosticEngine` from
+   - Import `AttributionSummary` from
      `src.metrics.diagnostic_engine`.
    - Import `get_optimal_device` from `src.utils.device`.
    - Setup basic console logging (INFO level).
@@ -65,11 +65,11 @@ Requirements:
      `relevance_tensor = lrp.attribute(test_seq, target_time_step=EVENT_FRAME)`.
    - _Override Note:_ Explicitly monkey-patch `engine.compute_attribution` to
      use the `MambaLRPEpsilon.attribute` method so the
-     `ThermodynamicDiagnosticEngine` calls the mathematically exact LRP instead
+     `AttributionSummary` calls the mathematically exact LRP instead
      of its naive Input\*Gradient fallback:
      `engine.compute_attribution = lambda x, t: lrp.attribute(x, t)`
-   - Instantiate `ThermodynamicDiagnosticEngine(engine)`.
-   - Call `generate_diagnostic(test_seq, EVENT_FRAME)`.
+   - Instantiate `AttributionSummary(engine)`.
+   - Call `summarize(test_seq, EVENT_FRAME)`.
    - Print the resulting `diagnostic_report` beautifully formatted as a JSON
      string to the console. It MUST successfully identify the spike at T=110 on
      the `Psi` genes as the primary causal trace.

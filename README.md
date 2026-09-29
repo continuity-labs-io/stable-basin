@@ -121,7 +121,7 @@ configured: `make preflight`
 
 **2. Execute the Clinical Diagnostic Pipeline** This command spins up parallel
 workers to evaluate the architectures simultaneously against the pharmacological
-crash dataset: `make clinical-diagnostic` _All inference latencies, KSM traces,
+crash dataset: `make ksm-threshold` _All inference latencies, KSM traces,
 and MambaLRP Causal Diagnostic JSONs will automatically sync to your W&B cloud
 dashboard._
 

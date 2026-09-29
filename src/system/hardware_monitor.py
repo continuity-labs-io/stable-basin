@@ -17,8 +17,7 @@ class HardwareMonitor:
     scaling efficiencies across varying sequence lengths.
 
     Note: This is configured to support macOS (using a mock CPU fallback).
-    For full hardware acceleration on non-Mac systems, a different Mamba library
-    (such as the official `mamba_ssm` with CUDA support) is recommended.
+    (such as the official `mamba_ssm` with CUDA support) is recommended. On CPU, VRAM is estimated, not measured.
 
     Args:
         device (torch.device): The PyTorch device to run benchmarks on (e.g., 'cpu', 'cuda').
@@ -55,7 +54,7 @@ class HardwareMonitor:
         if self.device.type not in ["cuda", "mps"]:
             logger.info(
                 "Warning: Hardware acceleration not available. "
-                "Returning mock lists for CPU demonstration."
+                "Returning mock lists for CPU demonstration (estimated, not measured)."
             )
             mamba_vram = [
                 self.base_vram_mb + (L * d_model * self.bytes_per_float * self.d_state / (1024**2))

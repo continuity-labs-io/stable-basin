@@ -34,7 +34,7 @@ successfully integrated into the platform:
    - The `calculate_dynamic_rank` function was directly appended to
      `metrics.py`. It is clearly demarcated with a warning block indicating that
      it is highly experimental ("SUPER VERY MUCH RESEARCH LAND!!").
-   - The `calculate_ksm` method inside `ThermodynamicMetrics` was extended to
+   - The `calculate_ksm` method inside `TimeSeriesStabilityMetrics` was extended to
      accept a `rank_method` parameter.
    - When `rank_method="dynamic"`, the engine explicitly performs a highly
      efficient Truncated SVD over the sliding latent state window to calculate

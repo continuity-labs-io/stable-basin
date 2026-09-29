@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader
 from src.data.ephys.spike_dataset import SpikeProphecyDataset
 from src.models.ssm.spike_forecaster import SpikeForecaster
 from src.models.losses.meld_loss import MeldLoss
-from src.metrics.metrics import ThermodynamicMetrics
+from src.metrics.metrics import TimeSeriesStabilityMetrics
 from src.utils.device import get_optimal_device
 import matplotlib
 
@@ -255,7 +255,7 @@ def main():
         print(f"    -> Extracted Topological Trajectory Shape: {z_sequence.shape}")
 
         # Calculate thermodynamics over the latent sequence
-        metrics = ThermodynamicMetrics(alpha=500.0, beta=1.0)
+        metrics = TimeSeriesStabilityMetrics(alpha=500.0, beta=1.0)
 
         t0 = time.perf_counter()
 

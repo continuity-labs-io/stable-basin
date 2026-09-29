@@ -22,13 +22,13 @@ non-blocking methods to log our PyTorch tensors and thermodynamic scalars.
    sequence frame and the physical time in seconds using `rr.set_time_sequence`
    and `rr.set_time_seconds`.
 3. **Macrostates Logger:** Create a method
-   `log_fedichev_macrostates(self, z0_volatility: float, Z_entropic_damage: float, epsilon_0_ksm: float, lle_chaos: float)`.
+   `log_path_metrics(self, csd: float, cumulative_path_divergence: float, ksm: float, lle_chaos: float)`.
    This should log each variable as a `rr.TimeSeriesScalar` under the
-   hierarchical path `fedichev_macrostates/...` and `early_warning_radar/...`.
+   hierarchical path `metrics/...` and `metrics/...`.
 4. **Phase Space Logger:** Create a method
    `log_attractor_basin(self, latent_tensor: torch.Tensor)`. It should accept a
    tensor of shape `[Num_Points, 3]` and log it as a 3D point cloud
-   (`rr.Points3D`) under the path `consciousness_manifold/attractor_basin`. This
+   (`rr.Points3D`) under the path `latent/points_3d/attractor_basin`. This
    visualizes the structural geometry of the continuous state.
 5. **Telemetry Logger:** Create a method
    `log_infrastructure(self, vram_mb: float, perfusion_rate: float)`. This

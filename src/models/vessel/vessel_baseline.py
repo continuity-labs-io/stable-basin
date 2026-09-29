@@ -170,7 +170,7 @@ def run_simulation():
     (line,) = ax2.plot([], [], lw=2, color="cyan")
     ax2.set_xlim(0, 1000)
     ax2.set_ylim(0, 0.5)
-    ax2.set_title("Internal Variance (Entropy) over Time", color="white")
+    ax2.set_title("Internal variance over Time", color="white")
     ax2.set_xlabel("Time Step (t)", color="white")
     ax2.set_ylabel("Variance (Var[u_internal])", color="white")
     ax2.grid(True, linestyle="--", alpha=0.3)

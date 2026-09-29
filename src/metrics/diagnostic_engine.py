@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ThermodynamicDiagnosticEngine:
+class AttributionSummary:
     """
     Engine for generating causal attribution reports ("Autopsies") for sequence models.
     Uses Layer-wise Relevance Propagation (LRP) or Taylor attribution to trace back from
@@ -46,8 +46,8 @@ class ThermodynamicDiagnosticEngine:
         names.extend(voltage_tracks)
         return names
 
-    def generate_diagnostic(
-        self, x_sequence: torch.Tensor, crash_time_step: int, confidence_score: float = 0.98
+    def summarize(
+        self, x_sequence: torch.Tensor, crash_time_step: int
     ) -> dict:
         """
                 Generates a structured causal trace identifying the root cause of an event.
@@ -60,9 +60,8 @@ class ThermodynamicDiagnosticEngine:
                 Returns:
                     dict: A structured diagnostic report with the following schema:
                         {
-                            "status": str,  # E.g., "CRITICAL_FAILURE_PREDICTED"
+                            "status": str,  # E.g., "attribution_summary"
                             "predicted_crash_time": str,         # E.g., "T=140"
-                            "confidence_score": float,           # E.g., 0.98
                             "anomaly_ontology": {
                                 "primary_latent_driver": str,    # E.g., "RNA_TP53"
         "causal_trace": list[dict]       # Top 3 anomalous events leading to the
@@ -74,8 +73,7 @@ class ThermodynamicDiagnosticEngine:
                         {
                             "time_step": str,                    # E.g., "T=110"
                             "flagged_input": str,                # The name of the offending feature
-                            "relevance_score": float,            # Normalized LRP attribution score
-                            "mechanism": str                     # High-level biological mechanism
+                            "relevance_score": float             # Normalized LRP attribution score
                         }
         """
         # x_sequence: [1, Time, 114]
@@ -126,29 +124,17 @@ class ThermodynamicDiagnosticEngine:
             else:
                 normalized_score = 0.0
 
-            # Map mechanism
-            if flagged_feature.startswith("Psi"):
-                mechanism = "RNA stress alarm"
-            elif flagged_feature.startswith("Omega"):
-                mechanism = "Electrical baseline destabilization"
-            elif flagged_feature.startswith("Sigma"):
-                mechanism = "Morphological shape distortion"
-            else:
-                mechanism = "Unknown anomaly"
-
             causal_trace.append(
                 {
                     "time_step": f"T={int(t)}",
                     "flagged_input": flagged_feature,
                     "relevance_score": round(normalized_score, 4),
-                    "mechanism": mechanism,
                 }
             )
 
         return {
-            "status": "CRITICAL_FAILURE_PREDICTED",
+            "status": "attribution_summary",
             "predicted_crash_time": f"T={int(crash_time_step)}",
-            "confidence_score": confidence_score,
             "anomaly_ontology": {
                 "primary_latent_driver": primary_latent_driver,
                 "causal_trace": causal_trace,

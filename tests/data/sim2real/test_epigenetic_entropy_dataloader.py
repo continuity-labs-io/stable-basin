@@ -1,5 +1,5 @@
 import pytest
-from src.data.sim2real.epigenetic_entropy_dataloader import EpigeneticEntropyLoader
+from src.data.synthetic.epigenetic_entropy_dataloader import EpigeneticEntropyLoader
 
 
 def test_epigenetic_entropy_dataloader():

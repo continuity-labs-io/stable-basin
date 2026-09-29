@@ -125,7 +125,7 @@ a vacuum.
 #### 3. Real Data Benchmark Proposal: "The Waddington Collapse"
 
 Predicting the _exact_ crash frame (as done in your current
-`clinical_diagnostic_runner.py`) is a binary ML task. We are building a
+`ksm_threshold_runner.py`) is a binary ML task. We are building a
 thermodynamic engine, so we need a thermodynamic benchmark.
 
 - **The Setup:** We repurpose your existing `PharmacologicalShockDataset` (20kHz
