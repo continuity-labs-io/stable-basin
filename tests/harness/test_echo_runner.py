@@ -59,11 +59,11 @@ def test_echo_runner_orchestration(tmp_path):
     runner = EchoRunner(str(config_path))
     runner.setup(trainer)
 
-    train_dataset = DummyDataset(16, seq_len, d_sensory, d_state)
-    val_dataset = DummyDataset(16, seq_len, d_sensory, d_state)
+    train_dataset = DummyDataset(2, seq_len, d_sensory, d_state)
+    val_dataset = DummyDataset(2, seq_len, d_sensory, d_state)
 
-    train_loader = DataLoader(train_dataset, batch_size=8)
-    val_loader = DataLoader(val_dataset, batch_size=8)
+    train_loader = DataLoader(train_dataset, batch_size=2)
+    val_loader = DataLoader(val_dataset, batch_size=2)
 
     """
     ACT

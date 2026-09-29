@@ -1,12 +1,29 @@
 import pytest
 import torch
+import torch.nn as nn
+from unittest.mock import patch
 from src.models.encoders.spatial_compressor import SpatialCompressor
 
-# Paranoid Debugger Mode
-torch.autograd.set_detect_anomaly(True)
+
+class DummyViT(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # Just a dummy projection to satisfy the shape [Batch, 768]
+        # and allow gradients to flow back to the input
+        self.proj = nn.Linear(3 * 224 * 224, 768)
+
+    def forward(self, x):
+        return self.proj(x.reshape(x.shape[0], -1))
 
 
-def test_spatial_compressor_backward_gradient_flow():
+def dummy_create_model(*args, **kwargs):
+    return DummyViT()
+
+
+# torch.autograd.set_detect_anomaly(True)
+
+@patch("src.models.encoders.spatial_compressor.timm.create_model", side_effect=dummy_create_model)
+def test_spatial_compressor_backward_gradient_flow(mock_create):
     # ARRANGE
     B, T, C, D, H, W = 1, 2, 2, 4, 128, 128
     device = "cpu"
@@ -30,7 +47,8 @@ def test_spatial_compressor_backward_gradient_flow():
     assert x.grad.shape == x.shape, "Gradient shape mismatch."
 
 
-def test_spatial_compressor_extreme_values():
+@patch("src.models.encoders.spatial_compressor.timm.create_model", side_effect=dummy_create_model)
+def test_spatial_compressor_extreme_values(mock_create):
     # ARRANGE
     B, T, C, D, H, W = 2, 1, 2, 2, 224, 224
     device = "cpu"

@@ -15,7 +15,7 @@ def test_packer():
 
     # 1. Create the base dataset
     # By default it's 30 dimensions (20 slow + 10 fast sparse) and seq_len=500
-    base_dataset = SyntheticWaddingtonDataset(size=8, seq_len=500, density=0.05)
+    base_dataset = SyntheticWaddingtonDataset(size=2, seq_len=100, density=0.05)
 
     print(f"Base Dataset Size: {len(base_dataset)}")
     base_sample = base_dataset[0]

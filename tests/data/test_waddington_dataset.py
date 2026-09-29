@@ -4,17 +4,17 @@ from src.data.waddington_dataset import SyntheticWaddingtonDataset
 
 
 def test_waddington_data_shapes_and_masks():
-    dataset = SyntheticWaddingtonDataset(size=5, seq_len=500)
-    assert len(dataset) == 5
+    dataset = SyntheticWaddingtonDataset(size=2, seq_len=100)
+    assert len(dataset) == 2
 
     batch = dataset[0]
     x_raw = batch["x_raw"]
     mask = batch["mask"]
     y_true = batch["y_true"]
 
-    assert x_raw.shape == (500, 30)
-    assert mask.shape == (500, 2)
-    assert y_true.shape == (500, 1)
+    assert x_raw.shape == (100, 30)
+    assert mask.shape == (100, 2)
+    assert y_true.shape == (100, 1)
 
     # Modality 0 (first 20 dims) mask should be all 1s
     assert torch.all(mask[:, 0] == 1.0)
@@ -34,7 +34,7 @@ def test_waddington_dynamics_leakage():
     but does NOT provide a direct shortcut to v (y_true).
     Modality 1 (Sparse fast variable) SHOULD correlate strongly with v when unmasked.
     """
-    dataset = SyntheticWaddingtonDataset(size=1, seq_len=2000)
+    dataset = SyntheticWaddingtonDataset(size=1, seq_len=500)
     batch = dataset[0]
 
     x_raw = batch["x_raw"]

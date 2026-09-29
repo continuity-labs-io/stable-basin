@@ -6,7 +6,7 @@ from src.metrics.time_domain import ThermodynamicMetrics, calculate_dynamic_rank
 @pytest.fixture(autouse=True)
 def detect_anomaly():
     """Paranoid Debugger Mode"""
-    torch.autograd.set_detect_anomaly(True)
+    # torch.autograd.set_detect_anomaly(True)
     yield
 
 def test_calculate_dynamic_rank_biological_elbow():

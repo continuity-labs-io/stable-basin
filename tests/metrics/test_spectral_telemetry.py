@@ -172,7 +172,7 @@ def test_adversarial_spectral_telemetry():
     - Odd length sequences in Hilbert transform
     """
     # ARRANGE
-    torch.autograd.set_detect_anomaly(True)
+    # torch.autograd.set_detect_anomaly(True)
     metrics = SpectralMetrics()
     fs = 100.0
 

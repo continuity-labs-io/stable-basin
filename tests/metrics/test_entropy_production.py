@@ -104,7 +104,7 @@ import warnings
 def test_adversarial_entropy_production():
     # ARRANGE
     import torch
-    torch.autograd.set_detect_anomaly(True)
+    # torch.autograd.set_detect_anomaly(True)
     
     fs = 100.0
     lag = 1

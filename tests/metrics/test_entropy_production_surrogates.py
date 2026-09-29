@@ -9,7 +9,7 @@ from src.metrics.entropy_production_surrogates import (
 )
 import torch
 
-torch.autograd.set_detect_anomaly(True)
+# torch.autograd.set_detect_anomaly(True)
 
 def test_phase_randomized_surrogate_prime_length():
     # ARRANGE

@@ -31,10 +31,10 @@ def test_smoke():
     ]
 
     batch_size = 2
-    seq_len = 100
+    seq_len = 10
     modality_dims = [20, 10]
     out_dim = 1
-    d_model = 64
+    d_model = 16
 
     d_sensor_total = sum(modality_dims)
 

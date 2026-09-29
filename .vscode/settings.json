@@ -12,7 +12,13 @@
     "**/LICENSE": true,
     "pytest.ini": true,
     ".prettierrc": true,
-    ".envrc": true
+    ".envrc": true,
+    ".gitignore": true,
+    "environment.yml": true,
+    "pyproject.toml": true,
+    "requirements.txt": true,
+    "uv.lock": true,
+    ".pre-commit-config.yaml": true
   },
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
