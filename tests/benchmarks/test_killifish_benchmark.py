@@ -5,7 +5,7 @@ from pathlib import Path
 import os
 import random
 from sklearn.model_selection import KFold
-from src.benchmarks.lifespan.killifish_benchmark import compute_f2a_for_fish, run_evaluation_pipeline, seed_everything
+from src.benchmarks.killifish_lifespan.killifish_benchmark import compute_f2a_for_fish, run_evaluation_pipeline, seed_everything
 
 def test_synthetic_coxph_positive():
     """
@@ -99,9 +99,6 @@ def test_feature_matrix_raises_forbidden():
     """
     ARRANGE: Define inputs and constants.
     """
-    from src.benchmarks.lifespan.killifish_benchmark import main
-    pass
-
     # Let's just test the assertion directly:
     forbidden = {'prognosis', 'prognosis_fraction', 'lifespan', 'status', 'hatch_date', 'full_fish_name', 'fish_number', 'cohort', 'table', 'sex', 'feeding', 'genotype'}
     feature_cols = ['snout_velocity', 'prognosis']

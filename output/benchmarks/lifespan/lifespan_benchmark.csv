@@ -1,4 +1,0 @@
-date,dataset,source,landmark,n_fish,n_events,gate_G1,gate_G2,gate_G3,feature_set,c_mean,c_lo,c_hi,delta_c
-2026-09-30,killifish,kinematic,70,78,38,True,True,True,F1,0.6016276041666667,0.5411783854166666,0.64794921875,
-2026-09-30,killifish,kinematic,70,78,38,True,True,True,F2,0.7231119791666667,0.69140625,0.7605143229166667,
-2026-09-30,killifish,kinematic,70,78,38,True,True,True,F1+F2,0.7154296875000001,0.6803059895833333,0.75,0.11380208333333333
