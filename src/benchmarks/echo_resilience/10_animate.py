@@ -1,7 +1,7 @@
 import os
 import logging
 import yaml
-from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
+from src.benchmarks.echo_resilience.task_registry import get_benchmark_task
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -11,7 +11,7 @@ def main():
     
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/aging_resilience.yaml")
+    parser.add_argument("--config", default="configs/echo_resilience.yaml")
     args, _ = parser.parse_known_args()
     config_path = args.config
     if not os.path.exists(config_path):
@@ -31,7 +31,7 @@ def main():
     old_data = ds_old[0].numpy() if hasattr(ds_old[0], 'numpy') else ds_old[0]
     
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
-    output_dir = f"output/benchmarks/aging_resilience/{dataset_name}"
+    output_dir = f"output/benchmarks/echo_resilience/{dataset_name}"
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, f"10_{dataset_name}_animation.gif")
     

@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import energy_distance
 
-from src.benchmarks.aging_resilience.core import setup_experiment, simulate_sde
-from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
+from src.benchmarks.echo_resilience.core import setup_experiment, simulate_sde
+from src.benchmarks.echo_resilience.task_registry import get_benchmark_task
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -23,7 +23,7 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/aging_resilience.yaml",
+        default="configs/echo_resilience.yaml",
         help="Path to config file",
     )
     args = parser.parse_args()

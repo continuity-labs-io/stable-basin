@@ -203,7 +203,7 @@ def main():
     args = parser.parse_args()
     seed_everything(args.seed)
 
-    output_dir = pathlib.Path("output/benchmarks/killifish_lifespan")
+    output_dir = pathlib.Path("output/benchmarks/model_free_resilience")
     output_dir.mkdir(parents=True, exist_ok=True)
     audit_file = output_dir / "killifish_audit.json"
     results_file = output_dir / "killifish_results.json"

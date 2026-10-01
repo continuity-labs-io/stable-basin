@@ -9,7 +9,7 @@ import jax.numpy as jnp
 import equinox as eqx
 import numpy as np
 
-from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
+from src.benchmarks.echo_resilience.task_registry import get_benchmark_task
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.echo.primitives.ebm_structured import StructuredPrecisionEBM

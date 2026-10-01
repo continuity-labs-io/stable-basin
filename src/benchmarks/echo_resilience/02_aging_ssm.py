@@ -11,13 +11,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from src.harness.sensor_fusion_predictor import SensorFusionPredictor
-from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
+from src.benchmarks.echo_resilience.task_registry import get_benchmark_task
 
 def main():
     import argparse
     import yaml
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/aging_resilience.yaml")
+    parser.add_argument("--config", default="configs/echo_resilience.yaml")
     args, _ = parser.parse_known_args()
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
@@ -101,7 +101,7 @@ def main():
     
     # 6. Serialization & Visualization
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
-    out_dir = f"output/benchmarks/aging_resilience/{dataset_name}"
+    out_dir = f"output/benchmarks/echo_resilience/{dataset_name}"
     os.makedirs(out_dir, exist_ok=True)
     
     metrics = {

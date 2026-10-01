@@ -1,7 +1,7 @@
 MODELS ?= zero_padded_ssm forward_fill_ssm mask_concat_ssm causal_transformer masr_ssm masr_mamba gru_d ode_rnn
-DATASET ?= aging_resilience
+DATASET ?= echo_resilience
 
-.PHONY: baseline extrapolation loss-ablation density-sweep ssm-experiments ksm-threshold aging-resilience-ebm aging-resilience-lambda-comparison aging-resilience-experiments lint-pytorch preflight audit coverage paper
+.PHONY: baseline extrapolation loss-ablation density-sweep ssm-experiments ksm-threshold echo-resilience-ebm echo-resilience-lambda-comparison echo-resilience-experiments lint-pytorch preflight audit coverage paper
 
 # ==========================================
 # General Software Engineering Tools
@@ -91,73 +91,81 @@ notebooks:
 
 .PHONY: run-worm-gait
 run-worm-gait:
-	$(MAKE) aging-resilience-experiments DATASET=aging_resilience
+	$(MAKE) echo-resilience-experiments DATASET=echo_resilience
 
 .PHONY: run-killifish
 run-killifish:
-	$(MAKE) aging-resilience-experiments DATASET=killifish_experiments
+	$(MAKE) echo-resilience-experiments DATASET=killifish_experiments
 
 .PHONY: run-catnap
 run-catnap:
-	$(MAKE) aging-resilience-experiments DATASET=catnap_experiments
+	$(MAKE) echo-resilience-experiments DATASET=catnap_experiments
 
 .PHONY: run-synthetic-aging
 run-synthetic-aging:
-	WANDB_MODE=disabled $(MAKE) aging-resilience-experiments DATASET=synthetic_aging
+	WANDB_MODE=disabled $(MAKE) echo-resilience-experiments DATASET=synthetic_aging
 
 # ------------------------------------------
 # Granular Pipeline Steps
 # ------------------------------------------
 # You can also run individual steps for a specific dataset like so:
-# make aging-resilience-ebm DATASET=killifish_experiments
+# make echo-resilience-ebm DATASET=killifish_experiments
 
 
-.PHONY: aging-resilience-baseline
-aging-resilience-baseline:
-	python -m src.benchmarks.aging_resilience.01_baseline_metrics --config configs/$(DATASET).yaml
+.PHONY: echo-resilience-baseline
+echo-resilience-baseline:
+	python -m src.benchmarks.echo_resilience.01_baseline_metrics --config configs/$(DATASET).yaml
 
-.PHONY: aging-resilience-ssm
-aging-resilience-ssm:
-	python -m src.benchmarks.aging_resilience.02_aging_ssm --config configs/$(DATASET).yaml
+.PHONY: echo-resilience-ssm
+echo-resilience-ssm:
+	python -m src.benchmarks.echo_resilience.02_aging_ssm --config configs/$(DATASET).yaml
 
-.PHONY: aging-resilience-transformer
-aging-resilience-transformer:
-	python -m src.benchmarks.aging_resilience.03_aging_transformer --config configs/$(DATASET).yaml
+.PHONY: echo-resilience-transformer
+echo-resilience-transformer:
+	python -m src.benchmarks.echo_resilience.03_aging_transformer --config configs/$(DATASET).yaml
 
-.PHONY: aging-resilience-optune
-aging-resilience-optune:
-	python -m src.benchmarks.aging_resilience.04_optune_ebm_architecture --config configs/$(DATASET).yaml
+.PHONY: echo-resilience-optune
+echo-resilience-optune:
+	python -m src.benchmarks.echo_resilience.04_optune_ebm_architecture --config configs/$(DATASET).yaml
 
-.PHONY: aging-resilience-ebm
-aging-resilience-ebm:
-	python -m src.benchmarks.aging_resilience.05_aging_ebm --config configs/$(DATASET).yaml
+.PHONY: echo-resilience-ebm
+echo-resilience-ebm:
+	python -m src.benchmarks.echo_resilience.05_aging_ebm --config configs/$(DATASET).yaml
 
-.PHONY: aging-resilience-fit-lambda
-aging-resilience-fit-lambda:
-	python -m src.benchmarks.aging_resilience.06_fit_lambda --config configs/$(DATASET).yaml
+.PHONY: echo-resilience-fit-lambda
+echo-resilience-fit-lambda:
+	python -m src.benchmarks.echo_resilience.06_fit_lambda --config configs/$(DATASET).yaml
 
-.PHONY: aging-resilience-lambda-comparison
-aging-resilience-lambda-comparison:
-	python -m src.benchmarks.aging_resilience.07_lambda_comparison --config configs/$(DATASET).yaml
+.PHONY: echo-resilience-lambda-comparison
+echo-resilience-lambda-comparison:
+	python -m src.benchmarks.echo_resilience.07_lambda_comparison --config configs/$(DATASET).yaml
 
-.PHONY: aging-resilience-sweep
-aging-resilience-sweep:
-	python -m src.benchmarks.aging_resilience.08_lambda_sweep --config configs/$(DATASET).yaml
+.PHONY: echo-resilience-sweep
+echo-resilience-sweep:
+	python -m src.benchmarks.echo_resilience.08_lambda_sweep --config configs/$(DATASET).yaml
 
-.PHONY: aging-resilience-lambda-argmax
-aging-resilience-lambda-argmax:
-	python -m src.benchmarks.aging_resilience.09_lambda_argmax --config configs/$(DATASET).yaml
+.PHONY: echo-resilience-lambda-argmax
+echo-resilience-lambda-argmax:
+	python -m src.benchmarks.echo_resilience.09_lambda_argmax --config configs/$(DATASET).yaml
 
-.PHONY: aging-resilience-animate
-aging-resilience-animate:
-	python -m src.benchmarks.aging_resilience.10_animate --config configs/$(DATASET).yaml
+.PHONY: echo-resilience-animate
+echo-resilience-animate:
+	python -m src.benchmarks.echo_resilience.10_animate --config configs/$(DATASET).yaml
 
-.PHONY: aging-resilience-null-control
-aging-resilience-null-control:
-	python -m src.benchmarks.aging_resilience.11_null_control --config configs/$(DATASET).yaml
+.PHONY: echo-resilience-null-control
+echo-resilience-null-control:
+	python -m src.benchmarks.echo_resilience.11_null_control --config configs/$(DATASET).yaml
 
-.PHONY: aging-resilience-experiments
-aging-resilience-experiments: aging-resilience-baseline aging-resilience-ssm aging-resilience-transformer aging-resilience-optune aging-resilience-ebm aging-resilience-fit-lambda aging-resilience-lambda-comparison aging-resilience-sweep aging-resilience-lambda-argmax aging-resilience-animate aging-resilience-null-control
+.PHONY: echo-resilience-experiments
+echo-resilience-experiments: echo-resilience-baseline echo-resilience-ssm echo-resilience-transformer echo-resilience-optune echo-resilience-ebm echo-resilience-fit-lambda echo-resilience-lambda-comparison echo-resilience-sweep echo-resilience-lambda-argmax echo-resilience-animate echo-resilience-null-control
 
 .PHONY: reproduce-paper
-reproduce-paper: aging-resilience-experiments paper
+reproduce-paper: echo-resilience-experiments paper
+
+# ==========================================
+# Scientific Experiments (Model Free Resilience Suite)
+# ==========================================
+
+.PHONY: model-free-resilience-killifish
+model-free-resilience-killifish:
+	python -m src.benchmarks.model_free_resilience.killifish_benchmark

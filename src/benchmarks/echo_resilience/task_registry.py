@@ -48,13 +48,13 @@ def get_benchmark_task(config: Dict[str, Any]) -> AgingBenchmarkTask:
     
     if dataset_name == "worm_gait":
         # Import inside here to prevent circular imports if the task imports from registry
-        from src.benchmarks.aging_resilience.tasks.worm_task import WormGaitTask
+        from src.benchmarks.echo_resilience.tasks.worm_task import WormGaitTask
         return WormGaitTask()
     elif dataset_name == "killifish":
-        from src.benchmarks.aging_resilience.tasks.killifish_task import KillifishTask
+        from src.benchmarks.echo_resilience.tasks.killifish_task import KillifishTask
         return KillifishTask()
     elif dataset_name == "catnap":
-        from src.benchmarks.aging_resilience.tasks.catnap_task import CatnapTask
+        from src.benchmarks.echo_resilience.tasks.catnap_task import CatnapTask
         return CatnapTask()
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}")
@@ -103,7 +103,7 @@ def build_cohorts(samples, dataset_name, seed, young_fn, old_fn):
         raise ValueError(f"Empty cohorts! Young: {len(eval_young_samples)}, Old: {len(eval_old_samples)}")
         
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
-    output_dir = f"output/benchmarks/aging_resilience/{dataset_name}"
+    output_dir = f"output/benchmarks/echo_resilience/{dataset_name}"
     os.makedirs(output_dir, exist_ok=True)
     cohorts_dict = {
         "train": {"individuals": len(pure_train_inds), "chunks": len(train_samples), "ids": pure_train_inds},

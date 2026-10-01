@@ -15,8 +15,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import equinox as eqx
 
-from src.benchmarks.aging_resilience.core import build_graph, get_full_states, compute_full_trace, compute_metrics, run_aging_experiment
-from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
+from src.benchmarks.echo_resilience.core import build_graph, get_full_states, compute_full_trace, compute_metrics, run_aging_experiment
+from src.benchmarks.echo_resilience.task_registry import get_benchmark_task
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.data.datasets import JAXDictDataset
@@ -88,7 +88,7 @@ def plot_ablation_results(
 
     plt.tight_layout()
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
-    out_dir = f"output/benchmarks/aging_resilience/{dataset_name}"
+    out_dir = f"output/benchmarks/echo_resilience/{dataset_name}"
     os.makedirs(out_dir, exist_ok=True)
     plt.savefig(f"{out_dir}/05_decline_ablation.png")
     
@@ -107,7 +107,7 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/aging_resilience.yaml",
+        default="configs/echo_resilience.yaml",
         help="Path to the YAML configuration file.",
     )
     args = parser.parse_args()
@@ -144,7 +144,7 @@ def main():
     )
 
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
-    model_path = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}/{dataset_name}_trained_engine.eqx")
+    model_path = config.get("paths", {}).get("model_weights", f"output/benchmarks/echo_resilience/{dataset_name}/{dataset_name}_trained_engine.eqx")
     
     logger.info(f"Serializing trained Clean Baseline {dataset_name} engine to disk.")
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
@@ -152,7 +152,7 @@ def main():
 
     all_metrics = {"IdentityPrecisionEBM": metrics_A, "PrecisionWeightedEBM": metrics_B}
 
-    metrics_path = config.get("paths", {}).get("output_metrics", f"output/benchmarks/aging_resilience/{dataset_name}/{dataset_name}_metrics.json")
+    metrics_path = config.get("paths", {}).get("output_metrics", f"output/benchmarks/echo_resilience/{dataset_name}/{dataset_name}_metrics.json")
     with open(metrics_path, "w") as f:
         json.dump(all_metrics, f, indent=2)
     logger.info(f"Serialized full statistical metrics to {metrics_path}")

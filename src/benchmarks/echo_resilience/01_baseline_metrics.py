@@ -11,7 +11,7 @@ import yaml
 warnings.filterwarnings("ignore")
 
 from src.metrics.baseline_statistics import compute_stats
-from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
+from src.benchmarks.echo_resilience.task_registry import get_benchmark_task
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ def run_baseline_metrics():
     
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/aging_resilience.yaml")
+    parser.add_argument("--config", default="configs/echo_resilience.yaml")
     args, _ = parser.parse_known_args()
     config_path = args.config
     if not os.path.exists(config_path):
@@ -84,7 +84,7 @@ def run_baseline_metrics():
 
     # Save results
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
-    out_dir = f"output/benchmarks/aging_resilience/{dataset_name}"
+    out_dir = f"output/benchmarks/echo_resilience/{dataset_name}"
     os.makedirs(out_dir, exist_ok=True)
     out_file = os.path.join(out_dir, f"01_{dataset_name}_baseline_metrics.json")
     

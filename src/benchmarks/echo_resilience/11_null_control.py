@@ -22,8 +22,8 @@ Pre-registered direction: if Hessian trace tracks loss of resilience ("flattenin
 degraded worms should show LOWER trace, i.e. negative Hedges' g (degraded minus clean).
 
 Usage
-  python -m src.benchmarks.aging_resilience.11_null_control --config configs/aging_resilience.yaml
-  python -m src.benchmarks.aging_resilience.11_null_control --retrain          # fresh model, held-out val
+  python -m src.benchmarks.echo_resilience.11_null_control --config configs/echo_resilience.yaml
+  python -m src.benchmarks.echo_resilience.11_null_control --retrain          # fresh model, held-out val
   python 11_null_control.py --stub --train-ts a.ts --test-ts b.ts       # stats plumbing only, no JAX
 """
 
@@ -45,7 +45,7 @@ try:
 except ImportError:  # running next to synthetic_aging.py outside the repo
     from synthetic_aging import slow_amplitude_relaxation
 
-from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
+from src.benchmarks.echo_resilience.task_registry import get_benchmark_task
 
 from src.data.utils import zscore_fit, stratified_split, window_starts
 from src.utils.io import sha256
@@ -96,7 +96,7 @@ def load_ts(path: str, mock: bool = False) -> tuple[list[np.ndarray], np.ndarray
 def load_or_train_graph(config: dict, config_path: str, train_trajs, train_labels, args):
     import equinox as eqx
     import jax
-    from src.benchmarks.aging_resilience.core import build_graph
+    from src.benchmarks.echo_resilience.core import build_graph
     from src.echo.primitives.ebm import PrecisionWeightedEBM
 
     seed = config.get("experiment", {}).get("seed", 42)
@@ -163,12 +163,12 @@ class StubEvaluator:
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--config", default="configs/aging_resilience.yaml")
+    ap.add_argument("--config", default="configs/echo_resilience.yaml")
     ap.add_argument("--train-ts", default="data/worm/EigenWorms_TRAIN.ts")
     ap.add_argument("--test-ts", default="data/worm/EigenWorms_TEST.ts")
     ap.add_argument("--weights", default="")
     ap.add_argument("--retrain", action="store_true", help="train a fresh engine with a held-out val split")
-    ap.add_argument("--out-dir", default="output/benchmarks/aging_resilience")
+    ap.add_argument("--out-dir", default="output/benchmarks/echo_resilience")
     ap.add_argument("--severities", type=float, nargs="+", default=[1.0, 1.25, 1.5, 2.0, 3.0])
     ap.add_argument("--pair", type=int, nargs=2, default=[0, 1], help="eigenworm channels forming the gait oscillator")
     ap.add_argument("--windows-per-worm", type=int, default=4)
@@ -192,7 +192,7 @@ def main():
         
     if not args.weights:
         dataset_name = config.get("dataset", {}).get("name", "worm_gait")
-        args.weights = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}/{dataset_name}_trained_engine.eqx")
+        args.weights = config.get("paths", {}).get("model_weights", f"output/benchmarks/echo_resilience/{dataset_name}/{dataset_name}_trained_engine.eqx")
         
     if 1.0 not in args.severities:
         args.severities = [1.0] + list(args.severities)

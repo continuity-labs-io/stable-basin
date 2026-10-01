@@ -17,7 +17,7 @@ from sklearn.linear_model import Ridge
 
 from src.data.utils import zscore_fit, window_starts
 import importlib
-null_control = importlib.import_module("src.benchmarks.aging_resilience.11_null_control")
+null_control = importlib.import_module("src.benchmarks.echo_resilience.11_null_control")
 load_ts = null_control.load_ts
 load_or_train_graph = null_control.load_or_train_graph
 
@@ -46,12 +46,12 @@ def integrated_autocorrelation_time(x):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default="configs/aging_resilience.yaml")
+    ap.add_argument("--config", default="configs/echo_resilience.yaml")
     ap.add_argument("--train-ts", default="data/worm/EigenWorms_TRAIN.ts")
     ap.add_argument("--test-ts", default="data/worm/EigenWorms_TEST.ts")
     ap.add_argument("--weights", default="")
     ap.add_argument("--retrain", action="store_true")
-    ap.add_argument("--out-dir", default="output/benchmarks/aging_resilience")
+    ap.add_argument("--out-dir", default="output/benchmarks/echo_resilience")
     ap.add_argument("--windows-per-worm", type=int, default=4)
     ap.add_argument("--burn-in", type=int, default=50)
     args = ap.parse_args()
@@ -69,7 +69,7 @@ def main():
         
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
     if not args.weights:
-        args.weights = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}/{dataset_name}_trained_engine.eqx")
+        args.weights = config.get("paths", {}).get("model_weights", f"output/benchmarks/echo_resilience/{dataset_name}/{dataset_name}_trained_engine.eqx")
         
     train_trajs, train_labels = load_ts(args.train_ts)
     test_trajs, test_labels = load_ts(args.test_ts)

@@ -5,7 +5,7 @@ import numpy as np
 from typing import Dict, Any, Tuple, Optional, Callable
 from torch.utils.data import DataLoader
 
-from src.benchmarks.aging_resilience.task_registry import AgingBenchmarkTask
+from src.benchmarks.echo_resilience.task_registry import AgingBenchmarkTask
 from src.data.behavior.celegans_gait_dataset import RealEigenwormDataset, SyntheticWormMockDataset
 from src.data.datasets import JAXDictDataset
 from src.metrics.spectral import SpectralMetrics

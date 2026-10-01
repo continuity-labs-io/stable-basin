@@ -2,7 +2,7 @@ import logging
 import numpy as np
 from torch.utils.data import DataLoader
 
-from src.benchmarks.aging_resilience.task_registry import AgingBenchmarkTask
+from src.benchmarks.echo_resilience.task_registry import AgingBenchmarkTask
 from src.data.datasets import JAXDictDataset
 
 try:
@@ -48,7 +48,7 @@ class CatnapTask(AgingBenchmarkTask):
 
         master_dataset = CatnapContinuousDataset(h5_path=h5_path, sequence_length=seq_len, cohort="all")
         
-        from src.benchmarks.aging_resilience.task_registry import build_cohorts
+        from src.benchmarks.echo_resilience.task_registry import build_cohorts
         def young_fn(s):
             return s['chronological_age'] <= 6
         def old_fn(s):

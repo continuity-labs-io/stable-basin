@@ -12,12 +12,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import energy_distance
 
-from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
+from src.benchmarks.echo_resilience.task_registry import get_benchmark_task
 from src.echo.architecture.observer import MarkovBlanketObserver
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 
-from src.benchmarks.aging_resilience.core import setup_experiment, simulate_sde
+from src.benchmarks.echo_resilience.core import setup_experiment, simulate_sde
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ def calculate_metrics(graph, traj_A_batch, traj_B_batch, config):
 
 
 def plot_results(traj_A, traj_B, dist_A, dist_B, R_lambda_B, config):
-    from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
+    from src.benchmarks.echo_resilience.task_registry import get_benchmark_task
     task = get_benchmark_task(config)
     label_a, label_b = task.cohort_labels
     logger.info("Generating.")
@@ -171,7 +171,7 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/aging_resilience.yaml",
+        default="configs/echo_resilience.yaml",
         help="Path to config file",
     )
     args = parser.parse_args()

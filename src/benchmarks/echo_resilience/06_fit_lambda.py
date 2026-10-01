@@ -10,9 +10,9 @@ import logging
 from torch.utils.data import DataLoader
 import torch
 
-from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
+from src.benchmarks.echo_resilience.task_registry import get_benchmark_task
 from src.data.datasets import JAXDictDataset
-from src.benchmarks.aging_resilience.core import build_graph
+from src.benchmarks.echo_resilience.core import build_graph
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 from src.echo.architecture.hierarchical_factor import HierarchicalThermoFlowFactor
 from src.echo.architecture.predictive_coding_graph import PredictiveCodingGraph
@@ -138,7 +138,7 @@ def train_step(lambda_model: LambdaModel, graph: PredictiveCodingGraph, x_init_b
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/aging_resilience.yaml")
+    parser.add_argument("--config", default="configs/echo_resilience.yaml")
     args, _ = parser.parse_known_args()
     config_path = args.config
     with open(config_path, "r") as f:
@@ -156,7 +156,7 @@ def main():
     _, _, _, loader = task.get_dataloaders(config, d_state, batch_size=config.get("dataset", {}).get("batch_size", 2))
 
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
-    model_path = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}/{dataset_name}_trained_engine.eqx")
+    model_path = config.get("paths", {}).get("model_weights", f"output/benchmarks/echo_resilience/{dataset_name}/{dataset_name}_trained_engine.eqx")
     if not os.path.exists(model_path):
         logger.error(f"Pre-trained model not found at {model_path}. Please run benchmark 05 first.")
         return

@@ -5,7 +5,7 @@ from pathlib import Path
 import os
 import random
 from sklearn.model_selection import KFold
-from src.benchmarks.killifish_lifespan.killifish_benchmark import compute_f2a_for_fish, run_evaluation_pipeline, seed_everything
+from src.benchmarks.model_free_resilience.killifish_benchmark import compute_f2a_for_fish, run_evaluation_pipeline, seed_everything
 
 def test_synthetic_coxph_positive():
     """

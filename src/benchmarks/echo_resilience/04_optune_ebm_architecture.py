@@ -12,8 +12,8 @@ import optuna
 from optuna.integration.wandb import WeightsAndBiasesCallback
 import copy
 import wandb
-from src.benchmarks.aging_resilience.core import run_aging_experiment, build_graph
-from src.benchmarks.aging_resilience.task_registry import get_benchmark_task
+from src.benchmarks.echo_resilience.core import run_aging_experiment, build_graph
+from src.benchmarks.echo_resilience.task_registry import get_benchmark_task
 from src.data.datasets import JAXDictDataset
 from src.echo.primitives.ebm import PrecisionWeightedEBM
 
@@ -81,7 +81,7 @@ def objective(trial, train_young_loader, val_loader, eval_young_loader, eval_old
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/aging_resilience.yaml")
+    parser.add_argument("--config", default="configs/echo_resilience.yaml")
     args, _ = parser.parse_known_args()
     config_path = args.config
     with open(config_path, "r") as f:
@@ -126,7 +126,7 @@ def main():
 
     # Save best parameters to a JSON for easy extraction later
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
-    out_dir = f"output/benchmarks/aging_resilience/{dataset_name}"
+    out_dir = f"output/benchmarks/echo_resilience/{dataset_name}"
     os.makedirs(out_dir, exist_ok=True)
     with open(f"{out_dir}/04_ebm_best_params.json", "w") as f:
         json.dump(study.best_trial.params, f, indent=2)
