@@ -24,7 +24,7 @@ def main():
     task = get_benchmark_task(config)
     
     logger.info("Loading data via task...")
-    _, ds_young, ds_old = task.get_raw_datasets(config)
+    _, _, ds_young, ds_old = task.get_raw_datasets(config)
     
     # Take the first sequence from each
     young_data = ds_young[0].numpy() if hasattr(ds_young[0], 'numpy') else ds_young[0]
@@ -33,7 +33,7 @@ def main():
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
     output_dir = f"output/benchmarks/aging_resilience/{dataset_name}"
     os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, "10_worm_gait_animation.gif")
+    output_path = os.path.join(output_dir, f"10_{dataset_name}_animation.gif")
     
     logger.info("Rendering animation (this may take a minute)...")
     

@@ -93,11 +93,11 @@ def plot_ablation_results(
     plt.savefig(f"{out_dir}/05_decline_ablation.png")
     
     if wandb.run is not None:
-        wandb.log({"05_worm_gait_decline_ablation": wandb.Image(f"{out_dir}/05_decline_ablation.png")})
+        wandb.log({f"05_{dataset_name}_decline_ablation": wandb.Image(f"{out_dir}/05_decline_ablation.png")})
     plt.close()
 
     logger.info(
-        "Benchmark complete. Plot saved to output/benchmarks/aging_resilience/05_worm_gait_decline_ablation.png"
+        f"Benchmark complete. Plot saved to {out_dir}/05_decline_ablation.png"
     )
 
 
@@ -126,7 +126,7 @@ def main():
     task = get_benchmark_task(config)
     batch_size = config.get("dataset", {}).get("batch_size", 2)
     train_young_loader, val_loader, eval_young_loader, eval_old_loader = task.get_dataloaders(config, d_state, batch_size)
-    _, eval_young_dataset_raw, eval_old_dataset_raw = task.get_raw_datasets(config)
+    _, _, eval_young_dataset_raw, eval_old_dataset_raw = task.get_raw_datasets(config)
 
     key, kA = jax.random.split(key)
     config_A = copy.deepcopy(config)

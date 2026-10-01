@@ -100,7 +100,8 @@ def main():
     batch_size = base_config.get("dataset", {}).get("batch_size", 2)
     train_young_loader, val_loader, eval_young_loader, eval_old_loader = task.get_dataloaders(base_config, d_state, batch_size)
 
-    study = optuna.create_study(direction="maximize", study_name="worm_gait_aging_ebm")
+    dataset_name = base_config.get("dataset", {}).get("name", "worm_gait")
+    study = optuna.create_study(direction="maximize", study_name=f"{dataset_name}_aging_ebm")
 
     # 1 hour timeout limit
     timeout_seconds = 3600

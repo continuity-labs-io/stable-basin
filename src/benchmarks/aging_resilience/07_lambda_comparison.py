@@ -156,9 +156,10 @@ def save_results(
         "energy_distance_rescue": dist_B,
         "R_lambda_rescue": R_lambda_B
     })
-    wandb.log({"07_worm_gait_intervention_rescue": wandb.Image(config["paths"]["output_plot"])})
+    dataset_name = config.get("dataset", {}).get("name", "worm_gait")
+    wandb.log({f"07_{dataset_name}_intervention_rescue": wandb.Image(config["paths"]["output_plot"])})
     
-    artifact = wandb.Artifact("07_worm_gait_intervention_metrics", type="metrics")
+    artifact = wandb.Artifact(f"07_{dataset_name}_intervention_metrics", type="metrics")
     artifact.add_file(output_metrics)
     wandb.log_artifact(artifact)
 

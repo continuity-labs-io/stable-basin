@@ -177,7 +177,7 @@ def setup_experiment(config):
 
     d_full = graph.d_micro + graph.d_macro
     task = get_benchmark_task(config)
-    _, _, eval_old_dataset_raw = task.get_raw_datasets(config)
+    _, _, _, eval_old_dataset_raw = task.get_raw_datasets(config)
     
     sample = eval_old_dataset_raw[0]
     if isinstance(sample, (tuple, list)):

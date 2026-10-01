@@ -35,7 +35,7 @@ def run_baseline_metrics():
     task = get_benchmark_task(config)
     
     logger.info("Loading C. elegans biological datasets via task...")
-    _, ds_young, ds_old = task.get_raw_datasets(config)
+    _, _, ds_young, ds_old = task.get_raw_datasets(config)
 
     def evaluate_cohort(dataset):
         aggregated = {}
@@ -91,7 +91,7 @@ def run_baseline_metrics():
     with open(out_file, "w") as f:
         json.dump(results, f, indent=2)
         
-    wandb.init(project="worm_gait", name="01_baseline_metrics", config=results)
+    wandb.init(project="stable_basin_aging", group=dataset_name, name="01_baseline_metrics", config=results)
     
     # Flatten results for logging
     flat_results = {}
