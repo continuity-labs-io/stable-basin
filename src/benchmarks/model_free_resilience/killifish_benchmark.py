@@ -282,6 +282,9 @@ def main():
     daily_valid_counts = df_primary.groupby(['full_fish_name', 'age_days'])['is_valid_bin'].sum()
     valid_days = daily_valid_counts[daily_valid_counts >= 120].reset_index()
     
+    print("\nNegative values in df_primary per feature:")
+    print((df_primary[feature_cols] < 0).sum())
+
     audit_data = {}
     max_count = -1
     selected_L = None
@@ -331,6 +334,8 @@ def main():
                 
     df_eval = df_primary[df_primary['full_fish_name'].isin(valid_fish)].copy()
     df_eval = df_eval.merge(valid_days[['full_fish_name', 'age_days']], on=['full_fish_name', 'age_days'], how='inner')
+    df_eval = df_eval[df_eval['age_days'] < selected_L].copy()
+    assert df_eval['age_days'].max() < selected_L
     
     daily_means = df_eval.groupby(['full_fish_name', 'age_days'])[feature_cols].mean()
     
