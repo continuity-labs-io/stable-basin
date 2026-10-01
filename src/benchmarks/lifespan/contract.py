@@ -1,6 +1,10 @@
 import pandas as pd
 
-def validate(animals: pd.DataFrame, series: pd.DataFrame, variables: list[str], forbidden_variables: set[str]):
+FORBIDDEN_VARIABLES = {'lifespan_days', 'died', 'status', 'prognosis',
+                       'prognosis_fraction', 'group', 'cohort', 'sex', 'feeding', 
+                       'genotype', 'table', 'hatch_date', 'animal_id', 'age_days'}
+
+def validate(animals: pd.DataFrame, series: pd.DataFrame, variables: list[str], extra_forbidden: set[str] = None):
     """
     Validates the data contract for the lifespan benchmark inputs.
 
@@ -10,7 +14,7 @@ def validate(animals: pd.DataFrame, series: pd.DataFrame, variables: list[str], 
         series (pd.DataFrame): DataFrame containing time-series measurements per animal and time bin. 
             Must include `animal_id`, `age_days`, and the variables specified in `variables`.
         variables (list[str]): A list of column names in `series` representing the measured variables.
-        forbidden_variables (set[str]): A set of variable names that are forbidden to be used as features.
+        extra_forbidden (set[str], optional): Additional forbidden variables from the suite configuration.
 
     Raises:
         ValueError: If any contract constraint is violated (e.g., duplicate animals, missing 
@@ -19,6 +23,9 @@ def validate(animals: pd.DataFrame, series: pd.DataFrame, variables: list[str], 
     Returns:
         None
     """
+    forbidden_variables = FORBIDDEN_VARIABLES.copy()
+    if extra_forbidden:
+        forbidden_variables.update(extra_forbidden)
     if not animals['animal_id'].is_unique:
         raise ValueError("animal_id is not unique in animals.")
     

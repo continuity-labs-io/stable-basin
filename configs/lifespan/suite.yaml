@@ -16,7 +16,7 @@ forbidden_variables:
 
 datasets:
   - {name: synthetic_positive, role: positive_control, landmarks: [60], min_valid_days: 14}
-  - {name: synthetic_after_landmark_only, role: negative_control, landmarks: [60], min_valid_days: 14}
+  - {name: synthetic_negative_control, role: negative_control, landmarks: [60], min_valid_days: 14}
   - name: killifish_bedbrook
     role: data
     landmarks: [70, 100]

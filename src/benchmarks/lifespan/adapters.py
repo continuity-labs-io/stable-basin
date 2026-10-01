@@ -67,7 +67,7 @@ def killifish_bedbrook(cfg):
     return animals, series, variables
 
 def _generate_synthetic(cfg, mode="positive"):
-    np.random.seed(42)
+    rng = np.random.default_rng(cfg.get('seed', 42))
     n_animals = 80
     bins_per_day = 144
     n_vars = 4
@@ -79,27 +79,13 @@ def _generate_synthetic(cfg, mode="positive"):
         animal_id = f"anim_{i}"
         
         if mode == "positive":
-            tau_i = np.random.uniform(1, 10)
-            T = 60 - 5 * tau_i + np.random.normal(0, 5)
+            tau_i = rng.uniform(1, 10)
+            T = 60 - 5 * tau_i + rng.normal(0, 5)
             T = max(5, T)
             lifespan_days = int(60 + T)
             tau_array = np.full(lifespan_days * bins_per_day, tau_i * bins_per_day)
             
-        elif mode == "after_landmark_only":
-            tau_baseline = np.random.uniform(1, 10)
-            tau_i = tau_baseline
-            T = 60 - 5 * tau_i + np.random.normal(0, 5)
-            T = max(25, T)
-            lifespan_days = int(60 + T)
-            
-            tau_array = np.full(lifespan_days * bins_per_day, 5.0 * bins_per_day)
-            start_change_day = lifespan_days - 20
-            if start_change_day > 0:
-                tau_array[start_change_day * bins_per_day:] = tau_i * bins_per_day
-            else:
-                tau_array[:] = tau_i * bins_per_day
-                
-        died = 1 if np.random.rand() > 0.3 else 0
+        died = 1 if rng.random() > 0.3 else 0
         group = "synth"
         
         animals_list.append({
@@ -119,7 +105,7 @@ def _generate_synthetic(cfg, mode="positive"):
         })
         
         for v in range(n_vars):
-            x = ou_process(len(tau_array), 1.0, tau_array, sigma=1.0)
+            x = ou_process(len(tau_array), 1.0, tau_array, sigma=1.0, rng=rng)
             # Add shared 24h profile
             x += profile + v * 10
             df_series[f'v{v}'] = x
@@ -135,11 +121,63 @@ def _generate_synthetic(cfg, mode="positive"):
 def synthetic_positive(cfg):
     return _generate_synthetic(cfg, mode="positive")
 
-def synthetic_after_landmark_only(cfg):
-    return _generate_synthetic(cfg, mode="after_landmark_only")
+def synthetic_negative_control(cfg):
+    """Data before the landmark carry no information about lifespan. A score above chance
+    means post-landmark data reached the features."""
+    rng = np.random.default_rng(cfg.get('seed', 42))
+    L = cfg.get('landmark', 60)
+    n = cfg.get('n_animals', 100)
+    lifespan = rng.uniform(L + 20, L + 80, n).round()
+    died = rng.random(n) < 0.7
+    group = 'synth'
+
+    animals_list = []
+    series_list = []
+    
+    lifespan_z = (lifespan - lifespan.mean()) / lifespan.std()
+    
+    for i in range(n):
+        animal_id = f"anim_{i}"
+        animals_list.append({
+            'animal_id': animal_id,
+            'lifespan_days': float(lifespan[i]),
+            'died': int(died[i]),
+            'group': group
+        })
+        
+        T_days = int(lifespan[i])
+        n_bins = T_days * 144
+        
+        time_of_day = np.arange(n_bins) % 144
+        profile = np.sin(2 * np.pi * time_of_day / 144)
+        
+        df_series = pd.DataFrame({
+            'animal_id': animal_id,
+            'age_days': np.arange(n_bins) // 144,
+            'bin': time_of_day
+        })
+        
+        z_i = lifespan_z[i]
+        
+        for v in range(4):
+            x = ou_process(n_bins, 1.0, 2 * 144, 1.0, rng=rng)
+            x += profile + v * 10
+            
+            mask = df_series['age_days'] >= L
+            x[mask] += 3.0 * np.sqrt(0.5 * 2 * 144) * z_i
+            
+            df_series[f'v{v}'] = x
+            
+        series_list.append(df_series)
+        
+    animals = pd.DataFrame(animals_list)
+    series = pd.concat(series_list, ignore_index=True)
+    variables = [f'v{v}' for v in range(4)]
+    
+    return animals, series, variables
 
 ADAPTERS = {
     'killifish_bedbrook': killifish_bedbrook,
     'synthetic_positive': synthetic_positive,
-    'synthetic_after_landmark_only': synthetic_after_landmark_only
+    'synthetic_negative_control': synthetic_negative_control
 }
