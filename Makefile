@@ -70,6 +70,17 @@ quickstart:
 
 ssm-experiments: baseline extrapolation density-sweep loss-ablation ksm-threshold
 
+# ==========================================
+# Demos and Tutorials
+# ==========================================
+
+.PHONY: demo-observer
+demo-observer:
+	python -m examples.01_simulate_observer_zero --save output/observer_demo.mp4
+
+.PHONY: notebooks
+notebooks:
+	jupyter notebook notebooks/
 
 # ==========================================
 # Scientific Experiments (Aging Resilience Suite)
@@ -150,15 +161,3 @@ aging-resilience-experiments: aging-resilience-baseline aging-resilience-ssm agi
 
 .PHONY: reproduce-paper
 reproduce-paper: aging-resilience-experiments paper
-
-# ==========================================
-# Demos and Tutorials
-# ==========================================
-
-.PHONY: demo-observer
-demo-observer:
-	python -m examples.01_simulate_observer_zero --save output/observer_demo.mp4
-
-.PHONY: notebooks
-notebooks:
-	jupyter notebook notebooks/
