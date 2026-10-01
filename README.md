@@ -1,170 +1,258 @@
-# Stable Basin 🥣
+# Stable Basin
 
-> **Benchmarking continuous-time AI on its ability to maintain biological
-> homeostasis against entropic decay.**
-
-The objective is to maintain the biological latent state inside the youthful
-homeostatic attractor basin, evaluated by Time-in-Basin (TiB) against entropic
-decay and simulated hardware failures.
-
-Stable Basin Benchmark is a research repository for benchmarking continuous-time
-multiscale biological datasets using State Space Models (SSMs). The project
-focuses on fusing high-frequency electrophysiological data with lower-frequency
-optical imaging, orthogonalizing hardware artifacts, and performing real-time
-biological anomaly detection using self-supervised predictive coding.
+**Open benchmarks for one question: does function measured repeatedly over time
+predict how long an animal will live, better than a single snapshot of the same
+animal?**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Traditional AI leaderboards rank models on _Mean Squared Error_ or _Next-Token
-Prediction_. **Stable Basin** ranks models on **Survival**.
-
-Stable Basin is an open-source evaluation suite designed to stress-test
-infinite-horizon State Space Models (SSMs) and continuous sequence
-architectures. It measures a model's ability to lock onto and maintain a
-"youthful" biological attractor basin against entropic decay, systemic shocks,
-and catastrophic hardware failures.
-
-## 🎯 The Mission: Defeating Entropy
-
-Biological youth isn't about predicting the future; it's about holding the line.
-A living organism exists in a highly specific, high-energy _Stable Basin_ of
-homeostasis. Mechanical noise, DNA methylation drift, and environmental shocks
-are constantly trying to knock it out of that basin.
-
-We evaluate continuous-time machine learning architectures (like Mamba-2) on
-their ability to act as the ultimate biological flight computer: processing
-multi-modal, high-frequency telemetry (wearables, electrophysiology,
-epigenetics) to detect critical instability _before_ a physiological crash
-occurs.
-
-### Why "Stable Basin"?
-
-It's an impossible balancing act. The datasets in this repository are designed
-to be explicitly hostile. Sensors will randomly drop offline, hardware will
-vibrate, and the tissue will undergo variance explosions. If the AI relies on
-naive temporal memorization instead of deep spatial covariance, the latent
-geometry shatters, and the model "falls off the wall."
+Status as of September 30, 2026: early research code. The lead benchmark
+(killifish lifespan) is under construction and has no result yet. See
+[What has been tested](#what-has-been-tested) for what holds and what does not.
 
 ---
 
-## 🏆 The Leaderboard Gauntlet (The "Routes")
+## The question
 
-Stable Basin is divided into four progressively brutal trial routes. Models are
-ranked by **Time-in-Basin (TiB)**. How many continuous frames can your physics
-engine hold the grip before the biological latent state slips over the edge?
+Aging clocks and most omics biomarkers measure an organism's state at one moment.
+Testing an aging intervention against survival means waiting for animals to die,
+which takes years in mice.
 
-### Route 1: The Quake (Hardware Veto)
+Stable Basin tests a different kind of readout: how an organism behaves and
+recovers over time, recorded without harming it. If such recordings predict
+remaining lifespan in animals no model has seen, they become a candidate early
+readout (a surrogate endpoint) for intervention studies.
 
-Can the model hold the biological signal while ignoring a massive mechanical
-earthquake?
+**Working hypothesis.** An organism keeps its essential variables within livable
+ranges against constant disturbance. Aging is the gradual loss of that capacity:
+corrections get slower, targets drift, and the livable range narrows. If that is
+right, loss of capacity should show up in time-series features such as recovery
+time, variance and autocorrelation, before it shows up as death.
 
-- **The Test:** Multi-modal data corrupted by a massive 2Hz microfluidic pump
-  artifact.
-- **The Failure State:** Hallucinating a biological crash due to hardware
-  wobble.
+The benchmark tests this hypothesis rather than assuming it. Two cautions:
 
-### Route 2: The Blind Reach (Fault Tolerance)
-
-Can the model impute missing biology using pure spatial covariance?
-
-- **The Test:** Mid-sequence, 15% to 50% of the hardware sensors permanently
-  output `NaN`.
-- **The Failure State:** Catastrophic network collapse when the primary input
-  dimensions vanish.
-
-### Route 3: The Wobble (Critical Slowing Down)
-
-Can the model detect the phase transition _before_ it happens?
-
-- **The Test:** Tracking the physical 'wobble' (variance) and sluggishness
-  (lag-1 autocorrelation) of a system approaching a saddle-node bifurcation.
-- **The Leaderboard Stat:** **Detection Latency.** How many milliseconds in
-  advance does the AI radar trigger the alarm?
-
-### Route 4: The Scar (Rejuvenation Hysteresis)
-
-If the system falls out of the basin, can it compute the optimal path back in?
-
-- **The Test:** A biological tissue is shocked, then rescued with an
-  intervention.
-- **The Leaderboard Stat:** **Hysteresis Area.** The most efficient model leaves
-  the smallest topological "scar" between the aging trajectory and the
-  rejuvenation trajectory.
+- Passive recordings may show loss of capacity late. Measuring recovery after a
+  disturbance may be needed, not just watching fluctuations.
+- The direction of change can differ by system. Some human brain-imaging studies
+  find that aging shortens autocorrelation rather than lengthening it. The
+  benchmark reports the direction it finds.
 
 ---
 
-## ⚙️ The Reference Architecture: `MaskAwareSSM`
+## Roadmap: model organisms toward mouse
 
-To provide a baseline for the benchmark, this repository includes the
-**MaskAwareSSM**, a continuous-time state-space reference architecture powered
-by **Mamba-2**.
+Each stage asks the same question in a longer-lived organism. Each stage has a
+pass/fail gate written before the run.
 
-Unlike standard Transformers that suffer from $\mathcal{O}(N^2)$ context limits
-and rely on discrete tokens, the `MaskAwareSSM` utilizes Mask-Aware Subspace
-Routing to dynamically modulate the flow of time and maintain an
-$\mathcal{O}(1)$ VRAM footprint on edge hardware.
+| Stage | Organism | Data | Question | Status |
+|---|---|---|---|---|
+| 1. Methods check | *C. elegans* | EigenWorms posture recordings (real gait) with a known slowdown injected | Do the features detect a known slowdown, and ignore added measurement noise? | Planned |
+| 1b. Real aging | *C. elegans* | Open Worm Movement Database, ERIBA aging series (public; by day of adulthood, no lifespan labels) | Do the features change with age in real aging worms? | Planned |
+| 2. **Lead benchmark** | Killifish | [Bedbrook et al., *Science* 2026](https://zenodo.org/records/17238217): 20 fps pose tracking from puberty to death, individual death dates, CC BY 4.0 | Do behavior dynamics before a landmark age predict remaining life in held-out fish, beyond static summaries? | **In progress** |
+| 3. Mouse, observational | Mouse | JAX video frailty data; Calico home-cage physiology with survival (by request) | Does the signal hold in a mammal? | Not started |
+| 4. Mouse, intervention | Mouse | LEV Foundation RMR2 smart-cage monitoring (partnership needed) | Does the readout track a rejuvenation intervention months before survival data? | Not started |
 
-> [!NOTE] **Why no ODE-RNNs?** While continuous-time Ordinary Differential
-> Equation (ODE) RNNs were initially evaluated for this engine, they were
-> excluded from the final benchmark suite. Adaptive ODE solvers (like `dopri5`)
-> exhibit catastrophic computational stiffness when modeling high-frequency
-> biological phase transitions, resulting in inference latencies $>10^4\times$
-> slower than our Mamba (ZOH discretized) architectures.
+The end goal is stage 4: a readout that tells a mouse intervention study, within
+months, whether a treatment is changing the course of decline.
 
-### Quickstart: Push-Button Cloud Execution
+---
 
-Stable Basin uses declarative YAML configurations for distributed parallel
-execution.
+## Lead benchmark: killifish lifespan
 
-**1. Run the CI/CD Smoke Test** Ensure your hardware and registry are perfectly
-configured: `make preflight`
+Code: [`src/benchmarks/lifespan/killifish_benchmark.py`](src/benchmarks/lifespan/killifish_benchmark.py)
 
-**2. Execute the Clinical Diagnostic Pipeline** This command spins up parallel
-workers to evaluate the architectures simultaneously against the pharmacological
-crash dataset: `make ksm-threshold` _All inference latencies, KSM traces,
-and MambaLRP Causal Diagnostic JSONs will automatically sync to your W&B cloud
-dashboard._
+**Task.** Pick a landmark age L (70 or 100 days). Using only recordings made
+before L, predict each fish's remaining life after L. Fish still alive at the end
+of the study are kept as censored, never dropped.
 
-## 🧬 Thermodynamic Metrics
+**Features**
 
-The core of the Stable Basin is our deterministic physics evaluation suite
-(src/metrics/), which extracts true macroscopic variables from the model's
-latent embedding space:
+| Set | What it contains |
+|---|---|
+| F1, static | Per-session mean of each pose feature; per fish, the mean and SD across sessions |
+| F2, dynamic | Per session, after linear detrending: lag-1 autocorrelation, variance, integrated autocorrelation time. Per fish: the mean across sessions and the slope against age |
+| F1 + F2 | Both |
 
-- **Koopman Stability Metric (KSM)**: Dynamic Mode Decomposition (DMD) to
-  calculate the stable eigenvalue bounds of the biological attractor.
+**Evaluation.** Penalized Cox model with standardization and PCA fitted inside
+each training fold. 5-fold cross-validation split by fish, repeated 20 times.
+Score: concordance index (C-index). Null: the same pipeline on shuffled outcomes.
 
-- **Critical Slowing Down (CSD)**: Variance and AR1 tracking to detect phase
-  transitions before they occur.
+**Gates**
 
-- **Fedichev Macrostates**: Tracking the continuous accumulation of
-  configurational entropy ($Z$) over millions of frames.
+| Gate | Pass condition |
+|---|---|
+| G0, data | At least 40 fish alive at L, each with at least 3 sessions before L |
+| G1, signal | F1 + F2 C-index, lower 2.5% bound above 0.5 |
+| G2, dynamics add information | C(F1 + F2) − C(F1) has a mean of at least 0.03 and a lower 2.5% bound above 0 |
+| G3, null | Shuffled-outcome C-index between 0.45 and 0.55 |
 
-- **MambaLRP-Epsilon**: Layer-wise Relevance Propagation
-  designed explicitly for continuous-time SSMs to trace crashes back to their
-  root biological circuit.
+**Current state.** Step 0 (data audit and Gate 0) is written. It fails on the
+subset of files currently on disk, so the full Zenodo record is needed. Steps 1–3
+(features, evaluation, outputs) are being written.
 
-## 🔍 Open Research Problems
+**Outputs** go to `output/benchmarks/lifespan/` and one row per feature set is
+appended to `results/lifespan_benchmark.csv`.
 
-The core math of Stable Basin is written, but we are looking for engineers to
-take ownership of specific infrastructure nodes (e.g. CUDA/Triton Mamba-LRP
-kernels, Sim2Real dataloaders, Gymnasium environments).
+---
 
-If you want to solve aging and build out these missing nodes, please check out
-the GitHub Issues tab. Pick a
-constraint, and open a PR!
+## Tracks
 
-📄 Citation
+From [`tracks.md`](tracks.md). Every track serves the lifespan benchmark or is
+parked.
 
-If you use Stable Basin to benchmark your infinite-horizon sequence models or
-biological anomaly detection, please cite:
+| Track | Question it answers | Status |
+|---|---|---|
+| 1. Lifespan benchmark | Do time-series features predict remaining lifespan beyond static summaries, in held-out animals? | Active, lead |
+| 2. Model-free resilience metrics | Recovery time, lag-1 autocorrelation, variance, entropy production from raw data | Active |
+| 3. Echo model (energy-based SDE) | Does a fitted dynamical model give better predictors or interpretable resilience measures? | Active, gated on track 1 |
+| 4. Validation code | Null controls, positive controls, cohort splits, leakage checks | Active, always |
+| 5. MEA tissue QC | Spike sorting, drift, longitudinal comparability on MaxWell HD-MEA | Active, separate business decision |
+| 6. Sequence models | SSMs, Mamba, transformers, sensor fusion | Parked |
+| 7. Thermodynamic hardware | Torx / Extropic compatibility | Parked |
+| 8. Control and interventions | Controllers, a Gymnasium environment | Parked; needs a validated readout first |
 
+---
+
+## What has been tested
+
+| Test | Result | What it means |
+|---|---|---|
+| Synthetic check of the slowdown features (`synthetic_aging.py`) | Slowing the restoring dynamics raised variance and lag-1 autocorrelation together. Adding measurement noise raised variance but lowered autocorrelation. | The features can tell genuine slowing from added noise. |
+| Raw eigenworm autocorrelation | Lag-1 autocorrelation stays near 0.99 whatever the injected slowdown. | Raw channels measure the waveform, not resilience. Measure on amplitude residuals instead. |
+| Echo structure checks (`12_structure_checks.py`, 20 held-out worms) | Boundary test failed (r ≈ 0.23; gate < 0.01). Timescale-separation test failed (ratio 1.17, 95% CI 0.99–1.35; gate: lower bound > 2). Third test void: the gate was written incorrectly. | The fitted Echo model does not show the boundary (Markov blanket) or two-level hierarchy it was designed with. It should not be described as having either until a test passes. |
+
+**Withdrawn draft.** The draft paper in `paper/sharpening_the_tack/` (built by
+`make paper` and `make reproduce-paper`) is withdrawn pending a rewrite. Its
+"aged" cohort was synthetic noise added to young worm data, the model comparison
+was decided by construction, the rescue measure was circular, and each cohort was
+one worm. Its effect sizes do not measure aging and should not be cited.
+
+---
+
+## Quickstart
+
+### Setup
+
+```bash
+git clone https://github.com/continuity-labs-io/stable-basin.git
+cd stable-basin
+# Install dependencies: TODO confirm the install command for this repo.
+make preflight        # lint and run the test suite
 ```
+
+### Data
+
+| Dataset | Where to put it | Source |
+|---|---|---|
+| Killifish lifelong behavior | `data/killifish/` | [Zenodo 10.5281/zenodo.17238217](https://zenodo.org/records/17238217) (about 14.5 GB) |
+| EigenWorms | `data/worm/EigenWorms_TRAIN.ts`, `data/worm/EigenWorms_TEST.ts` | UEA/UCR time series classification archive |
+| Calico CATNAP features | `data/catnap/trace_features.h5` | By request |
+
+The worm pipeline raises an error when real data is missing. Synthetic data is
+used only when you ask for it with an explicit flag (for example `--mock` or
+`--use_synthetic`) or `make run-synthetic-aging`.
+
+### Run
+
+```bash
+# Lead benchmark: killifish lifespan (currently Step 0, the data audit)
+python -m src.benchmarks.lifespan.killifish_benchmark
+
+# Worm pipeline, null and positive control for the Echo curvature measure
+python -m src.benchmarks.aging_resilience.11_null_control
+
+# Echo structure checks (boundary, timescale separation, macro closure)
+python -m src.benchmarks.aging_resilience.12_structure_checks
+
+# Full numbered worm pipeline (scripts 01-11)
+make run-worm-gait
+make run-synthetic-aging    # synthetic data only, no W&B
+```
+
+Individual pipeline steps: `make aging-resilience-<step> DATASET=<config>`, where
+`<config>` names a file in `configs/`. See the Makefile for the step list.
+
+---
+
+## Repository map
+
+| Path | What it holds | Track |
+|---|---|---|
+| `src/benchmarks/lifespan/` | Lifespan benchmark | 1 |
+| `src/benchmarks/aging_resilience/` | Numbered worm-gait pipeline: baselines (01–03), Echo tuning and training (04–05), λ fitting and comparison (06–09), animation (10), null control (11), structure checks (12). Dataset adapters in `tasks/`. Its "old" cohort is real gait with a known slowdown injected, not aged worms. | 2, 3, 4 |
+| `src/data/behavior/` | Worm, killifish and Calico CATNAP loaders; `synthetic_aging.py`, degradations with known ground truth for testing detectors | 1, 2, 4 |
+| `src/data/ephys/` | MaxWell, HD-MEA, spike and LFP loaders | 5 |
+| `src/data/synthetic/` | Simulated multimodal data for plumbing tests. Not biological measurements. | 6 |
+| `src/echo/` | Echo model: architecture, energy functions, training harness, Hessian curvature (`metrics/energy_landscape.py`) | 3 |
+| `src/metrics/` | Time-series stability metrics (variance, autocorrelation, Koopman/DMD, Lyapunov estimate), spectral metrics, entropy production estimators, permutation and bootstrap statistics | 2, 4 |
+| `src/models/` | Sequence models: SSMs, transformer, GRU-D, ODE-RNN | 6 |
+| `src/harness/` | Training and sweep runners for the sequence-model suite | 6 |
+| `src/core/` | Device setup; `MetricThresholdMonitor`, which raises an alarm when metrics cross thresholds | 6, 8 |
+| `tracks.md`, `ISSUES.md` | Track definitions; engineering tickets and parked ideas | — |
+| `AGENTS.md` | Naming conventions and working rules for contributors and coding agents | — |
+
+### Parked: sequence-model suite (track 6)
+
+The original sensor-fusion experiments remain runnable but are not part of the
+lifespan work: `make quickstart`, `make ssm-experiments`, `make ksm-threshold`.
+They run on simulated data.
+
+---
+
+## Rules for results
+
+- Every experiment is a pass/fail gate, written down before the run.
+- Train/test splits are by animal, never by time window within an animal.
+- A null control (shuffled outcomes or no effect) must score near chance, and a
+  positive control with known ground truth must pass, before any claim is made.
+- Trained models: at least 10 seeds, and convergence verified for every model
+  being compared.
+- Report effect sizes with intervals, not p-values alone.
+- Names describe what the code does today. Simulations are not called clinical,
+  data is labeled by origin, and physics terms are used only for quantities that
+  are actually computed. See `AGENTS.md`.
+
+---
+
+## Contributing
+
+Open work, in priority order:
+
+1. **Finish the killifish benchmark** (features, evaluation, figures, tests).
+2. **Worm positive control:** detect a known slowdown injected into real gait, with
+   the false-positive rate on clean data reported.
+3. **Recovery after disturbance:** the killifish are fed seven times a day.
+   Measure how behavior returns to baseline after each feeding.
+4. **Data with hidden outcomes:** lifespan cohorts not yet public (killifish, worm
+   WorMotel or Lifespan Machine, mouse). A fair test needs outcomes no modeler has
+   seen.
+
+Open an issue before starting a large change.
+
+### Toward an open challenge
+
+The killifish benchmark is the seed of a proposed open challenge: predict
+remaining lifespan from function measured over time, scored on hidden test sets,
+with tracks for killifish, mouse and a live intervention cohort. Existing aging
+biomarker challenges score single samples. If you hold a lifespan cohort, run a
+challenge series or fund open datasets, please get in touch.
+
+---
+
+## Citation
+
+```bibtex
 @misc{stable_basin_2026,
-  title={Stable Basin: Benchmarking Infinite-Horizon Sequence Models on Thermodynamic Resilience and Rejuvenation Hysteresis},
-  author={Continuity Labs},
-  year={2026},
-  publisher={GitHub},
-  howpublished={\url{https://github.com/continuity-labs-io/stable-basin}}
+  title        = {Stable Basin: Open Benchmarks for Predicting Lifespan from Function Measured over Time},
+  author       = {McCall, Ryan J. and {Continuity Labs}},
+  year         = {2026},
+  publisher    = {GitHub},
+  howpublished = {\url{https://github.com/continuity-labs-io/stable-basin}}
 }
 ```
+
+If you use the killifish data, also cite Bedbrook et al., *Science* (2026).
+
+## License
+
+MIT.
