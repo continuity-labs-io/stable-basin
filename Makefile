@@ -82,8 +82,21 @@ demo-observer:
 notebooks:
 	jupyter notebook notebooks/
 
+
 # ==========================================
-# Scientific Experiments (Aging Resilience Suite)
+# Lifespan Suite (Track 4)
+# ==========================================
+
+.PHONY: lifespan
+lifespan:
+	python -m src.benchmarks.lifespan.run --suite configs/lifespan/suite.yaml $(if $(ONLY),--only $(ONLY))
+
+.PHONY: lifespan-test
+lifespan-test:
+	pytest tests/lifespan -v
+
+# ==========================================
+# Parked: track 3 (Echo)
 # ==========================================
 # The Aging Resilience suite abstracts the workflow so it can run across 
 # multiple diverse datasets. Use the convenience targets below to run the 
@@ -162,10 +175,3 @@ echo-resilience-experiments: echo-resilience-baseline echo-resilience-ssm echo-r
 .PHONY: reproduce-paper
 reproduce-paper: echo-resilience-experiments paper
 
-# ==========================================
-# Scientific Experiments (Model Free Resilience Suite)
-# ==========================================
-
-.PHONY: model-free-resilience-killifish
-model-free-resilience-killifish:
-	python -m src.benchmarks.model_free_resilience.killifish_benchmark

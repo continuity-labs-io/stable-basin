@@ -59,7 +59,7 @@ months, whether a treatment is changing the course of decline.
 
 ## Lead benchmark: killifish lifespan
 
-Code: [`src/benchmarks/lifespan/killifish_benchmark.py`](src/benchmarks/lifespan/killifish_benchmark.py)
+Code: [`src/benchmarks/lifespan/`](src/benchmarks/lifespan/)
 
 **Task.** Pick a landmark age L (70 or 100 days). Using only recordings made
 before L, predict each fish's remaining life after L. Fish still alive at the end
@@ -86,12 +86,10 @@ Score: concordance index (C-index). Null: the same pipeline on shuffled outcomes
 | G2, dynamics add information | C(F1 + F2) − C(F1) has a mean of at least 0.03 and a lower 2.5% bound above 0 |
 | G3, null | Shuffled-outcome C-index between 0.45 and 0.55 |
 
-**Current state.** Step 0 (data audit and Gate 0) is written. It fails on the
-subset of files currently on disk, so the full Zenodo record is needed. Steps 1–3
-(features, evaluation, outputs) are being written.
+**Current state.** Fully implemented. (Gate 0 passes when data is present).
 
 **Outputs** go to `output/benchmarks/lifespan/` and one row per feature set is
-appended to `results/lifespan_benchmark.csv`.
+appended to `output/lifespan/lifespan_ledger.csv`.
 
 ---
 
@@ -104,7 +102,7 @@ parked.
 |---|---|---|
 | 1. Lifespan benchmark | Do time-series features predict remaining lifespan beyond static summaries, in held-out animals? | Active, lead |
 | 2. Model-free resilience metrics | Recovery time, lag-1 autocorrelation, variance, entropy production from raw data | Active |
-| 3. Echo model (energy-based SDE) | Does a fitted dynamical model give better predictors or interpretable resilience measures? | Active, gated on track 1 |
+| 3. Echo model (energy-based SDE) | Does a fitted dynamical model give better predictors or interpretable resilience measures? | Parked |
 | 4. Validation code | Null controls, positive controls, cohort splits, leakage checks | Active, always |
 | 5. MEA tissue QC | Spike sorting, drift, longitudinal comparability on MaxWell HD-MEA | Active, separate business decision |
 | 6. Sequence models | SSMs, Mamba, transformers, sensor fusion | Parked |
@@ -155,8 +153,8 @@ used only when you ask for it with an explicit flag (for example `--mock` or
 ### Run
 
 ```bash
-# Lead benchmark: killifish lifespan (currently Step 0, the data audit)
-python -m src.benchmarks.lifespan.killifish_benchmark
+# Lead benchmark: killifish lifespan
+make lifespan
 
 # Worm pipeline, null and positive control for the Echo curvature measure
 python -m src.benchmarks.aging_resilience.11_null_control

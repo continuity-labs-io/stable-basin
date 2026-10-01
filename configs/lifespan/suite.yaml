@@ -1,0 +1,26 @@
+cv: {folds: 5, repeats: 20, seed: 42}
+model: {penalizer: 0.1, pca_components: 10}
+forbidden_variables:
+  - lifespan_days
+  - died
+  - status
+  - prognosis
+  - prognosis_fraction
+  - group
+  - cohort
+  - sex
+  - feeding
+  - genotype
+  - table
+  - hatch_date
+
+datasets:
+  - {name: synthetic_positive, role: positive_control, landmarks: [60], min_valid_days: 14}
+  - {name: synthetic_after_landmark_only, role: negative_control, landmarks: [60], min_valid_days: 14}
+  - name: killifish_bedbrook
+    role: data
+    landmarks: [70, 100]
+    min_valid_days: 14
+    path: data/killifish/data/b0_20250415/df_reformat_b0_10_20250416.csv
+    filters: {genotype: wt, sex: male, feeding: al}
+    negative_is_missing: false
