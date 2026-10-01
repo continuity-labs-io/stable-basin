@@ -100,7 +100,8 @@ def main():
     print(f"Cohen's d: {cohens_d:.4f}")
     
     # 6. Serialization & Visualization
-    out_dir = "output/benchmarks/aging_resilience"
+    dataset_name = config.get("dataset", {}).get("name", "worm_gait")
+    out_dir = f"output/benchmarks/aging_resilience/{dataset_name}"
     os.makedirs(out_dir, exist_ok=True)
     
     metrics = {

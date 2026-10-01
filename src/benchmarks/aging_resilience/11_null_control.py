@@ -166,7 +166,7 @@ def main():
     ap.add_argument("--config", default="configs/aging_resilience.yaml")
     ap.add_argument("--train-ts", default="data/worm/EigenWorms_TRAIN.ts")
     ap.add_argument("--test-ts", default="data/worm/EigenWorms_TEST.ts")
-    ap.add_argument("--weights", default="output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx")
+    ap.add_argument("--weights", default="")
     ap.add_argument("--retrain", action="store_true", help="train a fresh engine with a held-out val split")
     ap.add_argument("--out-dir", default="output/benchmarks/aging_resilience")
     ap.add_argument("--severities", type=float, nargs="+", default=[1.0, 1.25, 1.5, 2.0, 3.0])
@@ -190,9 +190,9 @@ def main():
     if args.mock:
         config.setdefault("experiment", {})["mock"] = True
         
-    if args.weights == "output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx":
+    if not args.weights:
         dataset_name = config.get("dataset", {}).get("name", "worm_gait")
-        args.weights = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}_trained_engine.eqx")
+        args.weights = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}/{dataset_name}_trained_engine.eqx")
         
     if 1.0 not in args.severities:
         args.severities = [1.0] + list(args.severities)

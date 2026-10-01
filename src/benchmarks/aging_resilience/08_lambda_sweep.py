@@ -32,7 +32,7 @@ def main():
         config = yaml.safe_load(f)
 
     # Dynamically inject lambda_A from inferred baseline
-    inferred_lambda_path = "output/benchmarks/aging_resilience/06_fitted_lambda.json"
+    inferred_lambda_path = f"{out_dir}/06_fitted_lambda.json"
     if os.path.exists(inferred_lambda_path):
         with open(inferred_lambda_path, "r") as f:
             lambda_data = json.load(f)
@@ -114,7 +114,7 @@ def main():
         R_per_lambda.append(R_lam)
         lambdas_for_plot.append(lam)
 
-    output_metrics = "output/benchmarks/aging_resilience/08_lambda_sweep_metrics.json"
+    output_metrics = f"{out_dir}/08_lambda_sweep_metrics.json"
     os.makedirs(os.path.dirname(output_metrics), exist_ok=True)
     with open(output_metrics, "w") as f:
         json.dump(results, f, indent=2)
@@ -125,7 +125,7 @@ def main():
 
     logger.info(f"Metrics saved to {output_metrics}")
 
-    output_plot = "output/benchmarks/aging_resilience/08_lambda_dose_response.png"
+    output_plot = f"{out_dir}/08_lambda_dose_response.png"
     os.makedirs(os.path.dirname(output_plot), exist_ok=True)
     plt.figure(figsize=(10, 6))
     

@@ -179,7 +179,7 @@ def main():
         config = yaml.safe_load(f)
 
     # Dynamically inject lambda_A from inferred baseline
-    inferred_lambda_path = "output/benchmarks/aging_resilience/06_fitted_lambda.json"
+    inferred_lambda_path = f"{out_dir}/06_fitted_lambda.json"
     if os.path.exists(inferred_lambda_path):
         with open(inferred_lambda_path, "r") as f:
             lambda_data = json.load(f)

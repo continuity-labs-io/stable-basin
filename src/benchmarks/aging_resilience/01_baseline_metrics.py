@@ -83,9 +83,10 @@ def run_baseline_metrics():
         logger.info(f"{label_b} {key}: {mean_o:.4f} ± {std_o:.4f}")
 
     # Save results
-    out_dir = "output/benchmarks/aging_resilience"
+    dataset_name = config.get("dataset", {}).get("name", "worm_gait")
+    out_dir = f"output/benchmarks/aging_resilience/{dataset_name}"
     os.makedirs(out_dir, exist_ok=True)
-    out_file = os.path.join(out_dir, "01_worm_gait_baseline_metrics.json")
+    out_file = os.path.join(out_dir, f"01_{dataset_name}_baseline_metrics.json")
     
     with open(out_file, "w") as f:
         json.dump(results, f, indent=2)

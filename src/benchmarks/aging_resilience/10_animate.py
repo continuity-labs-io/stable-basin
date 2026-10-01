@@ -30,7 +30,8 @@ def main():
     young_data = ds_young[0].numpy() if hasattr(ds_young[0], 'numpy') else ds_young[0]
     old_data = ds_old[0].numpy() if hasattr(ds_old[0], 'numpy') else ds_old[0]
     
-    output_dir = "output/benchmarks/aging_resilience"
+    dataset_name = config.get("dataset", {}).get("name", "worm_gait")
+    output_dir = f"output/benchmarks/aging_resilience/{dataset_name}"
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, "10_worm_gait_animation.gif")
     

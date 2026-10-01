@@ -102,7 +102,8 @@ def build_cohorts(samples, dataset_name, seed, young_fn, old_fn):
     if not eval_young_samples or not eval_old_samples:
         raise ValueError(f"Empty cohorts! Young: {len(eval_young_samples)}, Old: {len(eval_old_samples)}")
         
-    output_dir = "output/benchmarks/aging_resilience"
+    dataset_name = config.get("dataset", {}).get("name", "worm_gait")
+    output_dir = f"output/benchmarks/aging_resilience/{dataset_name}"
     os.makedirs(output_dir, exist_ok=True)
     cohorts_dict = {
         "train": {"individuals": len(pure_train_inds), "chunks": len(train_samples), "ids": pure_train_inds},

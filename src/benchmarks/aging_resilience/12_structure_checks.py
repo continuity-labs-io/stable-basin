@@ -49,7 +49,7 @@ def main():
     ap.add_argument("--config", default="configs/aging_resilience.yaml")
     ap.add_argument("--train-ts", default="data/worm/EigenWorms_TRAIN.ts")
     ap.add_argument("--test-ts", default="data/worm/EigenWorms_TEST.ts")
-    ap.add_argument("--weights", default="output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx")
+    ap.add_argument("--weights", default="")
     ap.add_argument("--retrain", action="store_true")
     ap.add_argument("--out-dir", default="output/benchmarks/aging_resilience")
     ap.add_argument("--windows-per-worm", type=int, default=4)
@@ -68,8 +68,8 @@ def main():
         config["optimization"]["max_epochs"] = 1
         
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
-    if args.weights == "output/benchmarks/aging_resilience/05_worm_gait_decline_trained_engine.eqx":
-        args.weights = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}_trained_engine.eqx")
+    if not args.weights:
+        args.weights = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}/{dataset_name}_trained_engine.eqx")
         
     train_trajs, train_labels = load_ts(args.train_ts)
     test_trajs, test_labels = load_ts(args.test_ts)

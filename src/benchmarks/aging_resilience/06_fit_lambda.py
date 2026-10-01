@@ -156,7 +156,7 @@ def main():
     _, _, _, loader = task.get_dataloaders(config, d_state, batch_size=config.get("dataset", {}).get("batch_size", 2))
 
     dataset_name = config.get("dataset", {}).get("name", "worm_gait")
-    model_path = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}_trained_engine.eqx")
+    model_path = config.get("paths", {}).get("model_weights", f"output/benchmarks/aging_resilience/{dataset_name}/{dataset_name}_trained_engine.eqx")
     if not os.path.exists(model_path):
         logger.error(f"Pre-trained model not found at {model_path}. Please run benchmark 05 first.")
         return
@@ -194,7 +194,7 @@ def main():
     final_lambda = float(jnp.exp(lambda_model.log_lambda))
     logger.info(f"Optimization complete. Final inferred biological lambda: {final_lambda:.4f}")
 
-    out_path = "output/benchmarks/aging_resilience/06_fitted_lambda.json"
+    out_path = f"{out_dir}/06_fitted_lambda.json"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as f:
         json.dump({"fitted_lambda": final_lambda}, f, indent=4)
