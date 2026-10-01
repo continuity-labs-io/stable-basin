@@ -452,8 +452,7 @@ def main():
     with open(results_file, "w") as f:
         json.dump(results, f, indent=4)
         
-    csv_file = pathlib.Path("results/lifespan_benchmark.csv")
-    csv_file.parent.mkdir(parents=True, exist_ok=True)
+    csv_file = output_dir / "lifespan_benchmark.csv"
     date_str = datetime.datetime.now().strftime('%Y-%m-%d')
     base_row = {
         'date': date_str, 'dataset': 'killifish', 'source': source_type, 'landmark': selected_L,
