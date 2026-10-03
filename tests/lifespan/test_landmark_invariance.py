@@ -1,5 +1,8 @@
 import numpy as np
 from src.benchmarks.lifespan.adapters import ADAPTERS
+import pytest
+
+pytestmark = pytest.mark.integration
 from src.benchmarks.lifespan.landmark import cut_at_landmark
 from src.features.static import static
 from src.features.dynamics import dynamics

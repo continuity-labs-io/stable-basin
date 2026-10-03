@@ -2,6 +2,8 @@ import pandas as pd
 import pytest
 from src.benchmarks.lifespan.contract import validate
 
+pytestmark = pytest.mark.integration
+
 def test_contract_validates_ok():
     animals = pd.DataFrame({'animal_id': ['a1', 'a2'], 'lifespan_days': [10.0, 20.0]})
     series = pd.DataFrame({'animal_id': ['a1', 'a1', 'a2'], 'age_days': [1, 2, 1], 'v1': [1.0, 2.0, 3.0]})

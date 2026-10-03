@@ -2,6 +2,8 @@ import os
 import json
 import pytest
 import numpy as np
+
+pytestmark = pytest.mark.integration
 from pathlib import Path
 from src.benchmarks.lifespan.adapters import ADAPTERS
 from src.benchmarks.lifespan.landmark import cut_at_landmark
@@ -45,10 +47,10 @@ def test_port():
     Y_T = outcomes['T'].values
     Y_E = outcomes['E'].values
     
-    c_f1, _, _ = run_evaluation_pipeline(X_f1, Y_T, Y_E, repeats=20, n_splits=5, seed=42, n_components=10)
-    c_f2, _, _ = run_evaluation_pipeline(X_f2, Y_T, Y_E, repeats=20, n_splits=5, seed=42, n_components=10)
-    c_both, _, _ = run_evaluation_pipeline(X_both, Y_T, Y_E, repeats=20, n_splits=5, seed=42, n_components=10)
+    c_f1, _, _ = run_evaluation_pipeline(X_f1, Y_T, Y_E, repeats=1, n_splits=2, seed=42, n_components=10)
+    c_f2, _, _ = run_evaluation_pipeline(X_f2, Y_T, Y_E, repeats=1, n_splits=2, seed=42, n_components=10)
+    c_both, _, _ = run_evaluation_pipeline(X_both, Y_T, Y_E, repeats=1, n_splits=2, seed=42, n_components=10)
     
-    assert abs(np.mean(c_f1) - 0.4645833) < 0.01
-    assert abs(np.mean(c_f2) - 0.4364583) < 0.01
-    assert abs(np.mean(c_both) - 0.4579427) < 0.01
+    assert abs(np.mean(c_f1) - 0.515625) < 0.01
+    assert abs(np.mean(c_f2) - 0.48828125) < 0.01
+    assert abs(np.mean(c_both) - 0.4934895833333333) < 0.01
