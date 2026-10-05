@@ -1,3 +1,13 @@
+"""
+Lifespan Benchmark Runner
+
+This script executes the core lifespan benchmark suite. It processes a configured list
+of datasets (as defined in a YAML suite file), applies a specific landmarking strategy to 
+measure static and dynamic behavioral features, and evaluates how well those features 
+predict remaining lifespan (using the C-index). It rigorously validates the pipeline by 
+checking both positive and negative controls, generating performance metrics, null distributions, 
+and Kaplan-Meier survival plots for each dataset, and finally recording all results to a central ledger.
+"""
 import argparse
 import yaml
 import json

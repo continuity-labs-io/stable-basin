@@ -6,7 +6,7 @@ import subprocess
 pytestmark = pytest.mark.integration
 from src.benchmarks.lifespan.adapters import ADAPTERS
 from src.benchmarks.lifespan.landmark import cut_at_landmark
-from src.benchmarks.lifespan.run import score_landmark
+from src.benchmarks.lifespan.run_lifespan_suite import score_landmark
 from src.benchmarks.lifespan.controls import POSITIVE_MIN_C, NEGATIVE_BAND, LEAK_MIN_C
 
 def test_synthetic_reproducible():
