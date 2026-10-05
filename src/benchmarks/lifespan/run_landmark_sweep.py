@@ -14,6 +14,7 @@ from src.benchmarks.lifespan.adapters import ADAPTERS
 from src.benchmarks.lifespan.landmark import cut_at_landmark
 from src.features.static import static
 from src.features.dynamics import dynamics
+from src.benchmarks.lifespan.evaluate import run_evaluation_pipeline
 
 def fit_and_score(X_train, Y_T_train, Y_E_train, X_test, Y_T_test, Y_E_test, n_components=10, seed=42):
     scaler = StandardScaler()
@@ -51,8 +52,6 @@ def run_bootstrap(X, Y_T, Y_E, n_draws=400, seed=42, n_components=10, shuffle_y=
     rng = np.random.RandomState(seed)
     for i in range(n_draws):
         idx = rng.choice(n, size=n, replace=True)
-        # We need both out-of-bag (OOB) for testing and in-bag for training
-        # to properly evaluate C-index on unseen animals.
         in_bag = np.unique(idx)
         out_of_bag = np.setdiff1d(np.arange(n), in_bag)
         
@@ -73,7 +72,6 @@ def run_bootstrap(X, Y_T, Y_E, n_draws=400, seed=42, n_components=10, shuffle_y=
         Y_E_test = Y_E[out_of_bag]
         
         if shuffle_y:
-            # We shuffle test outcomes as well to fully destroy signal
             shuff_idx_test = rng.permutation(len(out_of_bag))
             Y_T_test = Y_T_test[shuff_idx_test]
             Y_E_test = Y_E_test[shuff_idx_test]
@@ -86,25 +84,31 @@ def run_bootstrap(X, Y_T, Y_E, n_draws=400, seed=42, n_components=10, shuffle_y=
 
 def evaluate_feature_set(X, Y_T, Y_E, n_components=10, seed=42):
     if len(X) == 0:
-        return np.nan, np.nan, np.nan, np.nan, np.nan
+        return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
         
-    c_boot = run_bootstrap(X, Y_T, Y_E, n_draws=400, seed=seed, n_components=n_components, shuffle_y=False)
-    c_null = run_bootstrap(X, Y_T, Y_E, n_draws=200, seed=seed, n_components=n_components, shuffle_y=True)
+    c_obs_arr, _, _ = run_evaluation_pipeline(X, Y_T, Y_E, repeats=20, n_splits=5, seed=seed, n_components=n_components, shuffle_y=False)
+    c_null_arr, _, _ = run_evaluation_pipeline(X, Y_T, Y_E, repeats=500, n_splits=5, seed=seed, n_components=n_components, shuffle_y=True)
     
+    if len(c_obs_arr) == 0 or len(c_null_arr) == 0:
+        return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
+        
+    c_obs = np.mean(c_obs_arr)
+    null_mean = np.mean(c_null_arr)
+    
+    if not (0.47 <= null_mean <= 0.53):
+        raise ValueError(f"Sanity check failed: Null mean {null_mean:.3f} is outside [0.47, 0.53]")
+        
+    p_value = np.mean(c_null_arr >= c_obs)
+    detect_limit = np.percentile(c_null_arr, 95)
+    
+    c_boot = run_bootstrap(X, Y_T, Y_E, n_draws=400, seed=seed, n_components=n_components, shuffle_y=False)
     if len(c_boot) > 0:
-        c_mean = np.mean(c_boot)
         c_lo = np.percentile(c_boot, 2.5)
         c_hi = np.percentile(c_boot, 97.5)
     else:
-        c_mean, c_lo, c_hi = np.nan, np.nan, np.nan
+        c_lo, c_hi = np.nan, np.nan
         
-    if len(c_null) > 0:
-        null_lo = np.percentile(c_null, 2.5)
-        null_hi = np.percentile(c_null, 97.5)
-    else:
-        null_lo, null_hi = np.nan, np.nan
-        
-    return c_mean, c_lo, c_hi, null_lo, null_hi
+    return c_obs, c_lo, c_hi, null_mean, p_value, detect_limit
 
 def get_features(animals, series, variables, L, min_valid_days):
     pre_series, outcomes = cut_at_landmark(animals, series, variables, L, min_valid_days)
@@ -160,8 +164,8 @@ def main():
     
     results = []
     
-    print(f"{'L':>3} | {'FSet':>5} | {'N':>3} | {'Ev':>3} | {'C':>5} ({'2.5':>5}-{'97.5':>5}) | Null 97.5 | Signal")
-    print("-" * 75)
+    print(f"{'L':>3} | {'FSet':>5} | {'N':>3} | {'Ev':>3} | {'C_obs':>5} | {'Boot_CI(95%)':>13} | {'Null':>5} | {'p-val':>5} | {'Limit':>5} | Signal")
+    print("-" * 95)
     
     for L in landmarks:
         X_f1, X_f2, X_both, Y_T, Y_E, valid_animal_ids = get_features(animals, series, variables, L, min_valid_days)
@@ -172,24 +176,25 @@ def main():
             if X.shape[0] < 10:
                 continue
                 
-            c_mean, c_lo, c_hi, null_lo, null_hi = evaluate_feature_set(X, Y_T, Y_E, n_components=n_comp, seed=seed)
-            if np.isnan(c_mean):
+            c_obs, c_lo, c_hi, null_mean, p_value, detect_limit = evaluate_feature_set(X, Y_T, Y_E, n_components=n_comp, seed=seed)
+            if np.isnan(c_obs):
                 continue
                 
-            signal = "SIGNAL" if c_lo > null_hi else "NO SIGNAL"
+            signal = "SIGNAL" if p_value < 0.05 else "NO SIGNAL"
             
-            print(f"{L:>3} | {fset:>5} | {n_animals:>3} | {n_events:>3} | {c_mean:.3f} ({c_lo:.3f}-{c_hi:.3f}) | {null_hi:.3f}     | {signal}")
+            print(f"{L:>3} | {fset:>5} | {n_animals:>3} | {n_events:>3} | {c_obs:.3f} | {c_lo:.3f}-{c_hi:.3f} | {null_mean:.3f} | {p_value:.3f} | {detect_limit:.3f} | {signal}")
             
             results.append({
                 'L': L,
                 'feature_set': fset,
                 'n': n_animals,
                 'events': n_events,
-                'C': c_mean,
-                'lo': c_lo,
-                'hi': c_hi,
-                'null_lo': null_lo,
-                'null_hi': null_hi,
+                'C': c_obs,
+                'boot_lo': c_lo,
+                'boot_hi': c_hi,
+                'null_mean': null_mean,
+                'p_value': p_value,
+                'detect_limit': detect_limit,
                 'signal': signal
             })
             
