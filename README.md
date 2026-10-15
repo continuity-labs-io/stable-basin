@@ -93,6 +93,14 @@ appended to `output/lifespan/lifespan_ledger.csv`.
 
 ---
 
+## Protocols
+
+Assay designs and experimental protocol briefs are documented in [`docs/protocols/`](docs/protocols/):
+
+- [**Tissue Recovery Profiling**](docs/protocols/tissue-recovery-profiling.md): Protocol brief for measuring how long living neural tissue takes to return to baseline after a controlled electrical conditioning load on microelectrode arrays, evaluated against pre-registered pass/fail gates.
+
+---
+
 ## Tracks
 
 From [`tracks.md`](tracks.md). Every track serves the lifespan benchmark or is
@@ -186,6 +194,7 @@ Individual pipeline steps: `make aging-resilience-<step> DATASET=<config>`, wher
 | `src/models/` | Sequence models: SSMs, transformer, GRU-D, ODE-RNN | 6 |
 | `src/harness/` | Training and sweep runners for the sequence-model suite | 6 |
 | `src/core/` | Device setup; `MetricThresholdMonitor`, which raises an alarm when metrics cross thresholds | 6, 8 |
+| `docs/protocols/` | Experimental and assay protocol briefs (e.g., [`tissue-recovery-profiling.md`](docs/protocols/tissue-recovery-profiling.md)) | 2, 5 |
 | `tracks.md`, `ISSUES.md` | Track definitions; engineering tickets and parked ideas | — |
 | `AGENTS.md` | Naming conventions and working rules for contributors and coding agents | — |
 
