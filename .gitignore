@@ -179,6 +179,7 @@ logs/
 
 # LaTeX
 *.pdf
+!docs/**/*.pdf
 *.aux
 *.out
 *.toc
