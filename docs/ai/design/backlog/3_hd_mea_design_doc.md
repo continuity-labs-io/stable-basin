@@ -96,7 +96,7 @@ Five tiers. Each has a gate, and a failed gate stops the climb rather than being
 
 ## Trade-offs to settle before writing code
 
-Six decisions. Each is cheap to make now and expensive to revisit after the pipeline exists.
+If the Census above passes, the next step is making six decisions. Each is cheap to make now and expensive to revisit after the pipeline exists.
 
 **Spike sorting, or multi-unit per electrode?** Sorting HD-MEA data into single units is slow, introduces its own errors, and the errors are not independent across conditions. Every measure in this document is a network-level quantity. *Recommendation: multi-unit per electrode, no sorting.* Revisit only if tier 4 fails and there is reason to think unit identity is the missing piece.
 
