@@ -52,6 +52,21 @@ All Unit Tests Must delineate the following three blocks: "ARRANGE", "ACT", and
 
 Do not create commits unless the user explicitely asks you to do so.
 
+- **Skipping the pre-push hook**: If none of the commits being pushed touch a
+  source file, push with `git push --no-verify`. The hook runs
+  `make preflight` (TorchFix + pytest), and non-source files cannot change
+  its result. Check with `git diff --name-only @{u}..HEAD` before pushing.
+  - **Counts as source** (run the hook normally): anything under `src/`,
+    `tests/`, `tools/`, `examples/`, or `configs/`; any `*.py`, `*.yaml`,
+    `*.yml`, `*.toml`, `*.ini`, or `*.cfg` file; `Makefile`,
+    `pyproject.toml`, `pytest.ini`, `requirements.txt`, `environment.yml`,
+    `uv.lock`, `modal_runner.py`.
+  - **Does not count as source** (skipping is allowed): `docs/`, `paper/`,
+    `icebox/`, `notebooks/`, `*.md`, `*.pdf`, `*.json`, images,
+    `.gitignore`, `LICENSE`. Unit tests must not depend on committed JSON
+    files; generate any JSON fixtures inside the test (e.g., via `tmp_path`).
+  - If any file in the range is ambiguous, run the hook.
+
 ### The PyTorch Debugger `[MODE: PARANOID_DEBUGGER]`
 
 When instructed to debug PyTorch code or investigate NaNs, the agent MUST adopt

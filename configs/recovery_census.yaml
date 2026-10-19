@@ -1,0 +1,34 @@
+roots:
+  finalspark: "data/ephys/finalspark"
+  maxwell: "data/ephys/maxwell"
+  threebrain: "data/ephys"
+  organoid_pharma: "data/ephys/pharmacological_shock"
+
+# Glob patterns resolved only under each source's own root.
+# inventory() raises if two sources resolve to the same file.
+patterns:
+  finalspark: ["**/*_package.hdf5"]
+  maxwell: ["**/*.raw.h5"]
+  organoid_pharma: ["**/*.raw.h5"]
+  threebrain: ["**/*.brw"]
+
+output_dir: "output/recovery_census"
+
+census_skip_s: 60.0
+census_window_len_s: 40.0
+# Consecutive FinalSpark events further apart than this start a new session.
+finalspark_session_gap_s: 600.0
+census_window_fractions: [0.15, 0.5, 0.85]
+max_census_channels: 256
+
+min_spikes_active: 5
+min_active_electrodes: 20
+
+burst_bin_ms: 10.0
+burst_sigma_ms: 20.0
+burst_k: 4.0
+burst_min_ms: 50.0
+burst_min_electrodes: 10
+
+gate_min_bursts: 50
+gate_min_recordings: 20
