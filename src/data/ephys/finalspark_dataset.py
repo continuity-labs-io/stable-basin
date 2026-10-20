@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 import pandas as pd
 import numpy as np
 
+# TODO: remove hardcoding of fs437
 
 class FinalSparkDataset(Dataset):
     """
