@@ -3,6 +3,45 @@
 Scope: FinalSpark fs369, days 2025-02-20 and 2025-02-21. No lab, no new data.
 `analysis_standards.md` applies and is not repeated here.
 
+## Status
+
+# Gate 1 — Status, 2026-10-20
+
+Gate 1 asks whether a measurement of how fast tissue recovers after a
+perturbation repeats when you make it twice. We ran it on FinalSpark fs369,
+one neural culture recorded continuously for 21 days until it died. The
+dataset turned out to be richer than expected and nothing like what the
+original design assumed: stimulation is whole-array and simultaneous, and each
+day runs an identical 32-block dose-response sweep of 16 parameter conditions
+at two polarities, 10 trials each at 10 second spacing. Two consecutive days,
+2025-02-20 and 2025-02-21, run the same sweep and are the only adjacent pair
+not separated by a medium change. A long quiet period before each sweep gives
+a clean baseline. 24 of 32 electrodes are active on both days.
+
+**Gate 1 failed.** The pre-registered measure, the condition-centered
+correlation of per-electrode recovery time across the two days, came back at
+0.128 against a threshold of 0.7. The failure is interpretable rather than
+ambiguous: within-session reliability was 0.779, so ten trials are enough; a
+positive control recovered 0.878, so the pipeline finds an electrode-identity
+effect when one is present; and the observed value sits far below the ceiling
+rather than near it. So the measurement is reproducible inside a session and
+does not survive overnight. Post-hoc checks, not part of the pre-registered
+gate, show a gradient: peak response amplitude correlates across days at 0.80,
+electrode-averaged recovery time at 0.61, the per-cell value at 0.13, and the
+residual at -0.14. Something about each electrode persists overnight, strongest
+in response size and weaker in recovery time, but none of it reaches the gate.
+
+One confound is unresolved and it changes the meaning of the result. Day 1 had
+three hours of maximum-amplitude stimulation ending 7.4 hours before its sweep;
+day 2 had nothing comparable. "The tissue changed overnight" and "day 1 was
+pre-conditioned" both explain the data and imply opposite things. Baseline
+firing rates also moved by about 1.5x between the two days, consistent with a
+culture 21 days from death. Until that is separated, the honest statement is
+that this measurement did not repeat across these two sessions in this culture,
+and we do not know whether that is a property of the measurement or of the
+tissue. Code: `scripts/gate1_run.py`, outputs in `output/gate1/`.
+
+
 ## What the data is
 
 Each day runs an **identical 32-block dose-response sweep**: 16 parameter
