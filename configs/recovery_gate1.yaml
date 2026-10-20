@@ -1,0 +1,81 @@
+# Gate 1 Step 0: evidence for the four open questions in
+# docs/ai/design/3_recovery_profiling_gate1.md (plus quiet-period activity).
+# Nothing here is a chosen blanking or response window; Step 0 only proposes.
+
+input_path: "data/ephys/finalspark/fs369data/fs369_package.hdf5"
+# Step 0 refuses to open any input whose file name is listed here.
+forbidden_input_names: ["fs369_raw.hdf5"]
+output_dir: "output/recovery_gate1"
+
+tables:
+  stimulations: "/fs369_wholelife_stimulations"
+  events: "/fs369_wholelife_events"
+  metadata: "/fs369_wholelife_metadata"
+  door: "/fs369_wholelife_incubator_door_opening"
+
+metadata_fields:
+  first_recording_date: "Date"
+  medium_changes: "medium changes"
+
+# CANDIDATE parameter set. Matching is exact equality on every listed column.
+candidate:
+  a1: 0.8
+  a2: 0.8
+  d1: 300
+  d2: 300
+  nb_stim_pulse: 2
+  pulse_train_period: 10000
+  stim_polarity: 0
+  stim_shape: 0
+
+# Counts stated in the design doc. A mismatch is reported; the run continues.
+expected_candidate:
+  n_stims: 1294
+  n_electrodes: 32
+  n_days: 5
+
+# Slot membership, inclusive id ranges. UNVERIFIED assumption: contiguous in id.
+slots:
+  - [64, 71]
+  - [72, 79]
+  - [80, 87]
+  - [88, 95]
+
+# Events are queried once per CANDIDATE day over
+# [first CANDIDATE stim - margin, last CANDIDATE stim + margin].
+event_query_margin_s: 600.0
+
+psth:
+  pre_window_ms: 50.0
+  post_window_ms: 500.0
+  # Post-stimulus bin segments: [start_ms, stop_ms, width_ms].
+  # Pre-stimulus edges are the mirror image, clipped to pre_window_ms.
+  post_segments:
+    - [0.0, 20.0, 0.1]
+    - [20.0, 100.0, 1.0]
+    - [100.0, 500.0, 10.0]
+  voltage_percentile: 95.0
+  # Presentation only: segments for the coarse table in step0_report.md.
+  # Each edge must coincide with a bin edge above.
+  report_summary_edges_ms: [-50, 0, 1, 2, 5, 10, 20, 50, 100, 200, 500]
+
+blanking:
+  # Threshold = pre-stimulus median rate * multiplier.
+  threshold_multiplier: 3.0
+  # The rate must stay below threshold for this many consecutive bins.
+  n_consecutive_bins: 5
+  # Ratio between stimulated-electrode and other-slot windows that flags LOCAL.
+  local_ratio: 2.0
+
+windows:
+  gap_percentiles: [0, 1, 5, 10, 25, 50, 75, 100]
+  candidate_lengths_s: [0.5, 1, 2, 5, 10, 20, 30, 60]
+  min_fraction_stims: 0.6
+  min_days_per_electrode: 2
+
+activity:
+  rate_thresholds_hz: [0.1, 0.5, 1.0]
+  verdict_threshold_hz: 0.1
+
+# No random operation in Step 0; recorded per the output contract.
+seed: 0

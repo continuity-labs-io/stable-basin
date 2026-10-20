@@ -175,3 +175,11 @@ echo-resilience-experiments: echo-resilience-baseline echo-resilience-ssm echo-r
 .PHONY: reproduce-paper
 reproduce-paper: echo-resilience-experiments paper
 
+
+# ==========================================
+# Recovery Gate 1
+# ==========================================
+
+.PHONY: gate1-step0
+gate1-step0:
+	python -m src.benchmarks.recovery.step0 --config configs/recovery_gate1.yaml

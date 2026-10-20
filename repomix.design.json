@@ -12,6 +12,8 @@
   ],
   "ignore": {
     "customPatterns": [
+      "docs/ai/complete/**",
+      "docs/ai/design/backlog/shelved/**",
       "src/demo/**",
       "src/icebox/**",
       "output/**"
