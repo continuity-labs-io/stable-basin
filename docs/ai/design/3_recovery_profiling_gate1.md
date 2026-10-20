@@ -1,127 +1,116 @@
 # Gate 1 Design
 
-Scope: FinalSpark fs369 only. No lab, no new data. `analysis_standards.md`
-applies and is not repeated here.
+Scope: FinalSpark fs369, days 2025-02-20 and 2025-02-21. No lab, no new data.
+`analysis_standards.md` applies and is not repeated here.
 
-## What Step 0 established
+## What the data is
 
-**Stimulation is whole-array and simultaneous.** A median of 32 electrodes fire
-at the identical timestamp. Each session is **10 stimulation events spaced
-exactly 10 seconds apart across about 90 seconds**, once per day. The 1,294
-rows are 10 events times 32 electrodes, not 1,294 independent perturbations.
+Each day runs an **identical 32-block dose-response sweep**: 16 parameter
+conditions, each at polarity 0 then polarity 1, 10 stimulations per block at
+10.0 s spacing, 21.0 s between blocks. Amplitudes 0.8, 1.0, 1.2, 1.5 with
+durations 100, 200, 300, plus four asymmetric pairs. Whole-array: 32 electrodes
+fire at each timestamp.
 
-Consequences: there is no stimulated-versus-unstimulated electrode contrast
-anywhere in this dataset, so no sham exists at any level. And per electrode per
-session there are **10 trials**, not hundreds.
+02-20 blocks 1-32 and 02-21 blocks 0-31 are the same sequence in the same
+order.
 
-**One adjacent pair exists: 2025-02-20 and 2025-02-21.** 320 stimulations and
-all 32 electrodes on each, no medium change between them, no door openings
-inside either span. The medium change on 2025-02-28 disqualifies every other
-pair involving a later day.
+So the available data is **16 conditions x 10 trials x 32 electrodes x 2 days**,
+not 10 trials at one setting.
 
-**19 of 32 electrodes are active above 0.1 Hz on both days of that pair.** The
-Gate 1 correlation is over 19 points, not 32.
+**Baseline:** a long quiet period sits immediately before each day's sweep.
+02-20 has 7.4 hours with no stimulation (08:42 to 16:07). 02-21 is preceded by
+roughly 20 hours since the previous day's last stimulation at 17:06. Use the
+**last 30 minutes before each sweep begins**, so the baseline is temporally
+adjacent to the measurement.
 
-**There is a large, clean evoked response.** Pooled across all stimulations:
-baseline 1.9 Hz, peak 118.7 Hz in the 10 to 20 ms bin, then 41.3, 8.7, 6.6 and
-7.4 Hz through 500 ms. A peak at 10 to 20 ms rather than in the first bin means
-this is a network response, not an electrical artifact.
+**Blanking: 3 ms after each stimulus.** Settled, not re-derived.
 
-**The response has not returned to baseline by 500 ms.** It sits at roughly
-four times the pre-stimulus rate at the end of the measured window.
+**Active electrodes:** 19 of 32 exceed 0.1 Hz on both days. Everything below is
+computed on those 19.
 
-**Activity declines across the five sessions**: 22, 22, 19, 13, 0 electrodes
-above 0.1 Hz, with death two days after the last session. The adjacent pair is
-the least confounded pair available, since both days sit at 22.
+## The response shape
 
-## Settled by fiat: blanking at 3 ms
+Pooled recon shows a peak at 10-20 ms, decay by 60 ms, a second rise around
+0.3-2 s, then a tail flattening from 3-10 s. **A single exponential is the wrong
+model** and must not be used as the primary measure.
 
-Step 0 could not determine a blanking window because the rule used a median of a
-sparse histogram, which is zero. Rather than rerun it: the pooled rate in the
-first millisecond is 27.8 Hz against a 118.7 Hz peak at 10 to 20 ms, and there
-is a zero-event run from 2 to 2.4 ms.
+**Primary measure, non-parametric.** Per electrode, per condition, per day:
+bin the pooled post-stimulus rate from 3 ms to 10 s on log-spaced bins. Define
+`t_return` as the **last** bin whose rate exceeds `1.5 x baseline`. This is
+well-defined on a multi-humped curve and assumes nothing about shape.
 
-**Blank the first 3 ms after each stimulus.** It is conservative, it costs 3 ms
-out of a 10,000 ms window, and the cost of being wrong is negligible. Recorded
-as a parameter, not re-derived.
+Also record `peak_rate`, `t_peak`, and `residual`, the mean rate in the final
+second as a multiple of baseline.
 
-## Step 1 — The reliability ceiling, before either gate
+**Secondary, exploratory.** A double exponential over 0.1 to 10 s, reported but
+not gating anything.
 
-Two checks. Both are cheap and either can stop the work.
+## Step 1 — Reliability ceiling
 
-**1a. Does the response return within 10 seconds?** Build the pooled PSTH out to
-the full 10 second inter-stimulus interval, not 500 ms. Compare the rate in the
-last second before a stimulus against the rate in the quiet period before the
-session's first stimulus.
+Per electrode and condition, split the 10 trials into odds and evens, compute
+`t_return` for each half, correlate across all 19 x 16 = 304 electrode-condition
+pairs, and apply the Spearman-Brown correction.
 
-If they differ, the 10 second spacing is shorter than the recovery and the 10
-trials in a session are not independent. That is not fatal but it changes
-everything downstream: the baseline becomes the pre-session quiet period rather
-than the inter-stimulus interval, and the trials must be modeled as a sequence
-rather than averaged.
+This is now a well-estimated ceiling rather than the thin 5-against-5 the
+previous design relied on.
 
-**Report:** the full 10 s PSTH, the pre-session rate, the last-second-before
-rate, and whether they agree.
-
-**1b. What is the within-session reliability?** Per electrode, split the 10
-trials into odds and evens, fit each half, correlate the two 5-trial estimates
-across the 19 active electrodes, and apply the Spearman-Brown correction.
-
-This is the ceiling. A between-day correlation cannot exceed it. **If the
-corrected within-session reliability is below 0.7, Gate 1 is not answerable on
-this dataset at this trial count**, and the honest output is that finding rather
-than a failed gate.
-
-Report a bootstrap confidence interval over trials, because five trials per half
-is thin and a point estimate alone will mislead.
-
-## The measurement
-
-Per electrode, per session:
-
-1. Take the 10 stimulus times.
-2. Discard 0 to 3 ms after each.
-3. Build the peri-stimulus rate over 3 ms to 9 s, pooled across the 10 trials,
-   with log-spaced bins.
-4. Baseline is the pre-session quiet period, or the inter-stimulus tail if 1a
-   shows they agree.
-5. Fit `rate(t) = baseline + A * exp(-t / tau)`. Record `A`, `tau`, and the
-   residual at 9 s.
-6. Also record the non-parametric version: time to fall below 1.5 times
-   baseline.
-
-A session gives a 19-element vector of `tau`, one per active electrode, plus the
-same for `A` and the residual.
+**If the corrected ceiling is below 0.7, Gate 1 is not answerable at this trial
+count** and that is the output, not a failed gate.
 
 ## Gate 1 — Repeatability
 
-Compute the `tau` vector for 2025-02-20 and for 2025-02-21. Correlate across the
-19 active electrodes.
+Three correlations, reported together. The decomposition matters.
 
-**Pass: r >= 0.7.**
+**1. Per condition.** For each of the 16 conditions, correlate the 19-element
+`t_return` vector across the two days. Report all 16, plus their median and
+range.
 
-Report alongside, always: the within-session ceiling from 1b, the same
-correlation for `A` and the residual, the shuffle null, and the disattenuated
-correlation. If r is below 0.7 but close to the ceiling, the measurement is as
-repeatable as 10 trials allow and the limitation is trial count, not the method.
-Say which.
+**2. Pooled, condition-centered.** Flatten to 304 electrode-condition values per
+day, subtract the condition mean within each day, then correlate the residuals
+across days. This is electrode-specific repeatability with the condition effect
+removed.
 
-**n = 1 culture, 19 electrodes, 2 sessions, 10 trials each.** Every verdict
-states this.
+**Pooling without centering is a trap** and must not be the headline. If
+`t_return` varies strongly by condition and that pattern repeats, raw pooled
+correlation will look high while saying nothing about per-electrode
+reliability.
 
-**Do not** compute Gate 1 across non-adjacent days. Activity falls from 22 to 13
-to 0 electrodes across the later sessions, so a weak correlation there is the
-culture dying, not a reliability failure.
+**3. Dose-response slope.** Per electrode, regress `t_return` on amplitude
+across the symmetric conditions. Correlate the 19 slopes across days.
+
+**Pass: the condition-centered correlation (2) is >= 0.7.** Report the other two
+alongside, with the Step 1 ceiling and the shuffle null.
+
+If (2) falls below 0.7 but near the ceiling, the limit is trial count, not the
+method. Say which.
+
+**n = 1 culture, 19 electrodes, 16 conditions, 2 sessions, 10 trials each.**
+
+## What is now possible that was not
+
+**Dose-response.** Does `t_return` lengthen with stimulation amplitude? There
+are four amplitudes and three durations, 10 trials each, on two days. If
+recovery time tracks the size of the perturbation and does so reproducibly,
+that is a real relationship measured on public data.
+
+This is not Gate 3. There is still no vehicle. But it is the nearest thing this
+dataset supports and it is worth reporting whatever Gate 1 says.
+
+**Polarity.** Every condition runs at both polarities 21 s apart. Whether
+`t_return` differs between them is a biological question, not a replicate
+check, since negative-first and positive-first stimulation are not equivalent.
+Report it; do not use it as a reliability estimate.
 
 ## Confounds
 
+- **Block 0 on 02-20.** Three hours of sequential per-electrode stimulation at
+  amplitude 2.5, the highest in the file, 2,040 events ending 7.4 hours before
+  the sweep. 02-21 has nothing like it. If the two days disagree, look here
+  first.
 - One culture. 19 electrodes nested inside it. Not 19 independent units.
-- Twelve neurospheres across four slots of eight electrodes. The electrode to
-  neurosphere mapping is unknown, and slot is not neurosphere. Unresolved, and
-  nothing may treat slot as a tissue unit.
-- Whole-array stimulation means every response is a network response. A
-  per-electrode `tau` is that electrode's view of a global perturbation, not a
-  local measurement.
-- `pulse_train_period` units remain unresolved. Same value throughout the
-  candidate set, so it does not affect either gate, but the stimulation
-  frequency cannot be stated in a writeup yet.
+- Twelve neurospheres across four slots of eight electrodes, mapping unknown.
+  Slot is not neurosphere and must not be treated as a tissue unit.
+- Whole-array stimulation. A per-electrode `t_return` is one electrode's view
+  of a global perturbation, not a local measurement.
+- `pulse_train_period` units unresolved. Constant across the sweep, so it does
+  not affect the gate, but stimulation frequency cannot be stated in a writeup.
