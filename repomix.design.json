@@ -1,0 +1,21 @@
+{
+  "output": {
+    "filePath": "output/stable-basin-repomix-design.xml",
+    "compress": true,
+    "directoryStructure": true
+  },
+  "include": [
+    "**/*.md",
+    "Makefile",
+    "configs/**/*.yaml",
+    "src/**/*.py"
+  ],
+  "ignore": {
+    "customPatterns": [
+      "src/demo/**",
+      "src/icebox/**",
+      "output/**"
+    ]
+  }
+}
+
