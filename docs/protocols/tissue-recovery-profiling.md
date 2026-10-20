@@ -75,7 +75,7 @@ Stimulus amplitude is calibrated per site to half-maximal response, and recalibr
 
 **Electrode attrition is reported, not excluded.** With fixed routing, some routed electrodes will fall silent between sessions. The fraction that does is reported as its own number and those electrodes are not quietly dropped, because attrition is a fact about the tissue and excluding it biases the surviving set toward whatever was stable.
 
-**No uncontrolled prior load.** A session must not be preceded by stimulation outside the protocol. The pilot's two sessions could not be cleanly compared because one followed three hours of maximum-amplitude stimulation that the other did not. Any conditioning history on the preparation is logged, and sessions are only compared across matched histories.
+**No uncontrolled prior load.** A session must not be preceded by stimulation outside the protocol. The pilot's two sessions could not be cleanly compared because one followed three hours of maximum-amplitude stimulation that the other did not. Any conditioning history on the preparation is logged, and sessions are only compared across matched histories. Matched means matched program, not matched parameters: in the pilot recording one session carried the same parameter set as the sweep while delivering 54 stimuli per block instead of 10, which is a different experiment wearing the same label.
 
 **Multi-site extension.** For the route-diversity measure, the burst is delivered at four to six distinct sites per session rather than one, and the return trajectories are compared. This multiplies session length rather than plate count and needs no change to the hardware.
 
@@ -136,11 +136,13 @@ Nothing in the protocol above has been run on purpose-collected data. One pilot 
 
 **What it means.** The measure is reproducible inside a session and does not survive overnight in this preparation. The failure is interpretable rather than ambiguous, because the ceiling rules out too few trials and the positive control rules out a broken pipeline. Post-hoc, there is a gradient: peak response amplitude correlates across days at 0.80, electrode-averaged recovery time at 0.61, the per-cell value at 0.13. Something about each electrode persists overnight, strongest in response size, weaker in recovery time.
 
-**What it does not mean.** This is not Gate 1 failing. Gate 1 requires matched conditioning history and more than one culture, and this had neither. Day 1 followed three hours of maximum-amplitude stimulation ending 7.4 hours before its sweep; day 2 did not. "The tissue changed overnight" and "day 1 was pre-conditioned" both explain the data and imply opposite things, and found data cannot separate them because nobody designed the experiment to.
+**What it does not mean.** This is not Gate 1 failing. Gate 1 requires matched conditioning history and more than one culture, and this had neither. Day 1 followed three hours of maximum-amplitude stimulation ending 7.4 hours before its sweep; day 2 did not. "The tissue changed overnight" and "day 1 was pre-conditioned" both explain the data and imply opposite things.
+
+**The confound cannot be resolved in this dataset.** A census of the full recording settles that. Stimulation occurred on 7 of the roughly 21 recording days, no two of them adjacent, under a materially different program nearly every time: 2,040 pre-conditioning stimuli before the 02-20 sweep, a 2,127-stimulus session on 02-28 that also carries the medium change, 7,072 stimuli in seven large blocks on 03-04, and by 03-10 a degenerate pattern of 289 isolated single stimuli, two days before the culture died. Exactly two days run the sweep with nothing in the preceding 24 hours, 02-21 and 03-06, and those are 13 days apart across the medium change in a failing culture. So no pair in this recording isolates the overnight question. The reason is not bad luck about which days were pre-conditioned. It is that the recording was never designed as a repeated-measures experiment.
 
 **What it changed in this protocol.** The minimum trial count, the matched-history requirement, the response-window definition, the replacement of the exponential fit with a threshold crossing, the parallel baseline-free measure, explicit censoring, and the five-part structure of the Gate 1 acceptance test. All of those were underspecified before the pilot and are specified now.
 
-Code and outputs: `scripts/gate1_run.py`, `output/gate1/`. Standing analysis rules: `docs/ai/design/analysis_standards.md`.
+Code and outputs: `scripts/gate1_run.py`, `output/gate1/`, plus `scripts/day_census.py` for the stimulation-history census. Standing analysis rules: `docs/ai/design/analysis_standards.md`.
 
 ## Session budget
 
@@ -148,7 +150,7 @@ The first study is twenty wells over two weeks: dissociated rodent cortical cult
 
 One single-site session is 20 minutes. Multi-site at four to six sites is one to two hours per well. Gate 1 needs two sessions on consecutive days. Gate 3 needs a dose arm and vehicle wells, randomized across the plate and across time of day.
 
-That last point is not a detail. Two attempts to extract this measurement from public data have now failed, each for a different reason, and both reasons are design failures rather than analysis failures. In the first, five drug doses were recorded from one preparation across a single afternoon, so dose and elapsed time moved together and nothing could separate them. In the second, described above, the two comparable sessions differed in conditioning history, so tissue change and pre-conditioning moved together. Randomized dosing, vehicle wells, washout, logged conditioning history, matched session pairs and fixed electrode routing are in this design from the first plate for that reason.
+That last point is not a detail. Two attempts to extract this measurement from public data have now failed, each for a different reason, and both reasons are design failures rather than analysis failures. In the first, five drug doses were recorded from one preparation across a single afternoon, so dose and elapsed time moved together and nothing could separate them. In the second, described above, the two comparable sessions differed in conditioning history, so tissue change and pre-conditioning moved together, and a census of the remaining nineteen days found no pair anywhere in the recording that separates them. Randomized dosing, vehicle wells, washout, logged conditioning history, matched session pairs and fixed electrode routing are in this design from the first plate for that reason.
 
 The first study may not need the full spatial resolution of a high-density array. Gates 1 to 3 run on a sparse routing or on a conventional multiwell MEA. The dense routing becomes necessary at gate 4, where the measurement depends on spatial resolution.
 
@@ -231,3 +233,4 @@ I am not asking anyone to run an experiment for free. The useful thing right now
 **Pilot data**
 
 - FinalSpark Neuroplatform whole-life export fs369, [finalspark.com](https://finalspark.com/)
+
