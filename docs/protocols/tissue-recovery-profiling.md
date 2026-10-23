@@ -3,7 +3,7 @@
 Protocol brief, revised 2026-10-21. Open protocol: design, gates and analysis code are
 published whether they pass or fail.
 
-Ryan J. McCall, PhD, ContinuityLabs.io
+Ryan J. McCall, PhD, Continuity Labs
 
 ## What this is
 
@@ -16,7 +16,7 @@ where histology tells you tissue is alive and nothing tells you it works; and an
 readout, where the hypothesis is that recovery slows with age.
 
 This is not a firing-rate or burst-rate assay. Those describe what tissue is doing. This
-describes what it can still recover from.
+describes what it can still come back from.
 
 ## What the instrument has to do
 
@@ -52,9 +52,11 @@ addressing and a sampling rate above about 10 kHz can run this.
 
 ## The measurement
 
-**Readout: paired-pulse electrical probes.** Settled. They cost nothing, repeat indefinitely,
-carry microsecond timing, and have two standardized human analogs (cardiac S1-S2 pacing,
-paired-pulse TMS).
+**Readout: electrical probe pulses, read as a seconds-scale return.** Probes cost nothing,
+repeat indefinitely and carry microsecond timing, and the paired-pulse form has two
+standardized human analogs in cardiac S1-S2 pacing and paired-pulse TMS. What gets extracted
+from them is the time to return to baseline, not a millisecond coupling-interval curve. The
+timescale note below says why.
 
 **Perturbation: under decision.** Two configurations are live.
 
@@ -68,15 +70,26 @@ recovery measure in this space already standardized and already known to worsen 
 Its one real cost, smeared onset, is removed by perfusion. The electrical version is cheaper
 and is the right way to establish the readout before any compound is introduced.
 
-One open design decision gates this and is mine to make: paired-pulse operates in
-milliseconds to hundreds of milliseconds, while the pilot's probe delays ran to 32 seconds.
-Whether the assay is a millisecond-scale measure, a seconds-scale measure, or one measure
-spanning both is not yet settled.
+**Timescale: resolved, seconds.** This was open until the pilot data was re-examined for it.
+Within-session split-half reliability was computed for eight response measures across three
+bands. Millisecond-band timing came back unusable, with time-to-half-peak at 0.15 and
+time-to-peak at 0.34. The seconds-band timing measure, the threshold crossing, reached 0.76.
+So the assay is a seconds-scale measure, the 32-second probe window stands, and a
+millisecond-scale coupling-interval design is not supported by this data.
+
+Two qualifications belong with that. Amplitude measures were reliable in every band, between
+0.74 and 0.95, and that is close to trivial: an electrode with more cells near it produces
+larger responses in every window on every trial, so amplitude reliability largely reports how
+much tissue sits near the electrode rather than how that tissue responds. And the fast band
+was tested here on a 32-electrode array reading coarse threshold-crossing events rather than
+continuous voltage, with the first 3 ms blanked out of a 3 to 60 ms window. Fast-band timing
+could fail for those reasons and still work on a high-density array with targeted
+stimulation.
 
 **Protocol requirements that are settled**, whichever perturbation wins:
 
 - At least ten repeats per condition. The pilot measured within-session split-half
-  reliability at ten trials and got 0.78.
+  reliability at ten trials and got 0.78 uncentered, 0.76 condition-centered.
 - No uncontrolled stimulation before a session. Conditioning history is logged, and sessions
   are only compared across matched histories. Matched means matched program, not matched
   parameters: in the pilot recording one session carried the same parameter set as another
@@ -89,7 +102,8 @@ spanning both is not yet settled.
 
 ## What comes out
 
-Four numbers per session: resting response, suppression depth, recovery time, residual.
+Four numbers per session: resting response, suppression depth, recovery time, and residual,
+defined as the event rate over the final second as a fraction of baseline.
 Depth and rate are kept apart deliberately, since a system knocked down further but
 recovering at the same rate is a different finding from one knocked down equally that takes
 longer to return.
@@ -154,7 +168,9 @@ find out what the protocol was failing to specify.
 identical 32-block sweep, 10 trials per block.
 
 **Result.** Gate 1 failed. Condition-centered cross-session correlation 0.128 against 0.7.
-Within-session ceiling 0.779. Positive control 0.878. Permutation null cleared.
+Within-session ceiling 0.78 uncentered and 0.76 condition-centered. Positive control 0.878.
+Permutation null cleared. The matched comparison is 0.128 against 0.76, both condition-centered;
+the 0.78 figure is the uncentered ceiling and should not be set against a centered value.
 
 **Reading.** The measure is reproducible inside a session and did not survive overnight in
 this preparation. The failure is interpretable rather than ambiguous: the ceiling rules out
