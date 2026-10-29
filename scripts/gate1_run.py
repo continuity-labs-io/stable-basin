@@ -2,8 +2,9 @@
 
 Implements docs/ai/design/3_recovery_profiling_gate1.md on FS369 2025-02-20 vs 2025-02-21.
 Writes output/gate1/cells.csv (one row per active electrode, matched block, day) and
-output/gate1/gate1.json. No config file, Makefile target or unit tests: deliberate debt per
-prompt 256, paid only if Gate 1 passes.
+output/gate1/gate1.json. The analysis functions live in src/benchmarks/recovery/gate1.py; this
+script holds the parameter values, the HDF5 queries and the output writing. No config file or
+Makefile target yet: deliberate debt per prompt 256.
 """
 
 import json
@@ -13,6 +14,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+from src.benchmarks.recovery import gate1
+from src.benchmarks.recovery.gate1 import analyse, centered_r, pearson  # noqa: F401  (re-exported for timescale_spike.py)
 
 H5 = Path("data/ephys/finalspark/fs369data/fs369_package.hdf5")
 STIM_KEY, EVENT_KEY = "fs369_wholelife_stimulations", "fs369_wholelife_events"
@@ -29,9 +33,14 @@ OUT = Path("output/gate1")
 EDGES = np.geomspace(POST_LO_S, POST_HI_S, N_BINS + 1)
 CENTERS, WIDTHS = np.sqrt(EDGES[:-1] * EDGES[1:]), np.diff(EDGES)
 
+# The three functions below keep the signatures scripts/timescale_spike.py and
+# scripts/sharf_amp_vs_timing.py import from this module; they bind this run's parameters.
+
 
 def sweep_blocks(day, rows):
     """Split one day's stimulation rows into blocks and keep blocks whose every stimulus hits >= 32 electrodes.
+
+    Wraps gate1.sweep_blocks: prints the block census and turns a ValueError into a STOP exit.
 
     Args:
         day: date string, used in messages.
@@ -41,19 +50,11 @@ def sweep_blocks(day, rows):
         (kept, times, electrodes): kept blocks with TUPLE columns, {block: stimulus times}, and the
         sorted electrodes stimulated in the kept blocks.
     """
-    g = rows.groupby("time_of_stim")
-    if (g[TUPLE].nunique() > 1).to_numpy().any():
-        sys.exit(f"STOP: {day}: a time_of_stim carries more than one parameter tuple")
-    ev = g.agg(**{c: (c, "first") for c in TUPLE}, n_elec=("electrode", "nunique")).reset_index()
-    ev["block"] = (ev[TUPLE] != ev[TUPLE].shift()).any(axis=1).cumsum() - 1
-    b = ev.groupby("block").agg(**{c: (c, "first") for c in TUPLE}, n_elec_min=("n_elec", "min")).reset_index()
-    kept = b[b["n_elec_min"] >= SWEEP_MIN_ELEC]
-    if kept[TUPLE].duplicated().any():
-        sys.exit(f"STOP: {day}: a parameter tuple repeats across sweep blocks; matching by tuple is ambiguous")
-    times = {blk: ev.loc[ev["block"] == blk, "time_of_stim"].to_numpy() for blk in kept["block"]}
-    sweep_t = np.concatenate(list(times.values()))
-    elec = np.sort(rows.loc[rows["time_of_stim"].isin(sweep_t), "electrode"].unique())
-    print(f"{day}: blocks={len(b)} excluded (<{SWEEP_MIN_ELEC} electrodes per stimulus)={len(b) - len(kept)} "
+    try:
+        kept, times, elec, n_blocks = gate1.sweep_blocks(rows, TUPLE, SWEEP_MIN_ELEC)
+    except ValueError as err:
+        sys.exit(f"STOP: {day}: {err}")
+    print(f"{day}: blocks={n_blocks} excluded (<{SWEEP_MIN_ELEC} electrodes per stimulus)={n_blocks - len(kept)} "
           f"sweep blocks={len(kept)} sweep electrodes={len(elec)}")
     return kept, times, elec
 
@@ -69,18 +70,11 @@ def latencies(ev, electrodes, stim_times):
     Returns:
         dict (electrode, block index) -> list (one per trial) of latency arrays in seconds.
     """
-    out, lo_ns, hi_ns = {}, int(round(POST_LO_S * 1e9)), int(round(POST_HI_S * 1e9))
-    for e in electrodes:
-        te = np.sort(ev.loc[ev["electrode"] == e, "time_of_event"].to_numpy().astype("datetime64[ns]").astype(np.int64))
-        for k, ts in enumerate(stim_times):
-            ts = ts.astype("datetime64[ns]").astype(np.int64)
-            lo, hi = np.searchsorted(te, ts + lo_ns), np.searchsorted(te, ts + hi_ns)
-            out[e, k] = [(te[a:z] - t) / 1e9 for a, z, t in zip(lo, hi, ts)]
-    return out
+    return gate1.latencies(ev, electrodes, stim_times, POST_LO_S, POST_HI_S)
 
 
 def measures(trials, baseline):
-    """Compute the four response measures from pooled trials on log-spaced bins.
+    """Compute the response measures from pooled trials on this run's log-spaced bins (EDGES).
 
     Args:
         trials: list of per-trial latency arrays (s).
@@ -89,84 +83,7 @@ def measures(trials, baseline):
     Returns:
         dict with t_return, t_half_peak (+ censoring flags), peak_rate, t_peak, residual, n_trials, n_events.
     """
-    n, lat = len(trials), np.concatenate(trials)
-    rate = np.histogram(lat, bins=EDGES)[0] / (n * WIDTHS)
-    above = np.flatnonzero(rate > RETURN_X_BASELINE * baseline)
-    ret_cens = bool(above.size) and above[-1] == N_BINS - 1
-    t_ret = 0.0 if not above.size else POST_HI_S if ret_cens else float(CENTERS[above[-1]])
-    ip = int(np.argmax(rate))
-    below = np.flatnonzero(rate[ip + 1:] <= HALF_PEAK_FRAC * rate[ip])
-    t_half = float(CENTERS[ip + 1 + below[0]] - CENTERS[ip]) if below.size else POST_HI_S
-    resid = np.sum(lat >= POST_HI_S - RESIDUAL_S) / (n * RESIDUAL_S) / baseline
-    return dict(t_return=t_ret, t_return_censored=ret_cens, t_half_peak=t_half, t_half_peak_censored=not below.size,
-                peak_rate=float(rate[ip]), t_peak=float(CENTERS[ip]), residual=float(resid), n_trials=n, n_events=lat.size)
-
-
-def pearson(x, y):
-    """Pearson r of two flattened arrays; NaN if either is constant.
-
-    Args:
-        x: array.
-        y: array of the same size.
-
-    Returns:
-        float correlation.
-    """
-    x, y = np.ravel(x), np.ravel(y)
-    return float(np.corrcoef(x, y)[0, 1]) if x.std() > 0 and y.std() > 0 else float("nan")
-
-
-def centered_r(a, b):
-    """Correlation 2: subtract each block's mean over electrodes within each day, then correlate.
-
-    Args:
-        a: (electrodes, blocks) day-1 values.
-        b: (electrodes, blocks) day-2 values.
-
-    Returns:
-        float correlation of the residuals.
-    """
-    return pearson(a - a.mean(axis=0), b - b.mean(axis=0))
-
-
-def analyse(mat, half, sym_a1, sym, rng):
-    """Run the ceiling, three correlations, shuffle null and positive control for one measure.
-
-    Args:
-        mat: {day: (electrodes, blocks) array} on all trials.
-        half: {(day, "odd"|"even"): (electrodes, blocks) array}.
-        sym_a1: a1 values of the symmetric (a1 == a2) blocks.
-        sym: boolean block mask for a1 == a2.
-        rng: numpy Generator.
-
-    Returns:
-        dict of results.
-    """
-    def spearman_brown(r):  # half-length -> full-length reliability
-        return 2 * r / (1 + r)
-
-    a, b = (mat[d] for d in DAYS)
-    sb = {d: spearman_brown(pearson(half[d, "odd"], half[d, "even"])) for d in DAYS}
-    ceil = float(np.sqrt(sb[DAYS[0]] * sb[DAYS[1]])) if min(sb.values()) > 0 else min(sb.values())
-    sb_c = {d: spearman_brown(centered_r(half[d, "odd"], half[d, "even"])) for d in DAYS}
-    per_block = [pearson(a[:, k], b[:, k]) for k in range(a.shape[1])]
-    slopes = {d: np.polyfit(sym_a1, mat[d][:, sym].T, 1)[0] for d in DAYS}
-    obs = centered_r(a, b)
-    null = np.array([centered_r(a, b[rng.permutation(a.shape[0])]) for _ in range(N_PERM)])
-    pc = dict(r=float("nan"), noise_sd=float("nan"), synthetic_split_half=float("nan"),
-              expected_raw_r=float(np.sqrt(ceil)) if ceil > 0 else float("nan"))  # day 1 enters noise-free
-    if 0 < ceil < 1:  # synthetic day 2 halves = day 1 + N(0, sd); sd set so corrected split-half == ceiling
-        sd = float(np.sqrt(a.var() * (1 / (ceil / (2 - ceil)) - 1)))
-        odd, even = a + rng.normal(0, sd, a.shape), a + rng.normal(0, sd, a.shape)
-        pc.update(r=centered_r(a, (odd + even) / 2), noise_sd=sd,
-                  synthetic_split_half=spearman_brown(pearson(odd, even)))
-    return dict(ceiling=ceil, ceiling_by_day=sb, ceiling_condition_centered_by_day=sb_c,
-                per_block_r=per_block, per_block_median=float(np.nanmedian(per_block)),
-                per_block_min=float(np.nanmin(per_block)), per_block_max=float(np.nanmax(per_block)),
-                per_block_n_nan=int(np.isnan(per_block).sum()), condition_centered_r=obs,
-                raw_pooled_r_not_headline=pearson(a, b), dose_slope_r=pearson(*slopes.values()),
-                null_p95=float(np.nanpercentile(null, NULL_PCTL)), null_frac_ge_observed=float(np.mean(null >= obs)),
-                positive_control=pc)
+    return gate1.measures(trials, baseline, EDGES, RETURN_X_BASELINE, HALF_PEAK_FRAC, RESIDUAL_S)
 
 
 def main():
@@ -233,7 +150,7 @@ def main():
     for m in [primary, *[x for x in MEASURES if x != primary]]:
         mat = {d: grid(cells[cells["day"] == d], m) for d in DAYS}
         half = {(d, s): grid(halves[(halves["day"] == d) & (halves["split"] == s)], m) for d in DAYS for s in ("odd", "even")}
-        res[m] = analyse(mat, half, pairs.loc[sym, "a1"].to_numpy(), sym, rng)
+        res[m] = analyse(mat, half, DAYS, pairs.loc[sym, "a1"].to_numpy(), sym, rng, N_PERM, NULL_PCTL)
     p = res[primary]
     c2, ceil, pc = p["condition_centered_r"], p["ceiling"], p["positive_control"]["r"]
     verdict = "PASS" if c2 >= GATE_R else "UNINTERPRETABLE" if (np.isnan(c2) or ceil < CEILING_MIN) else "FAIL"
