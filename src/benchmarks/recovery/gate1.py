@@ -2,7 +2,7 @@
 
 Moved out of scripts/gate1_run.py so the logic can be imported and unit tested. The script keeps the
 HDF5 queries, the parameter values and the output writing; every function here receives its
-parameters as arguments. Implements docs/ai/design/3_recovery_profiling_gate1.md (prompt 256).
+parameters as arguments. Implements docs/ai/design/complete/3_recovery_profiling_gate1.md (prompt 256).
 """
 
 import numpy as np

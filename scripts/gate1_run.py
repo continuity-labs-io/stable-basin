@@ -1,6 +1,6 @@
 """Gate 1 run (prompt 256): cross-day repeatability of per-electrode post-stimulus response times.
 
-Implements docs/ai/design/3_recovery_profiling_gate1.md on FS369 2025-02-20 vs 2025-02-21.
+Implements docs/ai/design/complete/3_recovery_profiling_gate1.md on FS369 2025-02-20 vs 2025-02-21.
 Writes output/gate1/cells.csv (one row per active electrode, matched block, day) and
 output/gate1/gate1.json. The analysis functions live in src/benchmarks/recovery/gate1.py; this
 script holds the parameter values, the HDF5 queries and the output writing. No config file or

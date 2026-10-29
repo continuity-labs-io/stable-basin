@@ -1,5 +1,5 @@
 # Gate 1 Step 0: evidence for the four open questions in
-# docs/ai/design/3_recovery_profiling_gate1.md (plus quiet-period activity).
+# docs/ai/design/complete/3_recovery_profiling_gate1.md (plus quiet-period activity).
 # Nothing here is a chosen blanking or response window; Step 0 only proposes.
 
 input_path: "data/ephys/finalspark/fs369data/fs369_package.hdf5"

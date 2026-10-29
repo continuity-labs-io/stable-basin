@@ -41,6 +41,47 @@ that this measurement did not repeat across these two sessions in this culture,
 and we do not know whether that is a property of the measurement or of the
 tissue. Code: `scripts/gate1_run.py`, outputs in `output/gate1/`.
 
+## Closeout, 2026-10-29
+
+Archived to `docs/ai/design/complete/`. The gate ran and failed (Status above).
+The items below were not done and are not planned under this design.
+
+**Code.** `scripts/gate1_run.py` (parameters, HDF5 queries, outputs),
+`src/benchmarks/recovery/gate1.py` (analysis functions, moved there in prompt 260),
+`tests/benchmarks/recovery/test_gate1.py`. Outputs: `output/gate1/`.
+
+**Named in this design, not built:**
+
+- Double-exponential fit (Secondary). As written, it also cannot represent the
+  second rise at 0.3-2 s.
+- Polarity comparison.
+- Amplitude-response: only the cross-day correlation of per-electrode slopes was
+  computed (0.323). Whether `t_return` lengthens with amplitude was never reported.
+
+**`analysis_standards.md` requirements not met for this gate:**
+
+- No synthetic spike-train positive or negative control. The positive control
+  exists only at the correlation step.
+- The null permutes electrode labels at the last step, not a whole-pipeline
+  shuffle of stimulus times.
+- Confound register not run. `t_return` is defined against 1.5 x baseline and
+  baseline moved about 1.5x between days, so part of the cross-day change in
+  `t_return` may follow from the definition. Not tested.
+- Headline not re-run under two alternative definitions (threshold, bin count).
+- No config file; parameters are constants in `scripts/gate1_run.py`.
+
+**Unresolved:** the block-0 pre-conditioning confound. Prompt 257
+(`scripts/day_census.py`) found no other clean adjacent day pair in fs369, so it
+cannot be separated without new data.
+
+**Provenance gap:** in the Status section, 0.13 is the condition-centered r
+(0.128, `output/gate1/stdout.txt`). The post-hoc 0.80, 0.61 and -0.14 are not
+written by any committed script or output file.
+
+**Body text vs the run:** the sections below say 19 active electrodes and 16
+conditions. The run used 24 active electrodes and 32 blocks (16 conditions x 2
+polarities); see `output/gate1/stdout.txt`. The text below is left as designed.
+
 
 ## What the data is
 
